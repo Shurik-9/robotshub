@@ -1,0 +1,237 @@
+{
+ "geoskan-701": {
+  "source": "geoscan.site (каталог БПЛА «Самолёт Геоскан 701»)",
+  "caption": "БПЛА самолётного типа Геоскан 701",
+  "file": "assets/catalog/real/geoskan-701.webp"
+ },
+ "geoskan-401": {
+  "source": "geo-spektr.ru (Геоскан 401 Геодезия)",
+  "caption": "Коптер Геоскан 401",
+  "file": "assets/catalog/real/geoskan-401.webp"
+ },
+ "albatros-m5": {
+  "source": "alb.aero (АПК «Союз», Альбатрос М5 Agro)",
+  "caption": "БПЛА Альбатрос М5",
+  "file": "assets/catalog/real/albatros-m5.webp"
+ },
+ "ronavi-h1500": {
+  "source": "robob2b.ru (Ronavi H1500)",
+  "caption": "AMR Ronavi H1500",
+  "file": "assets/catalog/real/ronavi-h1500.webp"
+ },
+ "promobot-v4": {
+  "source": "вауробот.рф (Promobot V4, выставка)",
+  "caption": "Promobot V4",
+  "file": "assets/catalog/real/promobot-v4.webp"
+ },
+ "yandex-rover": {
+  "source": "cnews.ru (Яндекс Ровер, 2019)",
+  "caption": "Ровер Яндекса",
+  "file": "assets/catalog/real/yandex-rover.webp"
+ },
+ "cleanbotics": {
+  "source": "robob2b.ru (Waybot Cleanbotics 400 PRO)",
+  "caption": "Робот-уборщик Клинботикс",
+  "file": "assets/catalog/real/cleanbotics.webp"
+ },
+ "geoskan-201": {
+  "source": "geo-spektr.ru (Геоскан 201 Базовый)",
+  "file": "assets/catalog/real/geoskan-201.webp",
+  "size": [
+   152,
+   95
+  ]
+ },
+ "diam-20": {
+  "source": "геоскан.рф (БАС ИКАР СТ ДИАМ 20)",
+  "file": "assets/catalog/real/diam-20.webp",
+  "size": [
+   216,
+   135
+  ]
+ },
+ "kuryer-30": {
+  "source": "ria.ru (Курьер-30, Клеверкоптер)",
+  "file": "assets/catalog/real/kuryer-30.webp",
+  "size": [
+   1280,
+   800
+  ]
+ },
+ "omjet-03": {
+  "source": "omjet.ru (ОМДЖЕТ 03)",
+  "file": "assets/catalog/real/omjet-03.webp",
+  "size": [
+   1280,
+   800
+  ]
+ },
+ "tagarka": {
+  "source": "semargl.pro (карточка производителя, TAGARKA 6T)",
+  "file": "assets/catalog/real/tagarka.webp",
+  "size": [
+   1280,
+   800
+  ]
+ },
+ "evocargo-n1": {
+  "source": "ixbt.com (тесты с Почтой России)",
+  "file": "assets/catalog/real/evocargo-n1.webp",
+  "size": [
+   780,
+   487
+  ]
+ },
+ "dmr-600": {
+  "source": "kiit.ru (ДиКом DMR 600)",
+  "file": "assets/catalog/real/dmr-600.webp",
+  "size": [
+   400,
+   250
+  ]
+ },
+ "dmr-carrier-p": {
+  "source": "kiit.ru (карточка DMR Carrier P)",
+  "file": "assets/catalog/real/dmr-carrier-p.webp",
+  "size": [
+   810,
+   506
+  ]
+ },
+ "tfm-15-8e": {
+  "source": "www1.ru (сертификация TFM-15-8E)",
+  "file": "assets/catalog/real/tfm-15-8e.webp",
+  "size": [
+   920,
+   575
+  ]
+ },
+ "a12-1450": {
+  "source": "prorobotov.org (Эйдос А12-1450)",
+  "file": "assets/catalog/real/a12-1450.webp",
+  "size": [
+   267,
+   166
+  ]
+ },
+ "supercam-x4e": {
+  "source": "Налетай.рф (официальная карточка ГК «Беспилотные системы»)",
+  "file": "assets/catalog/real/supercam-x4e.webp",
+  "size": [
+   704,
+   440
+  ]
+ },
+ "supercam-x4": {
+  "source": "Налетай.рф (официальная карточка ГК «Беспилотные системы»)",
+  "file": "assets/catalog/real/supercam-x4.webp",
+  "size": [
+   704,
+   440
+  ]
+ },
+ "sibiryachok": {
+  "source": "URA.RU/ТАСС (соцкадр из справки ВЗГЛЯД, 03.2025)",
+  "file": "assets/catalog/real/sibiryachok.webp",
+  "size": [
+   540,
+   338
+  ]
+ },
+ "tubot": {
+  "source": "roboticsrus.ru (Тьюбот в цехе)",
+  "file": "assets/catalog/real/tubot.webp",
+  "size": [
+   800,
+   500
+  ]
+ },
+ "geoskan-gemini": {
+  "source": "sitimedia.ru (карточка дилера Геоскана)",
+  "file": "assets/catalog/real/geoskan-gemini.webp",
+  "size": [
+   694,
+   433
+  ]
+ },
+ "ronavi-h2000": {
+  "source": "robob2b.ru (карточка дилера)",
+  "file": "assets/catalog/real/ronavi-h2000.webp",
+  "size": [
+   500,
+   312
+  ]
+ },
+ "mark-2-se": {
+  "source": "kiit.ru (карточка дилера R2B)",
+  "file": "assets/catalog/real/mark-2-se.webp",
+  "size": [
+   400,
+   250
+  ]
+ },
+ "geoskan-801": {
+  "source": "геоскан.рф (обложка официального PDF, кроп)",
+  "file": "assets/catalog/real/geoskan-801.webp",
+  "size": [
+   1096,
+   685
+  ]
+ },
+ "moros-amr-1500": {
+  "source": "морос.рф (рендер производителя)",
+  "file": "assets/catalog/real/moros-amr-1500.webp",
+  "size": [
+   1280,
+   800
+  ]
+ },
+ "moros-amr-800": {
+  "source": "морос.рф (рендер производителя)",
+  "file": "assets/catalog/real/moros-amr-800.webp",
+  "size": [
+   720,
+   450
+  ]
+ },
+ "moros-amr-100": {
+  "source": "морос.рф (рендер производителя)",
+  "file": "assets/catalog/real/moros-amr-100.webp",
+  "size": [
+   1280,
+   800
+  ]
+ },
+ "dmr-1200": {
+  "source": "kiit.ru (карточка дилера)",
+  "file": "assets/catalog/real/dmr-1200.webp",
+  "size": [
+   810,
+   506
+  ]
+ },
+ "ak-2000-2": {
+  "source": "habr.com (репортаж о внедрении Автомакона)",
+  "file": "assets/catalog/real/ak-2000-2.webp",
+  "size": [
+   1280,
+   800
+  ]
+ },
+ "semyabot": {
+  "source": "semargl.pro (карточка производителя)",
+  "file": "assets/catalog/real/semyabot.webp",
+  "size": [
+   1280,
+   800
+  ]
+ },
+ "smartcube": {
+  "source": "monocle.ru (репортаж о SmartCube, роботы ARS CR-02)",
+  "file": "assets/catalog/real/smartcube.webp",
+  "size": [
+   668,
+   418
+  ]
+ }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "indoor-cleaning",
+  "width": 1200,
+  "height": 720,
+  "mPerPx": 0.08,
+  "startClock": "07:00",
+  "eventPlaceholders": "помещение",
+  "zones": [
+    {"id": "lobby", "label": "Входная группа", "x": 40, "y": 60, "w": 260, "h": 180},
+    {"id": "hall", "label": "Главный зал", "x": 360, "y": 60, "w": 430, "h": 300},
+    {"id": "corridor", "label": "Коридоры", "x": 360, "y": 430, "w": 430, "h": 160},
+    {"id": "service", "label": "Сервисная зона", "x": 850, "y": 430, "w": 280, "h": 160},
+    {"id": "charge", "label": "Зарядная", "x": 920, "y": 60, "w": 180, "h": 140}
+  ],
+  "props": [],
+  "flows": [
+    {"id": "lobby-clean", "label": "Уборка входной группы", "from": [160, 150], "to": [440, 150], "share": 0.3, "sprite": "scrubber", "speedMps": 1.0},
+    {"id": "hall-clean", "label": "Уборка главного зала", "from": [440, 200], "to": [700, 300], "share": 0.45, "sprite": "scrubber", "speedMps": 1.0},
+    {"id": "corridor-clean", "label": "Уборка коридоров", "from": [420, 510], "to": [740, 510], "share": 0.25, "sprite": "scrubber", "speedMps": 0.9}
+  ],
+  "charges": [[980, 110], [1040, 110]]
+}

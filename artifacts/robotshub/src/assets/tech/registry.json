@@ -1,0 +1,16 @@
+{
+  "_comment": "Реестр спрайтов техники: реальные габариты (м), скорость, экранный размер в симуляции (px). Соответствует моделям каталога ФЦ БАС. static=true — стационарные установки (не двигаются, рисуются под роботами).",
+  "amr-pallet":   {"title": "AMR паллетный",       "model": "Ronavi H1500",        "len_m": 1.05, "wid_m": 0.65, "speed_mps": 1.5, "len_px": 46,  "wid_px": 32},
+  "fmr-forklift": {"title": "FMR вилочный робот",  "model": "DMR Carrier P",       "len_m": 2.05, "wid_m": 1.0,  "speed_mps": 1.5, "len_px": 52,  "wid_px": 34},
+  "scrubber":     {"title": "Робот-уборщик",       "model": "MARK 2 SE",           "len_m": 0.86, "wid_m": 0.61, "speed_mps": 1.1, "len_px": 40,  "wid_px": 30},
+  "shuttle":      {"title": "Паллетный шаттл",     "model": "Pallet shuttle",      "len_m": 1.2,  "wid_m": 0.8,  "speed_mps": 0.9, "len_px": 42,  "wid_px": 26},
+  "tug":          {"title": "Беспилотный тягач",   "model": "Cognitive Pilot",     "len_m": 2.3,  "wid_m": 1.4,  "speed_mps": 5.5, "len_px": 56,  "wid_px": 38},
+  "truck":        {"title": "Беспилотный грузовик","model": "EVOCARGO N1",         "len_m": 5.0,  "wid_m": 1.8,  "speed_mps": 6.0, "len_px": 78,  "wid_px": 32},
+  "delivery-bot": {"title": "Робот-доставщик",     "model": "PuduBot 2",           "len_m": 0.58, "wid_m": 0.54, "speed_mps": 1.0, "len_px": 30,  "wid_px": 28},
+  "medical-amr":  {"title": "Медицинский AMR",     "model": "Ronavi SD",           "len_m": 0.42, "wid_m": 0.4,  "speed_mps": 2.0, "len_px": 28,  "wid_px": 26},
+  "palletizer":   {"title": "Паллетайзер",         "model": "Портальная станция",  "len_m": 4.0,  "wid_m": 3.0,  "speed_mps": 0,   "len_px": 120, "wid_px": 95, "static": true},
+  "robot-arm":    {"title": "Робот-манипулятор",   "model": "Промышленный манипулятор", "len_m": 3.0, "wid_m": 3.0, "speed_mps": 0, "len_px": 92, "wid_px": 92, "static": true},
+  "cube-storage": {"title": "Кубическое хранение", "model": "AutoStore-класс",     "len_m": 12.0, "wid_m": 8.0,  "speed_mps": 0,   "len_px": 200, "wid_px": 133, "static": true},
+  "conveyor":     {"title": "Конвейерный модуль",  "model": "Линия транспортировки", "len_m": 6.0, "wid_m": 1.0, "speed_mps": 0,   "len_px": 150, "wid_px": 36, "static": true},
+  "elevator":     {"title": "Грузовой лифт",       "model": "Межэтажный модуль",   "len_m": 2.5,  "wid_m": 2.5,  "speed_mps": 0,   "len_px": 56,  "wid_px": 56, "static": true}
+}

@@ -1,0 +1,22 @@
+{
+  "id": "territory",
+  "width": 1200,
+  "height": 720,
+  "mPerPx": 0.35,
+  "startClock": "06:00",
+  "eventPlaceholders": "открытая территория",
+  "zones": [
+    {"id": "promenade", "label": "Пешеходная зона", "x": 40, "y": 70, "w": 500, "h": 150},
+    {"id": "grounds", "label": "Газоны и зелёные зоны", "x": 40, "y": 300, "w": 500, "h": 300},
+    {"id": "road", "label": "Проезды и парковка", "x": 620, "y": 300, "w": 520, "h": 300},
+    {"id": "service", "label": "Сервисная площадка", "x": 620, "y": 70, "w": 260, "h": 150},
+    {"id": "charge", "label": "Зарядная", "x": 960, "y": 70, "w": 180, "h": 150}
+  ],
+  "props": [],
+  "flows": [
+    {"id": "promenade-work", "label": "Обработка пешеходной зоны", "from": [100, 140], "to": [480, 140], "share": 0.3, "sprite": "scrubber", "speedMps": 1.2},
+    {"id": "grounds-work", "label": "Обработка зелёной зоны", "from": [120, 380], "to": [480, 540], "share": 0.4, "sprite": "scrubber", "speedMps": 0.8},
+    {"id": "road-work", "label": "Обслуживание проездов", "from": [680, 380], "to": [1080, 540], "share": 0.3, "sprite": "scrubber", "speedMps": 1.4}
+  ],
+  "charges": [[1020, 130], [1080, 130]]
+}

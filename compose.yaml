@@ -1,0 +1,10 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # The existing workspace lockfile excludes non-x86 native packages.
+    platform: linux/amd64
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    restart: unless-stopped

@@ -1,0 +1,89 @@
+{
+  "id": "warehouse",
+  "name": "Склад",
+  "industry": "Торговля",
+  "icon": "IconWarehouse",
+  "sim_scene": "scenes/warehouse.json",
+  "groups": [
+    {
+      "id": "general", "name": "Общие параметры объекта",
+      "fields": [
+        {"key": "total_area_m2", "label": "Общая площадь склада", "unit": "м²", "type": "number", "base": 20000, "min": 10000, "max": 100000, "note": "Типичный FFC/RDC в логистическом парке"},
+        {"key": "active_area_m2", "label": "Площадь активной (роботизируемой) зоны", "unit": "м²", "type": "number", "base": 10000, "min": 5000, "max": 50000, "note": "50% от общей площади"},
+        {"key": "ceiling_height_m", "label": "Высота потолков в зоне хранения", "unit": "м", "type": "number", "base": 10, "min": 5, "max": 16, "note": "Влияет на выбор типа решений (шаттловые системы)"},
+        {"key": "floors_count", "label": "Количество этажей (мезонинов)", "unit": "шт.", "type": "int", "base": 2, "min": 1, "max": 3, "note": "Для многоэтажных решений нужны лифты — учитывается в CAPEX"},
+        {"key": "rack_rows", "label": "Стеллажных рядов", "unit": "шт.", "type": "int", "base": 8, "min": 0, "max": 20, "note": "Влияет на плотность препятствий и длину проездов в симуляции"},
+        {"key": "docks_count", "label": "Погрузочных постов", "unit": "шт.", "type": "int", "base": 4, "min": 0, "max": 6, "note": "Посты отображаются как въездные ворота на сцене"},
+        {"key": "main_aisle_width_m", "label": "Ширина главных проездов", "unit": "м", "type": "number", "base": 3.5, "min": 2.5, "max": 6, "note": "Определяет допустимые габариты робота"},
+        {"key": "rack_aisle_width_m", "label": "Ширина рабочих проходов между стеллажами", "unit": "м", "type": "number", "base": 2.8, "min": 1.5, "max": 4.5, "note": "Узкий проход (1,5–2,0 м) — только специализированные решения"},
+        {"key": "floor_type", "label": "Тип напольного покрытия", "type": "enum", "base": "Промышленный бетон", "options": ["Промышленный бетон", "Эпоксид", "Асфальт"], "note": "Влияет на выбор колёс/гусениц транспортировщиков"},
+        {"key": "floor_flatness_mm_2m", "label": "Ровность пола (отклонение)", "unit": "мм/2м", "type": "number", "base": 3, "min": 1, "max": 8, "note": "DIN 15185 / FM2. Критично для высотных решений"}
+      ]
+    },
+    {
+      "id": "mode", "name": "Режим работы",
+      "fields": [
+        {"key": "shifts_per_day", "label": "Рабочих смен в сутки", "unit": "смен", "type": "int", "base": 2, "min": 1, "max": 3, "note": "Стандартно 2 смены, 12 ч/сутки"},
+        {"key": "working_days_per_year", "label": "Рабочих дней в году", "unit": "дн.", "type": "int", "base": 365, "min": 365, "max": 365},
+        {"key": "shift_duration_h", "label": "Продолжительность смены", "unit": "ч", "type": "number", "base": 11, "min": 10, "max": 11, "note": "С учётом перерывов"},
+        {"key": "peak_factor", "label": "Пиковый коэффициент нагрузки", "type": "number", "base": 1.5, "min": 1.2, "max": 2.5, "note": "Отношение макс. часовой нагрузки к среднечасовой; e-com до 2,5"}
+      ]
+    },
+    {
+      "id": "operations", "name": "Операции: объём и производительность",
+      "fields": [
+        {"key": "inbound_pallets_per_day", "label": "Объём приёмки", "unit": "поддон/сут", "type": "number", "base": 1000, "min": 500, "max": 5000},
+        {"key": "outbound_pallets_per_day", "label": "Объём отгрузки", "unit": "поддон/сут", "type": "number", "base": 1000, "min": 500, "max": 5000, "note": "Включая консолидацию"},
+        {"key": "pick_lines_per_day", "label": "Объём отбора (строк/сутки)", "unit": "строк/сут", "type": "number", "base": 100000, "min": 50000, "max": 500000, "note": "Строка = 1 позиция в заказе. Ключевой KPI комплектации"},
+        {"key": "pick_units_per_day", "label": "Объём отбора (штук/сутки)", "unit": "шт./сут", "type": "number", "base": 150000, "min": 75000, "max": 750000, "note": "В среднем ~1,5 шт. на строку"},
+        {"key": "piece_pick_share_pct", "label": "Доля мелкоштучного отбора (piece-pick)", "unit": "%", "type": "number", "base": 30, "min": 10, "max": 80},
+        {"key": "active_sku_count", "label": "Количество активных SKU", "unit": "SKU", "type": "int", "base": 2000, "min": 1000, "max": 10000, "note": "Влияет на маршрутизацию и слотирование"},
+        {"key": "fast_moving_sku_share_pct", "label": "Доля быстрoоборотимых SKU (A-класс)", "unit": "%", "type": "number", "base": 20, "min": 10, "max": 40}
+      ]
+    },
+    {
+      "id": "staff", "name": "Персонал",
+      "fields": [
+        {"key": "total_staff", "label": "Общая численность персонала", "unit": "чел.", "type": "int", "base": 180, "min": 30, "max": 700, "note": "Включая ИТР, кладовщиков, водителей, уборку"},
+        {"key": "pickers_count", "label": "Отборщики (комплектовщики)", "unit": "чел.", "type": "int", "base": 100, "min": 15, "max": 500, "note": "Целевая группа экономии"},
+        {"key": "forklift_operators_count", "label": "Операторы погрузчиков", "unit": "чел.", "type": "int", "base": 25, "min": 5, "max": 80, "note": "Цель для автономных погрузчиков/VNA"},
+        {"key": "packing_operators_count", "label": "Операторы упаковочных линий", "unit": "чел.", "type": "int", "base": 20, "min": 5, "max": 60, "note": "Частично автоматизируется коботами"},
+        {"key": "picker_salary_gross", "label": "Средняя з/п отборщика (gross)", "unit": "руб./мес.", "type": "number", "base": 100000, "min": 70000, "max": 150000},
+        {"key": "forklift_salary_gross", "label": "Средняя з/п оператора погрузчика (gross)", "unit": "руб./мес.", "type": "number", "base": 120000, "min": 80000, "max": 170000, "note": "Квалификация выше; дефицит на рынке"},
+        {"key": "payroll_factor", "label": "Коэффициент начислений на ФОТ", "type": "number", "base": 1.302, "min": 1.302, "max": 1.302, "note": "Страховые взносы 30,2%"},
+        {"key": "picker_productivity_lines_h", "label": "Средняя выработка отборщика", "unit": "строк/ч·чел", "type": "number", "base": 150, "min": 80, "max": 200, "note": "До роботизации; ходьба, поиск, упаковка"},
+        {"key": "staff_loss_factor_pct", "label": "Потери рабочего времени (отпуск, болезнь, текучесть)", "unit": "%", "type": "number", "base": 25, "min": 15, "max": 35, "note": "Надбавка к нормативной численности"}
+      ]
+    },
+    {
+      "id": "routes", "name": "Маршруты и планировка",
+      "fields": [
+        {"key": "avg_route_m_per_line", "label": "Средняя длина маршрута отборщика на 1 строку", "unit": "м", "type": "number", "base": 25, "min": 15, "max": 60},
+        {"key": "conveyor_length_m", "label": "Протяжённость конвейерной/транспортной системы", "unit": "м", "type": "number", "base": 350, "min": 0, "max": 2000, "note": "0 если отсутствует"}
+      ]
+    },
+    {
+      "id": "storage", "name": "Хранение и характеристики грузов",
+      "fields": [
+        {"key": "rack_type", "label": "Тип стеллажной системы", "type": "enum", "base": "Фронтальные паллетные", "options": ["Фронтальные паллетные", "Shuttle", "AutoStore", "Miniload", "Drive-in", "Push-back"]},
+        {"key": "pallet_places", "label": "Количество паллетомест", "unit": "мест", "type": "int", "base": 20000, "min": 10000, "max": 100000},
+        {"key": "pallet_weight_kg", "label": "Средняя масса паллеты", "unit": "кг", "type": "number", "base": 800, "min": 200, "max": 1500, "note": "Влияет на грузоподъёмность роботов"},
+        {"key": "sku_weight_kg", "label": "Средняя масса штучной единицы", "unit": "кг", "type": "number", "base": 1.8, "min": 0.1, "max": 20, "note": "Критично для G2P-систем"},
+        {"key": "pallet_dims_mm", "label": "Габариты паллеты (Д×Ш×В)", "unit": "мм", "type": "text", "base": "1200×800×1600", "note": "Евростандарт"},
+        {"key": "sku_dims_mm", "label": "Габариты штучной единицы (Д×Ш×В)", "unit": "мм", "type": "text", "base": "300×200×150"},
+        {"key": "oversized_share_pct", "label": "Доля негабаритных/нестандартных грузов", "unit": "%", "type": "number", "base": 5, "min": 0, "max": 30, "note": "Нестандарт — барьер автоматизации, остаётся ручным"}
+      ]
+    },
+    {
+      "id": "infra", "name": "Инфраструктура и ограничения",
+      "fields": [
+        {"key": "charge_stations", "label": "Зарядных станций", "unit": "шт.", "type": "int", "base": 3, "min": 1, "max": 6, "note": "Количество зарядных мест на каждом этаже сцены"},
+        {"key": "power_available_kw", "label": "Доступная мощность электроснабжения", "unit": "кВт", "type": "number", "base": 500, "min": 100, "max": 3000, "note": "Для зарядных станций"},
+        {"key": "has_wms", "label": "Наличие WMS", "type": "bool", "base": true, "note": "Обязательно для роботизации"},
+        {"key": "erp_type", "label": "ERP/1С", "type": "enum", "base": "1С:ERP", "options": ["1С:ERP", "SAP", "Другая", "Нет"], "note": "Интеграция REST API / COM-коннектор"},
+        {"key": "capex_budget_mln", "label": "Планируемый бюджет на роботизацию", "unit": "млн руб.", "type": "number", "base": 80, "min": 10, "max": 500, "note": "Ориентир фильтрации; альтернативы — лизинг/RaaS"},
+        {"key": "payback_horizon_years", "label": "Горизонт расчёта окупаемости", "unit": "лет", "type": "int", "base": 5, "min": 3, "max": 10}
+      ]
+    }
+  ]
+}

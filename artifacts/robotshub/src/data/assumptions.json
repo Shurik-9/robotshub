@@ -1,0 +1,80 @@
+{
+  "_comment": "Единые финансовые допущения расчётного ядра. Любое значение, переопределённое пользователем, фиксируется в отчёте (требование прозрачности).",
+  "price_rules": {
+    "vat_included": true,
+    "excluded_from_price": ["доставка", "пусконаладочные работы", "глубокая интеграция в ИТ-ландшафт"],
+    "duplicates_policy": "дубли позиций каталога трактуются как альтернативные комплектации; пользователь выбирает вариант явно"
+  },
+  "capex_structure": {
+    "items": [
+      {"key": "equipment", "label": "Оборудование", "basis": "N единиц × цена каталога"},
+      {"key": "infrastructure", "label": "Инфраструктура (зарядные станции, разметка, лифты)", "basis": "оценка по объекту"},
+      {"key": "software", "label": "ПО и лицензии", "basis": "% от оборудования или прайс"},
+      {"key": "integration", "label": "Интеграция (WMS/ERP/МИС/СКУД/лифты)", "basis": "20–50% от стоимости техники (допущение)"},
+      {"key": "commissioning", "label": "Пусконаладка", "basis": "5–10% от оборудования (допущение)"},
+      {"key": "training", "label": "Обучение персонала", "basis": "фикс. сумма на систему (допущение)"},
+      {"key": "reserve", "label": "Резерв", "basis": "10% от суммы (норматив)"}
+    ]
+  },
+  "opex_structure": {
+    "items": [
+      {"key": "service", "label": "Сервисное обслуживание", "basis": "8–15% от CAPEX за оборудование в год (допущение)"},
+      {"key": "licenses", "label": "Лицензии ПО", "basis": "годовая подписка по прайсу"},
+      {"key": "energy", "label": "Электроэнергия", "basis": "мощность × часы работы × тариф"},
+      {"key": "connectivity", "label": "Связь и инфраструктура", "basis": "фикс. (допущение)"},
+      {"key": "consumables", "label": "Расходные материалы", "basis": "в т.ч. замена АКБ раз в 3–5 лет"},
+      {"key": "repairs", "label": "Ремонт", "basis": "включён в сервис либо отдельно"},
+      {"key": "operating_staff", "label": "Персонал эксплуатации (супервизия)", "basis": "остаточные FTE × стоимость FTE"}
+    ]
+  },
+  "calc_constants": {
+    "payroll_tax_factor": 1.302,
+    "peak_reserve_pct": {"base": 15, "range": [10, 25], "note": "роботы рассчитываются на пиковую нагрузку с резервом"},
+    "robot_utilization": {"base": 0.78, "range": [0.70, 0.85], "note": "коэффициент загрузки AMR: зарядка, простои, ожидание"},
+    "depreciation": {"method": "linear", "default_life_years": 7, "range": [5, 10]},
+    "tco_horizon_years": {"base": 5, "min": 5},
+    "discount_rate_pct": {"base": 15, "range": [8, 25], "note": "для NPV, опционально"},
+    "electricity_tariff_rub_kwh": {"base": 8.0, "range": [5, 15], "note": "промтариф, среднее"}
+  },
+  "payback_simulation": {
+    "iterations": 1000,
+    "seed": 15485863,
+    "base_probability": 0.5,
+    "uncertainties": [
+      {"key": "peak_reserve_pct", "label": "Резерв пиковой нагрузки", "unit": "%", "base": 15, "range": [10, 25], "source": "calc_constants.peak_reserve_pct.range"},
+      {"key": "robot_utilization", "label": "Коэффициент загрузки робота", "unit": "", "base": 0.78, "range": [0.70, 0.85], "source": "calc_constants.robot_utilization.range"},
+      {"key": "service_pct", "label": "Сервисное обслуживание", "unit": "% CAPEX оборудования/год", "base": 10, "range": [8, 15], "source": "opex_structure.service.basis"},
+      {"key": "electricity_tariff_rub_kwh", "label": "Тариф электроэнергии", "unit": "руб/кВт·ч", "base": 8, "range": [5, 15], "source": "calc_constants.electricity_tariff_rub_kwh.range"},
+      {"key": "integration_pct", "label": "Интеграция", "unit": "% CAPEX оборудования", "base": 20, "range": [20, 50], "source": "capex_structure.integration.basis"},
+      {"key": "commissioning_pct", "label": "Пусконаладка", "unit": "% CAPEX оборудования", "base": 5, "range": [5, 10], "source": "capex_structure.commissioning.basis"}
+    ]
+  },
+  "financing_scenarios": [
+    {"id": "own", "label": "Собственные средства (покупка)", "logic": "CAPEX сразу, амортизация линейная"},
+    {"id": "loan", "label": "Кредит", "logic": "первоначальный взнос + ежемесячные платежи; ставка и срок задаются пользователем; проценты входят в OPEX"},
+    {"id": "leasing", "label": "Лизинг", "logic": "аванс + ежемесячные платежи; по окончании выкуп; платежи входят в OPEX"},
+    {"id": "raas", "label": "RaaS (роботы как услуга)", "logic": "подписка за робота в месяц; CAPEX = 0; плата целиком в OPEX; срок контракта и условия выкупа задаются пользователем"}
+  ],
+  "comparison_requirements": {
+    "scenarios_min": 3,
+    "note": "сравнение: текущий процесс без роботизации + минимум 2 варианта роботизации по единым показателям (CAPEX, OPEX, годовой эффект, срок окупаемости, ROI, TCO)",
+    "sensitivity_params_min": 3,
+    "sensitivity_defaults": ["стоимость оборудования", "объём операций", "стоимость труда"],
+    "payback_interpretation": [
+      {"range": "до 3 лет", "verdict": "высокая целесообразность"},
+      {"range": "3–5 лет", "verdict": "уместно при стратегических причинах"},
+      {"range": "более 5 лет", "verdict": "осторожно: рассмотреть RaaS/лизинг или иной тип решения"}
+    ]
+  },
+  "formulas": {
+    "fte_as_is": "объём операций / (норма выработки человека в час × эффективные часы года)",
+    "fte_effective_hours": "часы смены × смены × рабочие дни × (1 − потери времени)",
+    "staff_cost": "FTE × з/п gross × 12 × коэффициент ФОТ",
+    "robots_count": "ceil(пиковая потребность в операциях/ч / (производительность единицы/ч × загрузка) × (1 + резерв))",
+    "annual_effect": "затраты as-is − OPEX роботизации (включая остаточный персонал)",
+    "payback": "CAPEX / годовой эффект (при положительном эффекте)",
+    "roi": "накопленный эффект за период / CAPEX × 100%",
+    "tco": "CAPEX + сумма OPEX за горизонт с учётом замены ключевых компонентов (АКБ)",
+    "npv": "сумма дисконтированного годового эффекта − CAPEX"
+  }
+}

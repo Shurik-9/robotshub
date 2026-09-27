@@ -1,0 +1,117 @@
+{
+  "id": "medical",
+  "name": "Медицинское учреждение",
+  "industry": "Социальная сфера",
+  "icon": "IconMedical",
+  "sim_scene": "scenes/hospital.json",
+  "groups": [
+    {
+      "id": "general", "name": "Общие параметры объекта",
+      "fields": [
+        {"key": "facility_type", "label": "Тип учреждения", "type": "enum", "base": "Многопрофильная больница", "options": ["Поликлиника", "Многопрофильная больница", "Онкоцентр", "Диагностический центр"]},
+        {"key": "total_area_m2", "label": "Общая площадь зданий", "unit": "м²", "type": "number", "base": 45000, "min": 3000, "max": 200000, "note": "Влияет на длину маршрутов и число роботов"},
+        {"key": "floors_count", "label": "Этажей (основной корпус)", "unit": "шт.", "type": "int", "base": 2, "min": 1, "max": 3, "note": "Межэтажные потоки используют служебный лифт"},
+        {"key": "elevators_count", "label": "Лифтов (грузовых/медицинских)", "unit": "шт.", "type": "int", "base": 4, "min": 1, "max": 12, "note": "Пропускная способность лифта — частое узкое место"},
+        {"key": "beds_count", "label": "Койек (стационар)", "unit": "коек", "type": "int", "base": 650, "min": 50, "max": 2500, "note": "Основная нагрузка: питание, бельё, медикаменты"},
+        {"key": "beds_occupancy_pct", "label": "Коечный фонд в эксплуатации", "unit": "%", "type": "number", "base": 82, "min": 60, "max": 95, "note": "Минздрав РФ, среднее по ЦФО 2023"},
+        {"key": "operating_rooms_count", "label": "Операционных", "unit": "шт.", "type": "int", "base": 12, "min": 2, "max": 40, "note": "Доставка стерильных наборов — приоритетный сценарий"},
+        {"key": "outpatient_visits_per_day", "label": "Амбулаторных посещений в сутки", "unit": "посещ./сут", "type": "int", "base": 850, "min": 100, "max": 5000}
+      ]
+    },
+    {
+      "id": "mode", "name": "Режим работы",
+      "fields": [
+        {"key": "hospital_mode", "label": "Режим стационара", "type": "text", "base": "24/7/365", "note": "Круглосуточно — требование к надёжности роботов"},
+        {"key": "outpatient_mode", "label": "Режим амбулатории", "type": "text", "base": "5/2, 08:00–20:00"},
+        {"key": "staff_shifts", "label": "Смен медперсонала", "unit": "смен/сут", "type": "int", "base": 3, "min": 2, "max": 3},
+        {"key": "peak_load_windows", "label": "Пиковые окна логистической нагрузки", "type": "text", "base": "07:00–10:00 и 15:00–17:00", "note": "Завтрак+обед; смена белья; приём/выдача анализов"}
+      ]
+    },
+    {
+      "id": "food", "name": "Логистика питания",
+      "fields": [
+        {"key": "meals_per_day_count", "label": "Кормлений в сутки", "unit": "раз/сут", "type": "int", "base": 3, "min": 3, "max": 5},
+        {"key": "food_portions_per_day", "label": "Порций питания в сутки", "unit": "порций/сут", "type": "int", "base": 1950, "min": 150, "max": 7500, "note": "= койки × занятость × кратность"},
+        {"key": "food_route_distance_m", "label": "Расстояние от пищеблока до отделения", "unit": "м", "type": "number", "base": 180, "min": 30, "max": 500},
+        {"key": "food_points_count", "label": "Точек раздачи питания (отделений)", "unit": "шт.", "type": "int", "base": 18, "min": 4, "max": 60},
+        {"key": "food_cart_weight_kg", "label": "Масса тележки с питанием (брутто)", "unit": "кг", "type": "number", "base": 120, "min": 40, "max": 250, "note": "Агрегатный лоток 60–80 кг"},
+        {"key": "food_delivery_norm_min", "label": "Норматив доставки питания", "unit": "мин", "type": "int", "base": 20, "min": 10, "max": 35, "note": "СанПиН и техкарта"}
+      ]
+    },
+    {
+      "id": "laundry", "name": "Логистика белья",
+      "fields": [
+        {"key": "dirty_laundry_kg_day", "label": "Грязное бельё", "unit": "кг/сут", "type": "number", "base": 1800, "min": 200, "max": 8000, "note": "~2,5–3,5 кг на койку в сутки"},
+        {"key": "clean_laundry_kg_day", "label": "Чистое бельё на раздачу", "unit": "кг/сут", "type": "number", "base": 1800, "min": 200, "max": 8000},
+        {"key": "laundry_points_count", "label": "Точек сбора/выдачи белья", "unit": "шт.", "type": "int", "base": 18, "min": 4, "max": 60},
+        {"key": "linen_change_per_day", "label": "Периодичность смены белья", "unit": "раз/сут", "type": "number", "base": 1, "min": 1, "max": 3},
+        {"key": "laundry_container_weight_kg", "label": "Масса контейнера с бельём", "unit": "кг", "type": "number", "base": 55, "min": 20, "max": 120, "note": "Замкнутый контейнер — противоинфекционное требование"}
+      ]
+    },
+    {
+      "id": "meds", "name": "Медикаменты и расходники",
+      "fields": [
+        {"key": "medication_names_count", "label": "Наименований медикаментов в обращении", "unit": "наим.", "type": "int", "base": 2800, "min": 300, "max": 8000, "note": "Аналог SKU"},
+        {"key": "medication_requests_per_day", "label": "Выдача медикаментов", "unit": "заявок/сут", "type": "int", "base": 340, "min": 40, "max": 1500, "note": "1 заявка = отделение + смена"},
+        {"key": "pharmacy_points_count", "label": "Аптечных точек выдачи", "unit": "шт.", "type": "int", "base": 2, "min": 1, "max": 6},
+        {"key": "med_delivery_points_count", "label": "Точек доставки (отделения + ОР + реанимация)", "unit": "шт.", "type": "int", "base": 22, "min": 5, "max": 70},
+        {"key": "med_kit_time_min", "label": "Время комплектации 1 заявки в аптеке", "unit": "мин", "type": "int", "base": 12, "min": 5, "max": 30},
+        {"key": "stat_share_pct", "label": "Доля срочных (STAT) доставок", "unit": "%", "type": "number", "base": 8, "min": 2, "max": 20, "note": "Робот прерывает плановый маршрут"},
+        {"key": "consumables_trips_per_day", "label": "Доставка расходных материалов", "unit": "рейсов/сут", "type": "int", "base": 45, "min": 10, "max": 200}
+      ]
+    },
+    {
+      "id": "samples", "name": "Анализы и биоматериалы",
+      "fields": [
+        {"key": "samples_per_day", "label": "Проб биоматериала в сутки", "unit": "проб/сут", "type": "int", "base": 1200, "min": 100, "max": 6000},
+        {"key": "labs_count", "label": "Лабораторий (КДЛ)", "unit": "шт.", "type": "int", "base": 2, "min": 1, "max": 5},
+        {"key": "sample_delivery_norm_min", "label": "Норматив доставки пробы", "unit": "мин", "type": "int", "base": 30, "min": 10, "max": 60, "note": "ГОСТ Р 53079.4-2008; критично для коагулологии"},
+        {"key": "results_trips_per_day", "label": "Выдача результатов анализов", "unit": "рейсов/сут", "type": "int", "base": 28, "min": 5, "max": 120, "note": "Бумага или ЛИС — влияет на сценарий"}
+      ]
+    },
+    {
+      "id": "waste", "name": "Медицинские отходы",
+      "fields": [
+        {"key": "waste_a_kg_day", "label": "Отходы класса А", "unit": "кг/сут", "type": "number", "base": 850, "min": 80, "max": 4000, "note": "Неинфицированные"},
+        {"key": "waste_b_kg_day", "label": "Отходы класса Б", "unit": "кг/сут", "type": "number", "base": 220, "min": 20, "max": 1200, "note": "Инфицированные: спецконтейнеры и маршрут"},
+        {"key": "waste_points_count", "label": "Точек сбора отходов", "unit": "шт.", "type": "int", "base": 20, "min": 4, "max": 70},
+        {"key": "waste_pickup_per_day", "label": "Периодичность вывоза", "unit": "раз/сут", "type": "number", "base": 2, "min": 1, "max": 4, "note": "СанПиН 2.1.3684-21"}
+      ]
+    },
+    {
+      "id": "staff", "name": "Персонал (немедицинский, логистика)",
+      "fields": [
+        {"key": "sanitar_count", "label": "Санитары и транспортировщики", "unit": "чел.", "type": "int", "base": 65, "min": 10, "max": 300, "note": "Основная целевая группа замещения"},
+        {"key": "food_staff_count", "label": "Сотрудники пищеблока (раздача)", "unit": "чел.", "type": "int", "base": 28, "min": 5, "max": 100, "note": "Частичное замещение — транспортная функция"},
+        {"key": "laundry_staff_count", "label": "Сотрудники прачечной (транспорт белья)", "unit": "чел.", "type": "int", "base": 18, "min": 3, "max": 60},
+        {"key": "sanitar_salary_gross", "label": "Средняя з/п санитара/транспортировщика (gross)", "unit": "руб./мес.", "type": "number", "base": 55000, "min": 38000, "max": 85000},
+        {"key": "food_salary_gross", "label": "Средняя з/п сотрудника пищеблока (gross)", "unit": "руб./мес.", "type": "number", "base": 52000, "min": 35000, "max": 75000},
+        {"key": "payroll_factor", "label": "Коэффициент начислений на ФОТ", "type": "number", "base": 1.302, "min": 1.302, "max": 1.302, "note": "Страховые взносы 30,2%"},
+        {"key": "turnover_pct", "label": "Годовая текучесть (немедицинский персонал)", "unit": "%", "type": "number", "base": 45, "min": 20, "max": 70}
+      ]
+    },
+    {
+      "id": "safety", "name": "Безопасность и санитарные нормы",
+      "fields": [
+        {"key": "disinfection_required", "label": "Обеззараживание робота между рейсами", "type": "text", "base": "Обязательно для Б-маршрутов", "note": "УФ-модуль или дезсредство — учитывается в OPEX"},
+        {"key": "ward_noise_dba", "label": "Уровень шума в палатах (ночь)", "unit": "дБА", "type": "number", "base": 30, "min": 25, "max": 40, "note": "СанПиН 2.1.3.2630-10"},
+        {"key": "has_access_control", "label": "СКУД по зонам", "type": "bool", "base": true, "note": "Интеграция через API лифтов и дверей"},
+        {"key": "robot_surface_requirements", "label": "Требования к поверхностям робота", "type": "text", "base": "Нержавеющая сталь или ABS с антибактериальным покрытием", "note": "Для обработки дезсредствами"}
+      ]
+    },
+    {
+      "id": "infra", "name": "Инфраструктура",
+      "fields": [
+        {"key": "charge_stations", "label": "Зарядных станций", "unit": "шт.", "type": "int", "base": 3, "min": 1, "max": 6, "note": "Количество зарядных мест на каждом этаже сцены"},
+        {"key": "has_mis", "label": "МИС", "type": "text", "base": "Да (ЕМИАС)", "note": "Источник данных для маршрутизации"},
+        {"key": "has_lis", "label": "ЛИС", "type": "bool", "base": true, "note": "Автоформирование заявок на доставку проб"},
+        {"key": "has_elevator_api", "label": "API управления лифтами (BMS)", "type": "text", "base": "Да (частично)", "note": "Критично: без API лифтов AMR не проходит между этажами"},
+        {"key": "corridor_width_m", "label": "Ширина основных коридоров", "unit": "м", "type": "number", "base": 2.4, "min": 1.8, "max": 3.5, "note": "Мин. 1,8 м для AMR + разминовка"},
+        {"key": "has_ramps", "label": "Пандусы/подъёмники (межэтаж без лифта)", "type": "bool", "base": false},
+        {"key": "charging_power_kw", "label": "Мощность зарядной инфраструктуры", "unit": "кВт", "type": "number", "base": 80, "min": 15, "max": 400, "note": "У сестринских постов или в технических нишах"},
+        {"key": "capex_budget_mln", "label": "Планируемый бюджет на роботизацию", "unit": "млн руб.", "type": "number", "base": 35, "min": 5, "max": 200, "note": "Консервативная отрасль: часто пилот на 1–3 робота"},
+        {"key": "payback_horizon_years", "label": "Горизонт расчёта окупаемости", "unit": "лет", "type": "int", "base": 7, "min": 5, "max": 15}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "id": "airport",
+  "name": "Аэропорт",
+  "industry": "Логистика",
+  "icon": "IconAirportTower",
+  "sim_scene": "scenes/airport.json",
+  "groups": [
+    {
+      "id": "general", "name": "Общие параметры объекта",
+      "fields": [
+        {"key": "terminal_area_m2", "label": "Суммарная площадь терминалов", "unit": "м²", "type": "number", "base": 85000, "min": 8000, "max": 500000, "note": "База для маршрутов роботов-транспортировщиков"},
+        {"key": "apron_area_m2", "label": "Площадь перрона и технических зон", "unit": "м²", "type": "number", "base": 100000, "min": 10000, "max": 800000, "note": "Открытая зона: ограничения (погода, допуски)"},
+        {"key": "terminals_count", "label": "Количество терминалов", "unit": "шт.", "type": "int", "base": 2, "min": 1, "max": 6, "note": "Несколько терминалов — сложная межтерминальная логистика"},
+      {"key": "floors_count", "label": "Уровней основного терминала", "unit": "шт.", "type": "int", "base": 2, "min": 1, "max": 3, "note": "Межэтажные потоки используют служебные лифты и BMS"},
+      {"key": "docks_count", "label": "Погрузочных постов", "unit": "шт.", "type": "int", "base": 2, "min": 0, "max": 6, "note": "Сервисные ворота для движения техники на сцене"},
+        {"key": "gates_count", "label": "Выходов на посадку (гейтов)", "unit": "шт.", "type": "int", "base": 20, "min": 8, "max": 50, "note": "Влияет на маршруты доставки и число роботов"},
+        {"key": "runways_count", "label": "Взлётно-посадочных полос", "unit": "шт.", "type": "int", "base": 2, "min": 1, "max": 4, "note": "Контекст масштаба"}
+      ]
+    },
+    {
+      "id": "pax", "name": "Пассажирский поток",
+      "fields": [
+        {"key": "pax_per_year_mln", "label": "Пассажиропоток", "unit": "млн пасс./год", "type": "number", "base": 8.5, "min": 0.5, "max": 50},
+        {"key": "pax_per_day", "label": "Среднесуточный пассажиропоток", "unit": "пасс./сут", "type": "number", "base": 23300, "min": 1400, "max": 137000, "note": "= годовой поток / 365"},
+        {"key": "peak_pax_per_hour", "label": "Пиковый пассажиропоток (PHF)", "unit": "пасс./ч", "type": "number", "base": 3200, "min": 200, "max": 18000},
+        {"key": "transfer_share_pct", "label": "Доля трансферных пассажиров", "unit": "%", "type": "number", "base": 15, "min": 5, "max": 45, "note": "Ключевой сегмент для роботов-носильщиков/кейсов"},
+        {"key": "checkin_desks_count", "label": "Стоек регистрации", "unit": "шт.", "type": "int", "base": 50, "min": 15, "max": 350, "note": "Целевая зона роботов сопровождения"}
+      ]
+    },
+    {
+      "id": "ramp", "name": "Наземное обслуживание (ramp)",
+      "fields": [
+        {"key": "flights_per_day", "label": "Рейсов в сутки (взлёт+посадка)", "unit": "рейсов/сут", "type": "int", "base": 280, "min": 30, "max": 1200},
+        {"key": "peak_flights_per_hour", "label": "Пиковое количество рейсов в час", "unit": "рейсов/ч", "type": "int", "base": 32, "min": 4, "max": 120, "note": "Пиковая потребность в спецтехнике"},
+        {"key": "tat_min", "label": "Среднее время оборота ВС (TAT)", "unit": "мин", "type": "int", "base": 45, "min": 25, "max": 90, "note": "Ключевой KPI перрона"},
+        {"key": "handling_ops_per_flight", "label": "Операций наземного обслуживания на 1 рейс", "unit": "операций", "type": "int", "base": 18, "min": 10, "max": 25, "note": "Буксировка, питание, заправка, уборка, погрузка"},
+        {"key": "baggage_units_per_day", "label": "Перемещение багажа", "unit": "ед./сут", "type": "int", "base": 35000, "min": 3000, "max": 300000, "note": "Целевой KPI багажных AMR"},
+        {"key": "baggage_avg_weight_kg", "label": "Средняя масса единицы багажа", "unit": "кг", "type": "number", "base": 18, "min": 10, "max": 35},
+        {"key": "baggage_carousels_count", "label": "Стоек выдачи багажа (каруселей)", "unit": "шт.", "type": "int", "base": 8, "min": 3, "max": 30},
+        {"key": "catering_meals_per_day", "label": "Объём бортового питания", "unit": "порций/сут", "type": "int", "base": 22000, "min": 1000, "max": 200000, "note": "Цель: автономные тележки доставки"},
+        {"key": "refueling_flights_per_day", "label": "Заправка ВС", "unit": "рейсов/сут", "type": "int", "base": 280, "min": 30, "max": 1200, "note": "Потенциал: автономные заправщики"}
+      ]
+    },
+    {
+      "id": "intra", "name": "Внутрипортовая логистика и уборка",
+      "fields": [
+        {"key": "intra_cart_trips_per_day", "label": "Рейсов грузовых тележек внутри терминала", "unit": "рейсов/сут", "type": "int", "base": 420, "min": 50, "max": 3000},
+        {"key": "cleaning_machines_count", "label": "Уборочных машин (терминал)", "unit": "шт.", "type": "int", "base": 8, "min": 2, "max": 40, "note": "Замена: автономные поломоечные машины"},
+        {"key": "cleaning_area_m2", "label": "Площадь, убираемая роботизированной уборкой", "unit": "м²", "type": "number", "base": 51000, "min": 4800, "max": 300000, "note": "~60–70% площади терминала, без режимных зон"},
+        {"key": "waste_containers_per_day", "label": "Вывоз мусора", "unit": "конт./сут", "type": "int", "base": 85, "min": 10, "max": 500, "note": "AMR-платформы для вывоза тележек"}
+      ]
+    },
+    {
+      "id": "staff", "name": "Персонал",
+      "fields": [
+        {"key": "ramp_staff", "label": "Персонал наземного обслуживания (ramp)", "unit": "чел.", "type": "int", "base": 320, "min": 50, "max": 2000},
+        {"key": "terminal_staff", "label": "Персонал терминала (логистика, уборка)", "unit": "чел.", "type": "int", "base": 180, "min": 30, "max": 800},
+        {"key": "ramp_salary_gross", "label": "Средняя з/п сотрудника ramp (gross)", "unit": "руб./мес.", "type": "number", "base": 100000, "min": 70000, "max": 150000},
+        {"key": "cleaner_salary_gross", "label": "Средняя з/п уборщика терминала (gross)", "unit": "руб./мес.", "type": "number", "base": 65000, "min": 38000, "max": 85000, "note": "Ниже рынка, высокая текучесть"},
+        {"key": "payroll_factor", "label": "Коэффициент начислений на ФОТ", "type": "number", "base": 1.302, "min": 1.302, "max": 1.302, "note": "В демо-датасете аэропорта указан 1; для консистентности методики принята ставка страховых взносов 30,2%"},
+        {"key": "turnover_pct", "label": "Годовая текучесть (персонал терминала)", "unit": "%", "type": "number", "base": 35, "min": 15, "max": 60}
+      ]
+    },
+    {
+      "id": "safety", "name": "Безопасность и ограничения",
+      "fields": [
+        {"key": "security_zones_count", "label": "Количество режимных зон", "unit": "шт.", "type": "int", "base": 4, "min": 2, "max": 8, "note": "Airside, landside, стерильная, перрон"},
+        {"key": "has_access_control", "label": "СКУД", "type": "enum", "base": "Да (OSDP)", "options": ["Да (OSDP)", "Да (другая)", "Нет"], "note": "AMR интегрируются со СКУД для прохода дверей"},
+        {"key": "airside_certification", "label": "Сертификация оборудования для airside", "type": "enum", "base": "EASA/ИКАО", "options": ["EASA/ИКАО", "Росавиация", "Не требуется"], "note": "Серьёзный барьер: не все роботы допущены на перрон"},
+        {"key": "noise_limit_dba", "label": "Ограничение по уровню шума", "unit": "дБА", "type": "number", "base": 70, "min": 55, "max": 80, "note": "Критично для ночной работы AMR"},
+        {"key": "min_temp_winter_c", "label": "Температура в неотапливаемых зонах (зима)", "unit": "°C", "type": "number", "base": -25, "min": -40, "max": 0, "note": "Многие роботы не сертифицированы ниже −20 °C"}
+      ]
+    },
+    {
+      "id": "infra", "name": "Инфраструктура",
+      "fields": [
+        {"key": "charge_stations", "label": "Зарядных станций", "unit": "шт.", "type": "int", "base": 3, "min": 1, "max": 6, "note": "Количество зарядных мест на каждом этаже сцены"},
+        {"key": "has_fids_aodb", "label": "Наличие FIDS/AODB", "type": "bool", "base": true, "note": "Источник данных для расписания роботов"},
+        {"key": "has_bms", "label": "Наличие BMS", "type": "bool", "base": true, "note": "Интеграция AMR с лифтами, дверями, освещением"},
+        {"key": "charging_power_kw", "label": "Доступная мощность зарядной инфраструктуры", "unit": "кВт", "type": "number", "base": 300, "min": 50, "max": 2000},
+        {"key": "capex_budget_mln", "label": "Планируемый бюджет на роботизацию", "unit": "млн руб.", "type": "number", "base": 120, "min": 20, "max": 800},
+        {"key": "payback_horizon_years", "label": "Горизонт расчёта окупаемости", "unit": "лет", "type": "int", "base": 7, "min": 5, "max": 15, "note": "Длиннее из-за сложности интеграции"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Карта роботизации: 223 записи, 12 отраслевых направлений и сценарии применения</title>
+<meta name="description" content="Интерактивная карта базового каталога ФЦ БАС: 223 отраслевые записи, девять исходных отраслей и три пересекающихся направления — акватории, горнодобыча и медицина. Сценарии, зрелость и кейсы.">
+<style>
+:root{
+  --bg:#0A101D; --bg2:#0E1628; --card:#101A2E; --line:#22304A; --line2:#334563; --line2s:#3D5075;
+  --tx:#F1F5F9; --mut:#AFBED3; --dim:#8FA1BB;
+  --op:#3BE68F; --pil:#38D6F0; --rnd:#B49AF8; --gold:#FBBF24;
+  --mono:ui-monospace,'SF Mono','Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+ html{scroll-behavior:smooth;scrollbar-width:none}
+ html::-webkit-scrollbar{width:0;height:0}
+ body{scrollbar-width:none}
+ body::-webkit-scrollbar{width:0;height:0}
+body{background:var(--bg);color:var(--tx);font:17px/1.5 -apple-system,'Segoe UI',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+ .wrap{width:100%;max-width:none;margin:0;padding:0 22px}
+/* ---------- фон ---------- */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.hero::before{content:"";position:absolute;inset:0;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:40px 40px;opacity:.35;mask-image:radial-gradient(ellipse 90% 120% at 50% 0%,#000 30%,transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 120% at 50% 0%,#000 30%,transparent 75%)}
+.glow{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;pointer-events:none;animation:drift 14s ease-in-out infinite alternate}
+.g1{width:520px;height:380px;background:rgba(59,230,143,.16);top:-140px;left:6%}
+.g2{width:560px;height:420px;background:rgba(56,214,240,.15);top:-120px;right:4%;animation-delay:-6s}
+.g3{width:420px;height:360px;background:rgba(180,154,248,.13);bottom:-200px;left:42%;animation-delay:-3s}
+@keyframes drift{from{transform:translate(0,0)}to{transform:translate(40px,26px)}}
+/* ---------- шапка ---------- */
+.kick{display:inline-flex;align-items:center;gap:10px;margin-top:26px;padding:8px 15px;border:1px solid var(--line);border-radius:999px;
+  font-size:13px;letter-spacing:.12em;color:var(--mut);background:rgba(16,26,46,.75);position:relative}
+.kick i{width:8px;height:8px;border-radius:50%;background:var(--op);box-shadow:0 0 12px var(--op);animation:blink 2.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+ h1{position:relative;font-size:clamp(32px,4.8vw,58px);line-height:1.07;font-weight:800;letter-spacing:-.02em;margin:18px 0 14px}
+h1 .grad{background:linear-gradient(92deg,var(--op) 0%,var(--pil) 55%,var(--rnd) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+ .sub{position:relative;color:var(--mut);font-size:19px}
+.sub b{color:var(--tx);font-weight:650}
+/* ---------- KPI ---------- */
+.kpis{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:26px 0 24px}
+.kpi{background:linear-gradient(180deg,rgba(34,48,74,.55),rgba(16,26,46,.9));border:1px solid var(--line);border-radius:16px;padding:16px 18px 14px;position:relative;overflow:hidden;transition:transform .25s,border-color .25s}
+.kpi:hover{transform:translateY(-3px);border-color:var(--line2s)}
+.kpi::after{content:"";position:absolute;left:18px;right:18px;bottom:0;height:3px;border-radius:3px;background:var(--ac,#3BE68F);opacity:.8}
+.kpi .v{font-family:var(--mono);font-size:35px;font-weight:800;letter-spacing:-.02em}
+.kpi .v small{font-size:19px;color:var(--mut);font-weight:600}
+.kpi .l{color:var(--mut);font-size:14px;margin-top:4px;line-height:1.3}
+/* ---------- табы ---------- */
+.tabsrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:8px 0 16px;position:relative}
+.tabs-control{display:flex;align-items:center;gap:10px}
+.tabs-caption{color:var(--tx);font-size:14px;font-weight:650;white-space:nowrap}
+.tabs{display:flex;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:5px}
+.tab{appearance:none;border:1px solid transparent;background:transparent;color:var(--mut);font:650 16.5px/1 inherit;padding:13px 20px;border-radius:10px;cursor:pointer;transition:color .2s,background .2s,border-color .2s;display:inline-flex;align-items:center;gap:9px;white-space:nowrap}
+.tab svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tab:hover{color:var(--tx);background:rgba(34,48,74,.55);border-color:var(--line2)}
+.tab.on{background:linear-gradient(180deg,#1E3050,#182742);color:var(--tx);border-color:var(--line2s);box-shadow:inset 0 0 0 1px rgba(56,214,240,.18)}
+.legend{display:flex;gap:18px;align-items:center;color:var(--mut);font-size:14.5px;flex-wrap:wrap;margin-left:auto}
+.legend b{display:inline-flex;align-items:center;gap:8px;font-weight:550}
+.legend i{width:11px;height:11px;border-radius:4px;display:inline-block}
+#sznote{color:var(--dim);font-size:13.5px}
+#ovbtn{display:none;margin-left:auto;align-items:center;gap:6px;border:1px solid var(--line2s);background:rgba(34,48,74,.45);color:var(--tx);font:600 12px/1 inherit;padding:6px 10px;border-radius:999px;cursor:pointer}
+.mback{display:none;position:sticky;top:0;z-index:3;width:100%;align-items:center;gap:8px;padding:12px 16px;border:0;border-bottom:1px solid var(--line);background:#0E1628;color:var(--pil);font:650 14px/1 inherit;cursor:pointer}
+.mback:focus-visible,#ovbtn:focus-visible{outline:2px solid var(--pil);outline-offset:2px}
+/* ---------- каркас ---------- */
+.stage{padding-bottom:24px}
+@media(max-width:1080px){.panel{margin:0 22px 24px}}
+.board{background:linear-gradient(180deg,rgba(16,26,46,.6),rgba(10,16,29,.4));border:1px solid var(--line);border-radius:20px;overflow:hidden;position:relative}
+.hint{display:flex;gap:11px;align-items:flex-start;padding:15px 20px;border-bottom:1px solid var(--line);color:var(--mut);font-size:15.5px;background:rgba(4,8,18,.4)}
+.hint i{flex:0 0 auto;width:9px;height:9px;border-radius:50%;margin-top:8px;background:var(--gold);box-shadow:0 0 10px rgba(251,191,36,.8)}
+.hint b{color:var(--tx)}
+.view{display:none}
+.view.on{display:block;animation:vin .45s cubic-bezier(.2,.7,.3,1)}
+@keyframes vin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.vh{padding:22px 24px 6px;font-size:25px;font-weight:750;letter-spacing:-.01em}
+.vh small{display:block;font-size:14.5px;color:var(--mut);font-weight:450;margin-top:6px;letter-spacing:0}
+/* ---------- пузыри ---------- */
+.map{display:block;width:100%;height:auto}
+.map .bub{cursor:pointer;outline:none}
+ .map .bub .plate{fill:rgba(2,6,14,.55);opacity:.7}
+ .map .bub .core{fill:rgba(18,29,50,.92);stroke-width:1.25;stroke-opacity:.55;vector-effect:non-scaling-stroke;transition:fill .25s,stroke-opacity .25s,filter .25s}
+ .map .bub .tint{pointer-events:none;opacity:.14;transition:opacity .25s}
+ .map .bub:hover .tint,.map .bub:focus-visible .tint,.map .bub.sel .tint{opacity:.26}
+ .map .bub:hover .core,.map .bub:focus-visible .core{fill:rgba(26,40,66,.96);stroke-opacity:1;filter:drop-shadow(0 6px 18px rgba(56,214,240,.14))}
+ .map .bub .halo{fill:none;stroke-width:1.25;vector-effect:non-scaling-stroke;opacity:0;stroke-dasharray:8 10;transition:opacity .25s}
+.map .bub.sel .halo{opacity:.95;animation:spin 14s linear infinite}
+ .map .bub.sel .core{stroke:#F1F5F9;stroke-opacity:1;stroke-width:1.75}
+ .map .bub .tile-title,.map .bub .tile-number,.map .bub .tile-unit{pointer-events:none}
+@keyframes spin{to{stroke-dashoffset:-240}}
+.map.focus .bub{opacity:.25;transition:opacity .25s}
+.map.focus .bub.hot{opacity:1}
+.pop{transform:scale(1)}
+.float{animation:fl 7s ease-in-out infinite alternate}
+@keyframes fl{from{transform:translateY(-3px)}to{transform:translateY(3px)}}
+.bub:focus-visible,.row:focus-visible,.zone:focus-visible,.zcard:focus-visible,.mrow:focus-visible{outline:2px solid var(--pil);outline-offset:3px}
+/* ---------- применения (строки) ---------- */
+.rows{padding:12px 20px 22px;display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:265px 1fr 128px;gap:16px;align-items:center;padding:11px 14px;border:1px solid transparent;border-radius:14px;cursor:pointer;transition:background .2s,border-color .2s;outline:none}
+.row:hover,.row:focus-visible{background:rgba(34,48,74,.5);border-color:var(--line)}
+.row.sel{background:rgba(34,48,74,.6);border-color:var(--line2s)}
+.row .nm{font-weight:650;font-size:17px;line-height:1.25}
+.row .nm small{display:block;color:var(--dim);font-weight:450;font-size:13px;margin-top:3px}
+.bar{height:32px;border-radius:9px;background:rgba(4,8,18,.55);position:relative;overflow:hidden;display:flex}
+.bar i{display:block;height:100%;transition:width .8s cubic-bezier(.2,.8,.25,1)}
+.bar span{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:13.5px;font-weight:700;color:#F1F5F9;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.row .num{text-align:right;font-family:var(--mono)}
+.row .num b{font-size:23px;font-weight:800}
+.row .num small{display:block;color:var(--dim);font-size:12.5px;margin-top:1px}
+/* ---------- УГТ ---------- */
+.trlwrap{padding:10px 24px 8px}
+.zones{position:relative;height:52px;display:grid;grid-template-columns:repeat(9,72px);gap:10px;align-items:end;margin-bottom:2px}
+.zone{border-radius:12px 12px 0 0;padding:0;cursor:pointer;border:1px solid var(--line);border-bottom:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;transition:filter .2s;overflow:hidden;position:relative}
+.zone .zl{font-size:12px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;padding:4px 0 5px;color:var(--mut)}
+.zone .zn{font-family:var(--mono);font-size:13px;color:var(--mut)}
+.zone:hover{filter:brightness(1.35)}
+.zone.sel{box-shadow:inset 0 -3px 0 var(--zc)}
+.cols{display:grid;grid-template-columns:repeat(9,1fr);gap:10px;align-items:end;position:relative}
+.col{display:flex;flex-direction:column;align-items:center;gap:6px}
+.dots{width:100%;border-radius:9px;background:rgba(4,8,18,.5);border:1px solid var(--line);position:relative;display:flex;flex-wrap:wrap;align-content:flex-end;justify-content:center;gap:5px;padding:7px 5px;min-height:28px}
+.dot{width:9px;height:9px;border-radius:50%;opacity:0;transform:translateY(46px);transition:transform .6s cubic-bezier(.2,.9,.3,1.2),opacity .5s}
+.dot.in{opacity:.95;transform:none}
+.dot:hover{transform:scale(2.1);opacity:1}
+.cnum{font-family:var(--mono);font-size:17px;font-weight:800}
+.clab{font-family:var(--mono);font-size:12.5px;color:var(--mut);border-top:1px solid var(--line);width:100%;text-align:center;padding-top:6px}
+.zcards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:18px 24px 26px}
+.zcard{border:1px solid var(--line);border-radius:14px;padding:15px 17px;cursor:pointer;transition:transform .2s,border-color .2s;background:rgba(4,8,18,.4)}
+.zcard:hover{transform:translateY(-2px);border-color:var(--line2s)}
+.zcard h4{font-size:16px;display:flex;align-items:center;gap:9px}
+.zcard h4 i{width:12px;height:12px;border-radius:4px}
+.zcard p{color:var(--mut);font-size:13.8px;margin-top:6px;line-height:1.45}
+.zcard .b{font-family:var(--mono);font-size:21px;font-weight:800;margin-top:9px}
+.zcard .b small{font-size:12.5px;color:var(--dim);font-weight:450}
+/* ---------- СМИ-кейсы ---------- */
+.mstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:9px;padding:16px 20px 6px}
+.mstat{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:rgba(4,8,18,.4)}
+.mstat .v{font-size:14px;font-weight:700;color:var(--tx);line-height:1.35}
+.mstat .k{color:var(--mut);font-size:12.3px;margin-top:4px;line-height:1.35}
+.mstat a{color:var(--pil);text-decoration:none;font-size:12px;white-space:nowrap;display:inline-block;margin-top:5px}
+.mstat a:hover{text-decoration:underline}
+.medwrap{padding:10px 20px 24px;display:flex;flex-direction:column;gap:18px}
+.mgroup h4{font-size:17px;font-weight:750;display:flex;align-items:baseline;gap:10px}
+.mgroup h4 small{color:var(--dim);font-weight:450;font-size:13.5px}
+.mrow{display:grid;grid-template-columns:54px 1fr auto;gap:13px;align-items:baseline;padding:12px 14px;border:1px solid var(--line);border-radius:13px;margin-top:8px;color:var(--tx);text-decoration:none;font-size:14.8px;line-height:1.45;transition:background .2s,border-color .2s;background:rgba(4,8,18,.35)}
+.mrow:hover{border-color:var(--line2s);background:rgba(34,48,74,.5)}
+.mrow .yr{font-family:var(--mono);color:var(--gold);font-weight:800;font-size:13.5px}
+.mrow .mc b{font-weight:700}
+.mrow .eff{display:block;color:var(--mut);font-style:normal;font-size:13.5px;margin-top:4px;line-height:1.45}
+.mrow .src{color:var(--dim);font-size:12.5px;white-space:nowrap}
+.mrow:hover .src{color:var(--pil)}
+.medx{border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin-top:9px;background:rgba(4,8,18,.35)}
+.medx b{font-size:14.5px;display:block}
+.medx span{color:var(--mut);font-size:13.3px;display:block;margin-top:3px;line-height:1.45}
+.medx a{color:var(--pil);font-size:12.3px;text-decoration:none;white-space:nowrap;display:inline-block;margin-top:5px}
+.medx a:hover{text-decoration:underline}
+.medx .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.medx .top i{font-style:normal;font-family:var(--mono);color:var(--gold);font-size:12.5px}
+/* ---------- панель ---------- */
+ .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto;scrollbar-width:none}
+ .panel::-webkit-scrollbar{width:0;height:0}.panel::-webkit-scrollbar-thumb{background:transparent}
+.phead{position:sticky;top:0;background:rgba(16,26,46,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:18px 20px 15px;z-index:2}
+.badge{display:inline-block;font-size:12px;font-weight:750;letter-spacing:.14em;color:var(--mut);border:1px solid var(--line2s);border-radius:999px;padding:5px 12px}
+.phead h3{font-size:24px;font-weight:750;margin-top:10px;letter-spacing:-.01em;line-height:1.2;padding-right:36px}
+.phead .cl{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:10px;border:1px solid var(--line2s);background:transparent;color:var(--mut);font-size:16px;cursor:pointer;line-height:1}
+.phead .cl:hover{color:var(--tx);background:rgba(34,48,74,.6)}
+.pbody{padding:18px 20px 22px}
+.pstack{display:flex;height:16px;border-radius:8px;overflow:hidden;background:rgba(4,8,18,.6);margin:4px 0 9px}
+.pstack i{display:block;height:100%}
+.pcap{display:flex;gap:16px;color:var(--mut);font-size:13.5px;flex-wrap:wrap;margin-bottom:16px}
+.pcap b{display:inline-flex;align-items:center;gap:7px;font-weight:650;color:var(--tx)}
+.pcap i{width:10px;height:10px;border-radius:3px}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:18px}
+.pg{border:1px solid var(--line);border-radius:12px;padding:11px 12px 10px}
+.pg .v{font-family:var(--mono);font-size:21px;font-weight:800}
+.pg .l{color:var(--dim);font-size:11.8px;margin-top:3px;letter-spacing:.03em}
+.ph{font-size:12.8px;font-weight:750;letter-spacing:.1em;color:var(--mut);margin:18px 0 9px;text-transform:uppercase}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{font-size:13.8px;color:var(--tx);border:1px solid var(--line2s);border-radius:999px;padding:5.5px 13px;background:rgba(34,48,74,.4)}
+.chip small{color:var(--dim)}
+.excard{border:1px solid var(--line);border-radius:13px;padding:13px 15px;margin-bottom:10px;background:rgba(4,8,18,.4);transition:border-color .2s}
+.excard:hover{border-color:var(--line2s)}
+.excard .t{font-weight:650;font-size:15.3px;line-height:1.3}
+.excard .m{color:var(--dim);font-size:12.8px;margin:4px 0 7px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.excard .m .ugt{font-family:var(--mono);color:var(--pil);border:1px solid rgba(56,214,240,.4);border-radius:6px;padding:1px 6px;font-size:11.5px}
+.excard .m .pr{font-family:var(--mono);color:var(--gold);font-weight:650}
+.excard .m .stq{border-radius:6px;padding:1px 7px;font-size:11.3px;font-weight:750}
+.excard p{color:var(--mut);font-size:13.6px;line-height:1.5}
+/* обзорная панель */
+.legend2{margin-bottom:6px}
+.legend2 div{display:flex;gap:11px;align-items:center;font-size:15.5px;font-weight:550;margin:11px 0}
+.legend2 i{width:13px;height:13px;border-radius:4px;flex:0 0 auto}
+.legend2 small{display:block;font-weight:450;color:var(--dim);font-size:13px;margin-top:1px}
+.clicktip{border:1px solid var(--line);border-radius:12px;padding:12px 15px;margin:14px 0 16px;background:rgba(4,8,18,.4);color:var(--mut);font-size:14.3px;line-height:1.5}
+.clicktip b{color:var(--gold)}
+.toprow{display:grid;grid-template-columns:1fr 70px;gap:10px;align-items:center;padding:8px 2px;border-bottom:1px dashed var(--line)}
+.toprow:last-child{border-bottom:0}
+.toprow .nm{font-size:14.5px;font-weight:650}
+.toprow .nm small{display:block;color:var(--dim);font-weight:450;font-size:12.3px}
+.toprow .pc{text-align:right;font-family:var(--mono);font-size:17px;font-weight:800}
+.mbar{grid-column:1/-1;height:6px;border-radius:3px;background:rgba(4,8,18,.7);overflow:hidden}
+.mbar i{display:block;height:100%;background:linear-gradient(90deg,var(--pil),var(--op))}
+.ugtbig{font-family:var(--mono);font-size:34px;font-weight:800}
+.ugtbig small{font-size:14px;color:var(--mut);font-family:inherit;font-weight:450}
+.deeplink{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:9px 15px;border:1px solid rgba(56,214,240,.45);border-radius:10px;color:var(--pil);font-weight:650;font-size:14px;text-decoration:none;transition:background .2s}
+.deeplink:hover{background:rgba(56,214,240,.12)}
+/* ---------- тултип ---------- */
+.tip{position:fixed;z-index:50;pointer-events:none;max-width:320px;background:#13203A;border:1px solid var(--line2s);border-radius:14px;padding:13px 15px;box-shadow:0 14px 40px rgba(0,0,0,.55);opacity:0;transform:translateY(6px);transition:opacity .15s,transform .15s;font-size:14px}
+.tip.on{opacity:1;transform:none}
+.tip h5{font-size:15.5px;margin-bottom:6px}
+.tip .st{display:flex;gap:12px;flex-wrap:wrap;color:var(--mut);margin-bottom:4px}
+.tip .st b{color:var(--tx)}
+.tip .st i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px}
+.tip .ft{color:var(--dim);font-size:12.5px;margin-top:7px;border-top:1px dashed var(--line);padding-top:6px}
+/* ---------- футер ---------- */
+footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--mut);font-size:14px}
+footer details{max-width:1100px}
+footer summary{cursor:pointer;font-weight:650;color:var(--tx);font-size:14.5px;padding:6px 0}
+footer .fx{display:grid;grid-template-columns:2fr 1fr;gap:30px;padding-top:14px}
+footer b{color:var(--tx)}
+footer .brandrow{margin-top:14px;color:var(--mut)}
+@media(max-width:1080px){
+  main{grid-template-columns:1fr}
+  .panel{position:static;max-height:none}
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .zcards{grid-template-columns:1fr}
+  footer .fx{grid-template-columns:1fr}
+  .row{grid-template-columns:160px 1fr 90px}
+  .legend{margin-left:0}
+  .sub{font-size:17px}
+}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}.vh{font-size:21px}.tabs-control{width:100%;align-items:flex-start;flex-direction:column;gap:7px}.tabs{max-width:100%;overflow-x:auto}.tabs-caption{font-size:13.5px}}
+@media(max-width:760px){
+  .app{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  .left{display:flex;flex:1;flex-direction:column;min-height:0}
+  .stage{flex:1;display:flex;min-height:0}
+  .board{flex:1;display:flex;flex-direction:column;min-height:0}
+  .view.on{display:flex;flex:1;flex-direction:column;min-height:0;overflow:auto}
+  #v-ind.on{overflow:hidden}
+  .map{flex:1;min-height:0;height:100%}
+  footer{display:none}
+  .wrap{padding:0 12px}
+  .hero .wrap{padding-bottom:2px}
+  h1{font-size:20px;line-height:1.2;margin:10px 0 2px}
+  .sub,.hint,#sznote,.tabs-caption,.vh small,.glow{display:none}
+  .tabsrow{margin:8px 0 6px;gap:6px}
+  .tabs-control{width:100%}
+  .tabs{width:100%;padding:3px;gap:2px;border-radius:11px}
+  .tab{flex:1;justify-content:center;font-size:12.5px;padding:8px 4px;gap:0}
+  .tab svg{display:none}
+  .legend{font-size:12px;gap:10px;width:100%}
+  .legend i{width:9px;height:9px}
+  #ovbtn{display:inline-flex}
+  .board{border-radius:14px}
+  .vh{padding:9px 12px 0;font-size:15px}
+  .stage{padding-bottom:12px}
+  .rows{padding:8px 8px 14px}.row{grid-template-columns:1fr 64px;gap:8px}.row .bar{grid-column:1/-1;grid-row:2}
+  .zones,.cols{grid-template-columns:repeat(9,1fr);gap:3px}.trlwrap{padding:8px 10px;overflow-x:auto}
+  .mrow{grid-template-columns:44px 1fr}.mrow .src{grid-column:2}
+  .panel{position:fixed;inset:0;margin:0;border-radius:0;z-index:40;max-height:none;height:100%;overflow:auto;transform:translateY(100%);visibility:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s .32s}
+  body.sheet .panel{transform:none;visibility:visible;transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+  .mback{display:flex}
+}
+@media(min-width:1081px){h1{white-space:nowrap}}
+@media(min-width:1081px){.sub{white-space:nowrap}}
+@media(min-width:1081px){
+  footer{display:none}
+  .app{display:grid;grid-template-columns:minmax(0,1fr) 380px;height:100vh;overflow:hidden}
+  .left{display:flex;flex-direction:column;min-height:0;min-width:0;padding-top:64px}
+  .hero{border-bottom:0}.hero .wrap{padding-bottom:4px}
+  h1{font-size:clamp(24px,2.3vw,34px);margin:14px 0 4px}
+  .sub{font-size:15px}
+  .tabsrow{margin:10px 0 10px}
+  .tab{font-size:14.5px;padding:9px 14px}.tabs-caption{font-size:13px}.legend{font-size:13.5px;gap:14px}
+  .stage{flex:1;min-height:0;display:flex;padding-bottom:16px}
+  .board{flex:1;display:flex;flex-direction:column;min-height:0}
+  .hint{padding:9px 18px;font-size:14px}.hint i{margin-top:6px}
+  .vh{padding:12px 20px 2px;font-size:19px}.vh small{font-size:13.5px;margin-top:3px}
+  .view.on{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto;scrollbar-width:thin}
+  #v-ind.on{overflow:hidden}
+  .map{flex:1;min-height:0;height:100%}
+  .panel{position:relative;top:0;height:100vh;max-height:none;border-radius:0;border:0;border-left:1px solid var(--line2s);background:linear-gradient(180deg,#111C31,#0D1628);scrollbar-width:thin}
+  .phead{padding:16px 20px 13px}.phead h3{font-size:21px}
+  .pbody{padding:14px 20px 20px}.legend2 div{margin:8px 0}.clicktip{margin:10px 0 12px}
+}
+@media(min-width:1081px) and (max-height:800px){.sub{display:none}.hint{display:none}h1{margin:12px 0 2px}}
+@media print{.tip,.panel .cl{display:none} body{background:#fff}}
+</style>
+<link rel="stylesheet" href="./partners.css">
+<script type="module" src="./partners.js"></script>
+</head>
+<body>
+
+<div class="app"><div class="left">
+<header class="hero">
+  <div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div>
+  <div class="wrap">
+    <h1>Роботы уже работают <span class="grad">в вашей отрасли</span></h1>
+    <p class="sub">Найдите свою отрасль: кто уже внедрил, что в пилотах — и сколько это стоит. <b>Кликните</b> на любой элемент — раскроется досье.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tabsrow">
+    <div class="tabs-control">
+      <div class="tabs-caption">Выберите вид карты:</div>
+      <div class="tabs" role="tablist" aria-label="Вид карты">
+      <button class="tab on" data-v="ind" role="tab"><svg viewBox="0 0 24 24"><circle cx="9" cy="9.5" r="5.5"/><circle cx="18" cy="7.5" r="3.2"/><circle cx="16.5" cy="17" r="4.2"/></svg><span>Отрасли</span></button>
+      <button class="tab" data-v="app" role="tab"><svg viewBox="0 0 24 24"><path d="M4 20v-8M10 20V5M16 20v-6M21 20v-3"/></svg><span>Применения</span></button>
+      <button class="tab" data-v="trl" role="tab"><svg viewBox="0 0 24 24"><path d="M3 20h5v-4h5v-4h5V8h4"/></svg><span>Зрелость</span></button>
+      <button class="tab" data-v="med" role="tab"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M7 9h6M7 13h10M7 16h7"/></svg><span>СМИ-кейсы</span></button>
+      </div>
+    </div>
+    <div class="legend">
+      <b><i style="background:var(--op)"></i>уже работают</b>
+      <b><i style="background:var(--pil)"></i>пилоты</b>
+      <b><i style="background:var(--rnd)"></i>разработки</b>
+      <b id="sznote"></b>
+      <button type="button" id="ovbtn" aria-controls="panel">Как читать карту</button>
+    </div>
+  </div>
+
+</div>
+  <div class="wrap stage">
+    <div class="board">
+      <div class="hint"><i></i><span id="hint"></span></div>
+
+      <section class="view on" id="v-ind">
+        <div class="vh">12 направлений · 223 записи базового каталога<small>9 исходных отраслей + 3 тематических среза. Срезы пересекаются с исходными отраслями: числа плиток не складываются. Площадь отражает число записей, полоса — их статусы.</small></div>
+        <svg class="map" id="bubbles" viewBox="0 0 1200 620" role="group" aria-label="Карта отраслей и тематических отраслевых направлений"></svg>
+      </section>
+
+      <section class="view" id="v-app">
+        <div class="vh">Что роботы уже умеют<small>97 сценариев → 8 полей. Полоса — число решений: зелёная часть работает, голубая в пилотах, сиреневая в разработке.</small></div>
+        <div class="rows" id="approws"></div>
+      </section>
+
+      <section class="view" id="v-trl">
+        <div class="vh">Можно ли уже закупать?<small>УГТ — шкала готовности технологий от 1 до 9. Каждая точка — решение каталога. Зелёная зона справа — зрелый рынок.</small></div>
+        <div class="trlwrap">
+          <div class="zones" id="zones"></div>
+          <div class="cols" id="cols"></div>
+        </div>
+        <div class="zcards" id="zcards"></div>
+      </section>
+
+      <section class="view" id="v-med">
+        <div class="vh">Что пишут СМИ: 47 кейсов 2023–2026<small>Деловые СМИ и пресс-релизы компаний. Каждая карточка — ссылка на публикацию. Цифры компаний не проверялись независимо.</small></div>
+        <div class="medwrap" id="medrows"></div>
+      </section>
+    </div>
+  </div>
+  <div class="partners-strip" role="region" aria-label="Логотипы заказчиков проекта">
+    <div class="partners-window" tabindex="0" aria-label="Логотипы заказчиков">
+      <div class="partners-track"></div>
+    </div>
+    <button class="partners-pause" type="button" aria-label="Приостановить движение логотипов" aria-pressed="false">Ⅱ</button>
+  </div>
+</div>
+<aside class="panel" id="panel" aria-live="polite"></aside>
+</div>
+
+<footer>
+  <div class="wrap">
+    <details>
+      <summary>Методика и источники</summary>
+      <div class="fx">
+        <div>
+          <b>Методика.</b> УГТ — уровень готовности технологии (международная шкала TRL 1–9): 1–4 — лабораторные разработки,
+          5–7 — испытания и пилотные проекты, 8–9 — подтверждённая промышленная эксплуатация.
+          Статусы зафиксированы в Каталоге внедрений ФЦ БАС. Цены — каталожные цены вендоров, с НДС, без доставки и пусконаладки;
+          суммарная стоимость каталога — сумма каталожных цен, а не бюджетов внедрений. Поля применения образованы группировкой
+           97 сценариев каталога. Девять исходных отраслей дают 223 записи; водное хозяйство, горнодобыча и медицина —
+           пересекающиеся с ними тематические срезы тех же записей, а не новые продукты. Повторные отраслевые записи одной модели
+           посчитаны отдельно, число моделей указано в досье. Внешняя карточка PuduBot 2 не входит в базовые 223 записи.
+           Кейсы СМИ — открытые публикации 2023–2026; эффекты приводятся словами компаний и не проверялись
+          независимо. Карта носит ознакомительный характер; решение о закупке принимайте после проверки данных у вендора.
+        </div>
+        <div>
+          <b>Источники:</b> Каталог внедрений ФЦ БАС, 2026; Коммерсантъ, Интерфакс, Ведомости, TAdviser, ComNews, Минпромторг,
+          Университет Иннополис и др. — полный список в отчёте «Обзор рынка 2026».
+        </div>
+      </div>
+    </details>
+    <div class="brandrow">Центр подбора роботизации «Железный аргумент» · 2026</div>
+  </div>
+</footer>
+
+<div class="tip" id="tip"></div>
+
+<script src="./extra-sectors.js"></script>
+<script>
+const AGG = {"total":223,"opTotal":132,"priceSumBn":1.5,"regions":24,"nScen":97,"avgTrl":7.7,"stRu":{"op":"В эксплуатации","pil":"Пилотирование","rnd":"НИОКР"},"industries":[{"id":"Торговля и услуги","n":48,"op":25,"pil":14,"rnd":9,"trlAvg":7.6,"medianPrice":2550000.0,"vendors":[{"v":"Ронави Роботикс","n":6},{"v":"Диком-Сервис","n":5},{"v":"Морос","n":3},{"v":"ГК Автомакон","n":3},{"v":"Яндекс Роботикс","n":3},{"v":"Сбербанк","n":3}],"ex":[{"name":"AK-2000-2","vendor":"ГК Автомакон","st":"op","trl":9,"price":2940000.0,"text":"Внедрены 67 роботов FMR в распределительном центре «Пятерочки» X5 Group «Новая Рига» для перемещения, сортировки и транспортировки грузов. Использование одного робота позволяет экономить 180 человеко-часов за…"},{"name":"Pick by Voice","vendor":"Умный сервис","st":"op","trl":8,"price":1000000.0,"text":"Внедрена система Pick by Voice и Pick to Light в распределительном центре сети «Дикси» для ускорения сборки онлайн-заказов. В результате скорость сборки выросла вдвое, уровень ошибок снижен до 0,03%, пересорт…"},{"name":"AMR 100","vendor":"Морос","st":"op","trl":9,"price":1500000.0,"text":"Более 40 AMR100 с двумя типами оснасток в составе действующей роботизированной линии СООО «Белвест». Перемещение грузов по территории цеха осуществляется исключительно с помощью мобильных роботов без участия…"}],"mix":[{"id":"g-logi","name":"Логистика и доставка","n":33},{"id":"g-service","name":"Торговля и сервис","n":8},{"id":"g-clean","name":"Уборка и клининг","n":6},{"id":"g-prod","name":"Производство и строительство","n":1}],"x":600,"y":312,"r":152.0,"color":"#39dbcf","label":"Торговля и услуги","mn":3},{"id":"Промышленность","n":28,"op":21,"pil":5,"rnd":2,"trlAvg":7.9,"medianPrice":3500000.0,"vendors":[{"v":"Технорэд","n":4},{"v":"Эйдос Робототехника","n":4},{"v":"Диком-Сервис","n":4},{"v":"Битроботикс","n":2},{"v":"Ронави Роботикс","n":2},{"v":"Семаргл","n":2}],"ex":[{"name":"Ronavi H1500","vendor":"Ронави Роботикс","st":"op","trl":8,"price":2700000.0,"text":"Внедрено 2 робота Ronavi H1500 на автосборочном заводе для межоперационной транспортировки кузовных деталей между сборочным и покрасочным цехами. В результате классическая конвейерная лента заменена на гибкий…"},{"name":"DMR 300 Carrier B","vendor":"Диком-Сервис","st":"op","trl":8,"price":10800000.0,"text":"АО «Чепецкий механический завод» — закупка робота для внутрипроизводственной логистики «Металлообработка-2025» — интеграция с автоматизированной системой хранения Российская неделя роботизации — доставка…"},{"name":"Модель А12-1450","vendor":"Эйдос Робототехника","st":"op","trl":9,"price":2500000.0,"text":"Как робот‑манипулятор А12 заменил бригаду сварщиков: кейс КАМАЗа Создание учебных РТК на базе А12-1450 в Калужском филиале Института развития профессионального образования"}],"mix":[{"id":"g-prod","name":"Производство и строительство","n":25},{"id":"g-insp","name":"Инспекция и мониторинг","n":3}],"x":877.3,"y":287.1,"r":116.1,"color":"#3be68f","label":"Промышленность","mn":16},{"id":"Транспорт и логистика","n":28,"op":13,"pil":13,"rnd":2,"trlAvg":7.5,"medianPrice":4350000.0,"vendors":[{"v":"ЛМТ","n":2},{"v":"Концерн Телематика","n":2},{"v":"ФГАОУ ВО \"Севастопольский Государственный Университет","n":2},{"v":"Си Проект","n":2},{"v":"Лаборатория Будущего","n":1},{"v":"Финко","n":1}],"ex":[{"name":"Вихрь-1М","vendor":"Интэк","st":"op","trl":8,"price":4200000.0,"text":": В августе 2026 года Центральная избирательная комиссия РФ и компания ИНТЭК подписали соглашение о применении «Вихрь-1М» для доставки избирательных бюллетеней в удаленные и труднодоступные поселки Кемеровской…"},{"name":"Курьер-30","vendor":"Клеверкоптер","st":"op","trl":9,"price":2200000.0,"text":"Запущен маршрут доставки биоматериалов с помощью БАС «Курьер-30» между медицинскими учреждениями в Нижегородской области. В результате время транспортировки сокращено с 1,5 часа до 10 минут, за год перевезено…"},{"name":"EVOCARGO N1","vendor":"Эвокарго","st":"op","trl":9,"price":6000000.0,"text":"Внедрены 6 автономных грузовиков EVOCARGO N1 в ОЭЗ Алабуга для перевозки паллет с минеральной ватой по 3 маршрутам без участия человека. Запущен пилотный проект по перевозке полимеров автономным…"}],"mix":[{"id":"g-logi","name":"Логистика и доставка","n":17},{"id":"g-insp","name":"Инспекция и мониторинг","n":5},{"id":"g-uwater","name":"Подводные и водные работы","n":4},{"id":"g-prod","name":"Производство и строительство","n":2}],"x":322.1,"y":334.0,"r":116.1,"color":"#38d8e2","label":"Транспорт и логистика","mn":12},{"id":"ТЭК","n":25,"op":12,"pil":11,"rnd":2,"trlAvg":7.6,"medianPrice":5000000.0,"vendors":[{"v":"Ровбилдер","n":5},{"v":"Геоскан","n":4},{"v":"ФГАОУ ВО \"Севастопольский Государственный Университет","n":3},{"v":"Подводная робототехника","n":3},{"v":"Финко","n":2},{"v":"Лаборатория Будущего","n":2}],"ex":[{"name":"Грузовик M700 V2","vendor":"Лаборатория Будущего","st":"op","trl":8,"price":4500000.0,"text":"Тяжелый дрон «Грузовик М700» от «Лаборатории будущего» задействован в труднодоступных северных регионах, в частности на удаленных объектах и фельдшерско-акушерских пунктах Ханты-Мансийского автономного округа…"},{"name":"T-16","vendor":"Зала Аэро","st":"op","trl":9,"price":4600000.0,"text":"Беспилотный комплекс ZALA T-16 еженедельно пролетает более 4 000 км над объектами «Удмуртнефти» (Роснефть). Борт круглосуточно патрулирует трубопроводы, предотвращая кражи, незаконные врезки и выявляя…"},{"name":"ТНПА «ГНОМ Про Вектор»","vendor":"Подводная робототехника","st":"pil","trl":7,"price":5700000.0,"text":"ТНПА с максимальной глубиной погружения до 300 метров применяется для инспекции прибрежных вод, обследования гидротехнических сооружений, трубопроводов и кабельных линий"}],"mix":[{"id":"g-insp","name":"Инспекция и мониторинг","n":12},{"id":"g-uwater","name":"Подводные и водные работы","n":12},{"id":"g-logi","name":"Логистика и доставка","n":1}],"x":198.6,"y":132.1,"r":109.7,"color":"#39d9dd","label":"ТЭК и энергетика","mn":3},{"id":"Сельское хозяйство","n":22,"op":9,"pil":7,"rnd":6,"trlAvg":7.1,"medianPrice":5269000.0,"vendors":[{"v":"Геоскан","n":4},{"v":"Финко","n":2},{"v":"Агробит","n":2},{"v":"Когнитив Пилот","n":2},{"v":"ГК \"Икар","n":1},{"v":"Промтехника-Приволжье","n":1}],"ex":[{"name":"Геоскан 201","vendor":"Геоскан","st":"op","trl":9,"price":3200000.0,"text":"Комплекс «Геоскан 201» внедрен «Агрофирмой АНК» в Амурской области с 2022 года для всестороннего обследования сельскохозяйственных полей."},{"name":"Волшебник","vendor":"Промтехника-Приволжье","st":"op","trl":9,"price":12000000.0,"text":"Наращено серийное производство роботов с 2022 года с мощностью завода от 8 единиц в месяц. С 2025 года начаты поставки в Беларусь."},{"name":"COGNITIVE AGRO PILOT для трактора с ИИ","vendor":"Когнитив Пилот","st":"pil","trl":6,"price":1250000.0,"text":"Cognitive Pilot разработала робота с ИИ для экспресс-анализа сельхозземель, который за 12 часов выдает результаты по 100 параметрам почвы, что позволило экономить удобрения до 25%."}],"mix":[{"id":"g-agro","name":"Сельское хозяйство","n":17},{"id":"g-uwater","name":"Подводные и водные работы","n":5}],"x":788.3,"y":500.8,"r":102.9,"color":"#3bd4f0","label":"Сельское хозяйство","mn":5},{"id":"Безопасность","n":21,"op":15,"pil":5,"rnd":1,"trlAvg":8.1,"medianPrice":4000000.0,"vendors":[{"v":"Геоскан","n":5},{"v":"Гумич РТК","n":2},{"v":"ФГАОУ ВО \"Севастопольский Государственный Университет","n":2},{"v":"Альбатрос","n":1},{"v":"Аэродин","n":1},{"v":"Финко","n":1}],"ex":[{"name":"Курьер-30","vendor":"Клеверкоптер","st":"op","trl":9,"price":2200000.0,"text":"Запущен маршрут доставки биоматериалов с помощью БАС «Курьер-30» между медицинскими учреждениями в Нижегородской области. В результате время транспортировки сокращено с 1,5 часа до 10 минут, за год перевезено…"},{"name":"Роботизированный лафетный ствол","vendor":"Коруфайер","st":"op","trl":8,"price":2200000.0,"text":"Робототехнический комплекс использовался в межведомственных опытно-исследовательских учениях «Безопасная Арктика – 2025»."},{"name":"Сарган","vendor":"ФГАОУ ВО \"Севастопольский Государственный Университет","st":"pil","trl":7,"price":5000000.0,"text":"Безэкипажный катер предназначен для мониторинга, патрулирования в речных и морских акваториях, может развивать скорость до 60 км в час"}],"mix":[{"id":"g-sec","name":"Безопасность и МЧС","n":12},{"id":"g-insp","name":"Инспекция и мониторинг","n":8},{"id":"g-uwater","name":"Подводные и водные работы","n":1}],"x":419.3,"y":120.1,"r":100.5,"color":"#3be691","label":"Безопасность","mn":1},{"id":"Строительство","n":20,"op":19,"pil":0,"rnd":1,"trlAvg":8.4,"medianPrice":3732500.0,"vendors":[{"v":"Геоскан","n":6},{"v":"Дронсхаб","n":2},{"v":"Альбатрос","n":1},{"v":"Финко","n":1},{"v":"ГК Тихие Крылья","n":1},{"v":"АМТ","n":1}],"ex":[{"name":"Cargo UNIT","vendor":"Дронсхаб","st":"op","trl":9,"price":2634670.0,"text":"Роботизация образования: как автономные роверы Cargo UNIT обучают будущих инженеров на ВДНХ Создана автономная роботизированная грузовая платформа грузоподъемностью до 300 кг для перевозки грузов по территории…"},{"name":"АМТ S300","vendor":"АМТ","st":"op","trl":9,"price":8920000.0,"text":"С помощью роботизированного 3D-принтера AMT S300 был построен целый поселок в Республике Татарстан, построено 34 дома. В общей стоимости дома это примерно 8-12% экономии по сравнению с традиционными методами…"},{"name":"Комплекс управления кранами ВИРСАЙН СДУ","vendor":"Вирсайн Инновации","st":"op","trl":8,"price":2000000.0,"text":"26 марта 2026 года на Краснопресненской набережной состоялась торжественная церемония закладки первого бетонного блока в основание Национального центра «Россия» с помощью системы дистанционного управления…"}],"mix":[{"id":"g-insp","name":"Инспекция и мониторинг","n":14},{"id":"g-prod","name":"Производство и строительство","n":4},{"id":"g-logi","name":"Логистика и доставка","n":2}],"x":1002.7,"y":474.4,"r":98.1,"color":"#3be68f","label":"Строительство","mn":4},{"id":"ЖКХ","n":19,"op":7,"pil":8,"rnd":4,"trlAvg":7.6,"medianPrice":5000000.0,"vendors":[{"v":"168Роботикс","n":2},{"v":"Астрамис","n":2},{"v":"Кингпро","n":2},{"v":"Тьюбот","n":1},{"v":"Тарис","n":1},{"v":"Диаконт","n":1}],"ex":[{"name":"Роботизированный диагностический комплекс","vendor":"Диаконт","st":"op","trl":9,"price":8000000.0,"text":"Завершена внутритрубная диагностика с помощью роботов тепломагистралей протяженностью 18,3 км перед отопительным сезоном. Предотвращены технологические нарушения на 54 участках."},{"name":"БРО 2.1","vendor":"168Роботикс","st":"op","trl":8,"price":15000000.0,"text":"Проведена апробация робота БРО 2.1 в парковой зоне загородного отеля для патрулирования и деликатной очистки территории, включая участки со сложным рельефом."},{"name":"Беспилотный бульдозер","vendor":"ДСТ-УРАЛ","st":"op","trl":9,"price":8600000.0,"text":"Челябинский тракторный завод (ДСТ-УРАЛ) впервые применил беспилотные бульдозер, самосвал и экскаватор при реконструкции федеральной трассы М-5."}],"mix":[{"id":"g-clean","name":"Уборка и клининг","n":10},{"id":"g-insp","name":"Инспекция и мониторинг","n":5},{"id":"g-prod","name":"Производство и строительство","n":3},{"id":"g-uwater","name":"Подводные и водные работы","n":1}],"x":1085.1,"y":209.1,"r":95.6,"color":"#47cff1","label":"ЖКХ и город","mn":1},{"id":"Лесное хозяйство","n":12,"op":11,"pil":0,"rnd":1,"trlAvg":8.3,"medianPrice":4769000.0,"vendors":[{"v":"Геоскан","n":5},{"v":"НПП \"Авакс -Геосервис","n":2},{"v":"Альбатрос","n":1},{"v":"ГК \"Икар","n":1},{"v":"Финко","n":1},{"v":"ВО \"Университет Иннополис","n":1}],"ex":[{"name":"miniSIGMA","vendor":"НПП \"Авакс -Геосервис","st":"op","trl":9,"price":3500000.0,"text":"В Красноярском крае для наблюдения за лесами закупили новые беспилотники. В конце 2024 года БАС прошли успешные испытания на аэродроме «Вознесенка», а с начала 2025 года заступили на регулярное дежурство. Была…"},{"name":"Геоскан 201","vendor":"Геоскан","st":"op","trl":9,"price":3200000.0,"text":"БАС применяется для мониторинговых задач Проведены аэрофотосъемка 860 га лесных площадей в Анивском лесничестве с помощью БАС «Геоскан 201» и обработка полученных данных для оценки лесовосстановления на…"},{"name":"БВС ОМДЖЕТ-03","vendor":"Роспроект","st":"op","trl":9,"price":3000000.0,"text":"Летом дроны мониторили лесные пожары на 2,6 млн гектаров. Линейка беспилотников прошла серьёзную проверку в пожароопасный сезон 2025 года в ХМАО. «ОмДжет 03» участвовал в мониторинге лесных пожаров на…"}],"mix":[{"id":"g-insp","name":"Инспекция и мониторинг","n":9},{"id":"g-sec","name":"Безопасность и МЧС","n":3}],"x":748.5,"y":124.1,"r":76.0,"color":"#3be68f","label":"Лесное хозяйство","mn":0}],"apps":[{"id":"g-insp","n":56,"op":51,"pil":2,"rnd":3,"trlAvg":8.3,"medianPrice":4000000.0,"vendors":[{"v":"Геоскан","n":17},{"v":"Финко","n":5},{"v":"Альбатрос","n":3},{"v":"НПП \"Авакс -Геосервис","n":3},{"v":"ГК \"Икар","n":3},{"v":"Лаборатория Будущего","n":3}],"ex":[{"name":"miniSIGMA","vendor":"НПП \"Авакс -Геосервис","st":"op","trl":9,"price":3500000.0,"text":"В Красноярском крае для наблюдения за лесами закупили новые беспилотники. В конце 2024 года БАС прошли успешные испытания на аэродроме «Вознесенка», а с начала 2025 года заступили на регулярное дежурство. Была…"},{"name":"Грузовик M700 V2","vendor":"Лаборатория Будущего","st":"op","trl":8,"price":4500000.0,"text":"Тяжелый дрон «Грузовик М700» от «Лаборатории будущего» задействован в труднодоступных северных регионах, в частности на удаленных объектах и фельдшерско-акушерских пунктах Ханты-Мансийского автономного округа…"},{"name":"Геоскан 201","vendor":"Геоскан","st":"op","trl":9,"price":3200000.0,"text":"БАС применяется для мониторинговых задач Проведены аэрофотосъемка 860 га лесных площадей в Анивском лесничестве с помощью БАС «Геоскан 201» и обработка полученных данных для оценки лесовосстановления на…"}],"name":"Инспекция и мониторинг","mix":[{"id":"Строительство","name":"Строительство","n":14},{"id":"ТЭК","name":"ТЭК и энергетика","n":12},{"id":"Лесное хозяйство","name":"Лесное хозяйство","n":9},{"id":"Безопасность","name":"Безопасность","n":8},{"id":"ЖКХ","name":"ЖКХ и город","n":5},{"id":"Транспорт и логистика","name":"Транспорт и логистика","n":5},{"id":"Промышленность","name":"Промышленность","n":3}],"scenarios":[{"s":"Мониторинг","n":7},{"s":"Регулярный мониторинг трубопроводов и детальный анализ","n":7},{"s":"Внутритрубная диагностика","n":6},{"s":"Мониторинг теплотрасс","n":4},{"s":"Контроль использования земельных участков","n":4}]},{"id":"g-logi","n":53,"op":28,"pil":17,"rnd":8,"trlAvg":7.6,"medianPrice":2700000.0,"vendors":[{"v":"Ронави Роботикс","n":6},{"v":"Диком-Сервис","n":5},{"v":"Морос","n":3},{"v":"Яндекс Роботикс","n":3},{"v":"Дронсхаб","n":3},{"v":"ГК Автомакон","n":2}],"ex":[{"name":"Cargo UNIT","vendor":"Дронсхаб","st":"op","trl":9,"price":2634670.0,"text":"Роботизация образования: как автономные роверы Cargo UNIT обучают будущих инженеров на ВДНХ Создана автономная роботизированная грузовая платформа грузоподъемностью до 300 кг для перевозки грузов по территории…"},{"name":"Вихрь-1М","vendor":"Интэк","st":"op","trl":8,"price":4200000.0,"text":": В августе 2026 года Центральная избирательная комиссия РФ и компания ИНТЭК подписали соглашение о применении «Вихрь-1М» для доставки избирательных бюллетеней в удаленные и труднодоступные поселки Кемеровской…"},{"name":"AK-2000-2","vendor":"ГК Автомакон","st":"op","trl":9,"price":2940000.0,"text":"Внедрены 67 роботов FMR в распределительном центре «Пятерочки» X5 Group «Новая Рига» для перемещения, сортировки и транспортировки грузов. Использование одного робота позволяет экономить 180 человеко-часов за…"}],"name":"Логистика и доставка","mix":[{"id":"Торговля и услуги","name":"Торговля и услуги","n":33},{"id":"Транспорт и логистика","name":"Транспорт и логистика","n":17},{"id":"Строительство","name":"Строительство","n":2},{"id":"ТЭК","name":"ТЭК и энергетика","n":1}],"scenarios":[{"s":"Внутрискладская логистика","n":19},{"s":"Сортировка грузов","n":9},{"s":"Доставка в удаленные","n":4},{"s":"Доставка последней мили","n":3},{"s":"Инвентаризация склада","n":2}]},{"id":"g-prod","n":35,"op":24,"pil":10,"rnd":1,"trlAvg":8.0,"medianPrice":3750000.0,"vendors":[{"v":"Технорэд","n":4},{"v":"Эйдос Робототехника","n":4},{"v":"Диком-Сервис","n":4},{"v":"Битроботикс","n":2},{"v":"Ронави Роботикс","n":2},{"v":"Семаргл","n":2}],"ex":[{"name":"Ronavi H1500","vendor":"Ронави Роботикс","st":"op","trl":8,"price":2700000.0,"text":"Внедрено 2 робота Ronavi H1500 на автосборочном заводе для межоперационной транспортировки кузовных деталей между сборочным и покрасочным цехами. В результате классическая конвейерная лента заменена на гибкий…"},{"name":"АМТ S300","vendor":"АМТ","st":"op","trl":9,"price":8920000.0,"text":"С помощью роботизированного 3D-принтера AMT S300 был построен целый поселок в Республике Татарстан, построено 34 дома. В общей стоимости дома это примерно 8-12% экономии по сравнению с традиционными методами…"},{"name":"Комплекс управления кранами ВИРСАЙН СДУ","vendor":"Вирсайн Инновации","st":"op","trl":8,"price":2000000.0,"text":"26 марта 2026 года на Краснопресненской набережной состоялась торжественная церемония закладки первого бетонного блока в основание Национального центра «Россия» с помощью системы дистанционного управления…"}],"name":"Производство и строительство","mix":[{"id":"Промышленность","name":"Промышленность","n":25},{"id":"Строительство","name":"Строительство","n":4},{"id":"ЖКХ","name":"ЖКХ и город","n":3},{"id":"Транспорт и логистика","name":"Транспорт и логистика","n":2},{"id":"Торговля и услуги","name":"Торговля и услуги","n":1}],"scenarios":[{"s":"Производство изделий","n":14},{"s":"Внутрипроизводственная логистика","n":8},{"s":"Возведение объектов","n":3},{"s":"Укладка заготовок","n":2},{"s":"Дорожные работы","n":2}]},{"id":"g-uwater","n":23,"op":4,"pil":17,"rnd":2,"trlAvg":7.0,"medianPrice":5000000.0,"vendors":[{"v":"ФГАОУ ВО \"Севастопольский Государственный Университет","n":6},{"v":"Ровбилдер","n":5},{"v":"Подводная робототехника","n":3},{"v":"Геоскан","n":2},{"v":"Финко","n":2},{"v":"Си Проект","n":2}],"ex":[{"name":"БРИЗ","vendor":"Си Проект","st":"pil","trl":7,"price":5000000.0,"text":"Проведены испытания безэкипажного катера БРИЗ в порту Архангельска для подготовки к экспериментальной доставке грузов на отдаленные островные территории. В результате катер с грузоподъемностью до 500 кг…"},{"name":"Морской скорпион","vendor":"ФГАОУ ВО \"Севастопольский Государственный Университет","st":"pil","trl":7,"price":4000000.0,"text":"Внедрено 2 аппарата для уборки мусора в Балаклавской бухте Севастополя. За 4-х часовую рабочую смену один беспилотник может собрать порядка 2 куб. м плавающего пластика, бумаги и древесины."},{"name":"ТНПА «ГНОМ Про Вектор»","vendor":"Подводная робототехника","st":"pil","trl":7,"price":5700000.0,"text":"ТНПА с максимальной глубиной погружения до 300 метров применяется для инспекции прибрежных вод, обследования гидротехнических сооружений, трубопроводов и кабельных линий"}],"name":"Подводные и водные работы","mix":[{"id":"ТЭК","name":"ТЭК и энергетика","n":12},{"id":"Сельское хозяйство","name":"Сельское хозяйство","n":5},{"id":"Транспорт и логистика","name":"Транспорт и логистика","n":4},{"id":"ЖКХ","name":"ЖКХ и город","n":1},{"id":"Безопасность","name":"Безопасность","n":1}],"scenarios":[{"s":"Проведение подводных работ и мониторинга","n":12},{"s":"Мониторинг и контроль внутренних водных объектов для выявления незаконного вылова рыбы","n":5},{"s":"Доставка грузов по воде","n":3},{"s":"Проведение работ на воде","n":1},{"s":"Мониторинг мелководья","n":1}]},{"id":"g-agro","n":17,"op":5,"pil":7,"rnd":5,"trlAvg":7,"medianPrice":4000000.0,"vendors":[{"v":"Геоскан","n":2},{"v":"Агробит","n":2},{"v":"Когнитив Пилот","n":2},{"v":"Промтехника-Приволжье","n":1},{"v":"Завод Агромаш","n":1},{"v":"Аврора Роботикс","n":1}],"ex":[{"name":"Геоскан 201","vendor":"Геоскан","st":"op","trl":9,"price":3200000.0,"text":"Комплекс «Геоскан 201» внедрен «Агрофирмой АНК» в Амурской области с 2022 года для всестороннего обследования сельскохозяйственных полей."},{"name":"Волшебник","vendor":"Промтехника-Приволжье","st":"op","trl":9,"price":12000000.0,"text":"Наращено серийное производство роботов с 2022 года с мощностью завода от 8 единиц в месяц. С 2025 года начаты поставки в Беларусь."},{"name":"COGNITIVE AGRO PILOT для трактора с ИИ","vendor":"Когнитив Пилот","st":"pil","trl":6,"price":1250000.0,"text":"Cognitive Pilot разработала робота с ИИ для экспресс-анализа сельхозземель, который за 12 часов выдает результаты по 100 параметрам почвы, что позволило экономить удобрения до 25%."}],"name":"Сельское хозяйство","mix":[{"id":"Сельское хозяйство","name":"Сельское хозяйство","n":17}],"scenarios":[{"s":"Сбор урожая","n":5},{"s":"Вспашка","n":4},{"s":"Мониторинг и анализ состояния посевов и полей","n":2},{"s":"Птицеводство","n":2},{"s":"Внесение веществ на поля","n":2}]},{"id":"g-clean","n":16,"op":6,"pil":6,"rnd":4,"trlAvg":7.4,"medianPrice":4028000.0,"vendors":[{"v":"Вейбот Автомакон Роботикс","n":2},{"v":"168Роботикс","n":2},{"v":"Астрамис","n":2},{"v":"Кингпро","n":2},{"v":"РОБО","n":1},{"v":"Р2Б","n":1}],"ex":[{"name":"Клинботикс 600","vendor":"Вейбот Автомакон Роботикс","st":"op","trl":8,"price":2310000.0,"text":"Внедрены два робота уборщика в НИИ Скорой помощи им. Н.В. Склифосовского в Москве для автоматической уборки помещений с высокой проходимостью. В результате сокращено время уборки с 1,5 часов до 35 минут…"},{"name":"БРО 2.1","vendor":"168Роботикс","st":"op","trl":8,"price":15000000.0,"text":"Проведена апробация робота БРО 2.1 в парковой зоне загородного отеля для патрулирования и деликатной очистки территории, включая участки со сложным рельефом."},{"name":"АК-SC80","vendor":"ГК Автомакон","st":"op","trl":9,"price":4056000.0,"text":"«Автомакон» внедряет роботов в распределительных центрах «Пятёрочки» X5 Group. Первая партия из 12 роботов уже работает в РЦ «Пятёрочки» в Подмосковье."}],"name":"Уборка и клининг","mix":[{"id":"ЖКХ","name":"ЖКХ и город","n":10},{"id":"Торговля и услуги","name":"Торговля и услуги","n":6}],"scenarios":[{"s":"Уборка улиц","n":7},{"s":"Уборка помещений","n":6},{"s":"Мойка фасадов","n":2},{"s":"Мойка окон","n":1}]},{"id":"g-sec","n":15,"op":11,"pil":2,"rnd":2,"trlAvg":8.1,"medianPrice":4000000.0,"vendors":[{"v":"Геоскан","n":3},{"v":"Гумич РТК","n":2},{"v":"Финко","n":1},{"v":"СМП Сервис","n":1},{"v":"ЛМТ","n":1},{"v":"Клеверкоптер","n":1}],"ex":[{"name":"Курьер-30","vendor":"Клеверкоптер","st":"op","trl":9,"price":2200000.0,"text":"Запущен маршрут доставки биоматериалов с помощью БАС «Курьер-30» между медицинскими учреждениями в Нижегородской области. В результате время транспортировки сокращено с 1,5 часа до 10 минут, за год перевезено…"},{"name":"БВС ОМДЖЕТ-03","vendor":"Роспроект","st":"op","trl":9,"price":3000000.0,"text":"Летом дроны мониторили лесные пожары на 2,6 млн гектаров. Линейка беспилотников прошла серьёзную проверку в пожароопасный сезон 2025 года в ХМАО. «ОмДжет 03» участвовал в мониторинге лесных пожаров на…"},{"name":"Роботизированный лафетный ствол","vendor":"Коруфайер","st":"op","trl":8,"price":2200000.0,"text":"Робототехнический комплекс использовался в межведомственных опытно-исследовательских учениях «Безопасная Арктика – 2025»."}],"name":"Безопасность и МЧС","mix":[{"id":"Безопасность","name":"Безопасность","n":12},{"id":"Лесное хозяйство","name":"Лесное хозяйство","n":3}],"scenarios":[{"s":"Поиск пропавших людей","n":3},{"s":"Патрулирование территории","n":2},{"s":"Мониторинг и патрулирование","n":2},{"s":"Мониторинг пожарной опасности в лесах","n":2},{"s":"Патрулирование площадных объектов","n":1}]},{"id":"g-service","n":8,"op":3,"pil":2,"rnd":3,"trlAvg":6.8,"medianPrice":6500000.0,"vendors":[{"v":"Промобот","n":2},{"v":"Сбербанк","n":1},{"v":"Айдол","n":1},{"v":"Робопро","n":1},{"v":"Соло Кофе","n":1},{"v":"Аврора Роботикс","n":1}],"ex":[{"name":"R-Cafe 1.3","vendor":"Робопро","st":"op","trl":9,"price":5000000.0,"text":"2 робокафе в Москве на станциях метро Нижегородская (функционирует с 20.05.24) и Курская (запуск с 30.12.2024). Специальный проект с изолированной зоной под требования московского метрополитена."},{"name":"Promobot V.4","vendor":"Промобот","st":"op","trl":9,"price":4265395.0,"text":"Сеть гипермаркетов «Лента» внедрила несколько штук роботов-консультантов Promobot. Они предоставляют посетителям информацию об актуальных акциях, скидках, а также демонстрируют важные материалы и предлагают…"},{"name":"Айдол","vendor":"Айдол","st":"pil","trl":7,"price":7000000.0,"text":"С 1 июля 2026 года, робот Айдол проходит пилотирование на территории Ходынского поля. Робот занимается консультацией гостей и может просто с ними пообщаться на любые темы"}],"name":"Торговля и сервис","mix":[{"id":"Торговля и услуги","name":"Торговля и услуги","n":8}],"scenarios":[{"s":"Администрирование торгового зала","n":4},{"s":"Приготовление напитков","n":2},{"s":"Нестационарная торговля","n":1},{"s":"Зарядка электромобилей","n":1}]}],"trl":[{"trl":1,"op":0,"pil":0,"rnd":0},{"trl":2,"op":0,"pil":0,"rnd":0},{"trl":3,"op":0,"pil":0,"rnd":3},{"trl":4,"op":0,"pil":0,"rnd":3},{"trl":5,"op":0,"pil":0,"rnd":5},{"trl":6,"op":2,"pil":6,"rnd":5},{"trl":7,"op":9,"pil":44,"rnd":10},{"trl":8,"op":48,"pil":13,"rnd":1},{"trl":9,"op":73,"pil":0,"rnd":1}],"zones":[{"id":"z14","trls":[1,2,3,4],"label":"Лаборатория","hint":"Идея доказана в стендовых условиях. До закупки далеко — но за этим будущие продукты.","color":"#B49AF8","n":6,"op":0,"pil":0,"rnd":6,"trlAvg":3.5,"medianPrice":3250000.0,"inds":[{"name":"Торговля и услуги","n":4},{"name":"Сельское хозяйство","n":1},{"name":"Транспорт и логистика","n":1}],"ex":[{"name":"Ronavi RCM","vendor":"Ронави Роботикс","st":"rnd","trl":3,"price":2000000.0,"text":"Разработана конструкторская документация ультратонкого логистического робота для транспортировки ролл-кейджей"},{"name":"Аркус","vendor":"НИУ ВШЭ","st":"rnd","trl":3,"price":1800000.0,"text":"Компания «Эфко» в сотрудничестве с НИУ ВШЭ разработала пилотный проект человекоподобного робота-курьера «Аркус» (Arcus)."},{"name":"Грин","vendor":"Сбербанк","st":"rnd","trl":4,"price":7000000.0,"text":"Представлен первый антропоморфный робот Сбера на конференции AI Journey. Запланированы пилотные проекты по интеграции робота в различные бизнес-процессы."}]},{"id":"z57","trls":[5,6,7],"label":"Пилоты и испытания","hint":"Технология уже работает на реальных площадках. Лучший момент для раннего внедрения и партнёрства.","color":"#38D6F0","n":81,"op":11,"pil":50,"rnd":20,"trlAvg":6.7,"medianPrice":5000000.0,"inds":[{"name":"ТЭК и энергетика","n":15},{"name":"Сельское хозяйство","n":14},{"name":"Торговля и услуги","n":12},{"name":"Транспорт и логистика","n":12},{"name":"ЖКХ и город","n":10},{"name":"Промышленность","n":8},{"name":"Безопасность","n":6},{"name":"Строительство","n":2},{"name":"Лесное хозяйство","n":2}],"ex":[{"name":"DMP 15000","vendor":"Диком-Сервис","st":"op","trl":6,"price":4500000.0,"text":"Планируется поставить 2 тяжелые мобильные платформы грузоподъемностью 15 тонн, рассчитанные на перемещение крупногабаритных деталей по производственным цехам, на предприятия авиационной промышленности."},{"name":"Беспилотный погрузчик","vendor":"МФТИ","st":"pil","trl":7,"price":3000000.0,"text":"Разработан программно-аппаратный комплекс «Беспилотный погрузчик» для автономной работы на складах в одном пространстве с людьми. Пилотные проекты реализованы в логистических центрах «ВкусВилл», X5 Group и…"},{"name":"MULE","vendor":"СМ РОБОТИКС","st":"pil","trl":7,"price":3000000.0,"text":"Робот прошел пилотное тестирование на складе 3PL-оператора RFL. Пилот проходит на широкопроходном складе площадью 20 000 м² на 27 000 палетомест с интенсивным палетным потоком"}]},{"id":"z89","trls":[8,9],"label":"Серия","hint":"Можно закупать: решения подтверждены промышленной эксплуатацией.","color":"#3BE68F","n":136,"op":121,"pil":13,"rnd":2,"trlAvg":8.5,"medianPrice":3500000.0,"inds":[{"name":"Торговля и услуги","n":32},{"name":"Промышленность","n":20},{"name":"Строительство","n":18},{"name":"Безопасность","n":15},{"name":"Транспорт и логистика","n":15},{"name":"ТЭК и энергетика","n":10},{"name":"Лесное хозяйство","n":10},{"name":"ЖКХ и город","n":9},{"name":"Сельское хозяйство","n":7}],"ex":[{"name":"Ronavi H1500","vendor":"Ронави Роботикс","st":"op","trl":8,"price":2700000.0,"text":"Внедрено 48 роботов на складах ГК «Восток-Сервис» для транспортировки грузов между зонами хранения. В результате производительность выросла вдвое - с 4 до 8 тысяч отгрузок за смену, количество ошибок…"},{"name":"AMR 100","vendor":"Морос","st":"op","trl":9,"price":1500000.0,"text":"Более 40 AMR100 с двумя типами оснасток в составе действующей роботизированной линии СООО «Белвест». Перемещение грузов по территории цеха осуществляется исключительно с помощью мобильных роботов без участия…"},{"name":"AK-2000-2","vendor":"ГК Автомакон","st":"op","trl":9,"price":2940000.0,"text":"Внедрены 67 роботов FMR в распределительном центре «Пятерочки» X5 Group «Новая Рига» для перемещения, сортировки и транспортировки грузов. Использование одного робота позволяет экономить 180 человеко-часов за…"}]}],"media":[{"id":"Торговля и услуги","indId":"Торговля и услуги","label":"Торговля и услуги","n":3,"cases":[{"id":"servis-563","c":"Отрасль сервисной робототехники","t":"563 компании-разработчика/интегратора сервисных роботов (+21,5% за год, ×2 к 2021)","ind":"Торговля и услуги","ty":"экосистема","r":"Россия","y":2026,"e":"Совокупная выручка 31 ключевой компании ~32 млрд ₽ (2024); сервисных роботов и гуманоидов в стране <1000 — сегмент экспериментальный","s":"Ведомости","u":"https://www.vedomosti.ru/industry/industrial_policy/articles/2026/09/17/1229390-mirovoi-rinok-robototehniki-rastet-na-fone-defitsita-kadrov-i-razvitiya-ii","d":"09.2026"},{"id":"klining","c":"Клининговый сегмент","t":"Роботизированная уборка: 51–60 млрд ₽ (2025) → прогноз 77–90 млрд ₽ к 2030","ind":"Торговля и услуги","ty":"клининговые роботы","r":"Россия","y":2026,"e":"Один сервисный робот заменяет 0,5–1,5 штатные единицы; к 2030 роботы охватят 9–10% рынка клининга (~580 млрд ₽)","s":"Kama Flow / ComNews","u":"https://www.comnews.ru/content/247089/2026-08-27/2026-w35/1008/rynok-kliningovoy-robototekhniki-mozhet-vyrasti-do-90-mlrd-rub-k-2030-g","d":"08.2026"},{"id":"raas","c":"Модель RaaS в РФ","t":"Роботизация по подписке: от 100 тыс. ₽/мес против покупки робота за 2–3,5 млн ₽","ind":"Торговля и услуги","ty":"бизнес-модель","r":"Россия","y":2026,"e":"Снижает порог входа для СМБ; рост сегмента 15–20% в год","s":"ComNews / Kama Flow","u":"https://www.comnews.ru/content/247089/2026-08-27/2026-w35/1008/rynok-kliningovoy-robototekhniki-mozhet-vyrasti-do-90-mlrd-rub-k-2030-g","d":"08.2026"}]},{"id":"Промышленность","indId":"Промышленность","label":"Промышленность","n":16,"cases":[{"id":"urallokomotiv","c":"Уральские локомотивы (Группа Синара)","t":"Роботизированный участок сварки тележек электровозов, инвестиции 1 млрд ₽","ind":"Промышленность","ty":"сварочные комплексы","r":"Екатеринбург","y":2026,"e":"Качество сварки критичных узлов высокоскоростных электровозов","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Производство_промышленных_роботов_в_России","d":"2026"},{"id":"dst-ural","c":"Тракторный завод «ДСТ-Урал»","t":"24 промышленных робота на сварочных операциях","ind":"Промышленность","ty":"сварочные роботы","r":"Челябинск","y":2026,"e":"Сварка +60% быстрее, брак снижен до 1,8%","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Производство_промышленных_роботов_в_России","d":"2026"},{"id":"odk-saturn","c":"ОДК-Сатурн (Ростех)","t":"Интеллектуальный роботокомплекс обработки лопаток газотурбинных двигателей","ind":"Промышленность","ty":"шлифовальный комплекс","r":"Рыбинск","y":2026,"e":"Цикл обработки крупногабаритных лопаток ускорен в 1,5–2 раза","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Производство_промышленных_роботов_в_России","d":"2026"},{"id":"avtovaz","c":"АвтоВАЗ","t":"Крупнейший парк промроботов страны: 1,6 тыс. машин; новый цех сварки кузовов — 112 роботов; закупка 347 млн ₽","ind":"Промышленность","ty":"промроботы-сварщики","r":"Тольятти","y":2025,"e":"Автоматизация основного производства конвейера","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Промышленные_роботы_в_России","d":"2025"},{"id":"gaz","c":"ГАЗ","t":"630 промышленных роботов на конвейере","ind":"Промышленность","ty":"промроботы","r":"Нижний Новгород","y":2025,"e":"Автоматизация производства автомобилей на 85%","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Промышленные_роботы_в_России","d":"2025"},{"id":"avtotor","c":"Автотор","t":"Роботизированная сварка автомобилей","ind":"Промышленность","ty":"сварочные комплексы","r":"Калининград","y":2025,"e":"Сварка ускорилась в 5 раз","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Промышленные_роботы_в_России","d":"2025"},{"id":"severstal","c":"Северсталь","t":"Программа роботизации на 500 млн ₽ в 2025: 16 типов роботокомплексов на ЧерМК и «Северсталь-метизе»; 15 роботов уже работают (уборка гартцинка…","ind":"Промышленность","ty":"разнотипные промроботы","r":"Череповец","y":2025,"e":"Роботы в опасных зонах и на труднокомплектуемых рабочих местах; завершение программы — 2026","s":"TAdviser","u":"https://vc.ru/id5073810/2102297-promyshlennye-roboty-v-rossii","d":"10.2025"},{"id":"klimovsk","c":"Климовский трубный завод","t":"Роботизированный участок за 31 млн ₽","ind":"Промышленность","ty":"промроботы","r":"Московская обл.","y":2025,"e":"Объём производства вырос вдвое","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Промышленные_роботы_в_России","d":"2025"},{"id":"metrovgon","c":"Метровагонмаш","t":"Крупногабаритный сварочный робот для вагонов метро","ind":"Промышленность","ty":"сварочный робот","r":"Мытищи","y":2025,"e":"Автоматизация сварки кузовов вагонов","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Промышленные_роботы_в_России","d":"2025"},{"id":"tvz","c":"Тихвинский вагоностроительный завод","t":"Роботизация сварочных операций вагонного производства","ind":"Промышленность","ty":"сварочные роботы","r":"Тихвин, Ленобласть","y":2025,"e":"Время сварочных работ сократилось в 8 раз","s":"Weldex","u":"https://weldex.ru/ru/media/news/2025/june/17/rynok-promyshlennykh-robotov-sostoyanie-trendy-perspektivy/","d":"06.2025"},{"id":"vrnmost","c":"Воронежстальмост","t":"Роботизация половины сварочных процессов мостовых конструкций","ind":"Промышленность","ty":"сварочные роботы","r":"Воронеж","y":2025,"e":"≈50% сварки — роботизировано","s":"Weldex","u":"https://weldex.ru/ru/media/news/2025/june/17/rynok-promyshlennykh-robotov-sostoyanie-trendy-perspektivy/","d":"06.2025"},{"id":"sveza","c":"Свеза (Segezha Group)","t":"Закупка промышленных роботов на 400 млн ₽","ind":"Промышленность","ty":"промроботы","r":"Вологодская обл.","y":2025,"e":"Ответ на дефицит кадров в деревообработке","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Промышленные_роботы_в_России","d":"2025"},{"id":"leber","c":"Лебер","t":"Промроботы на производстве детских игровых площадок","ind":"Промышленность","ty":"промроботы","r":"Россия","y":2025,"e":"Выпуск продукции ускорился в 4 раза","s":"TAdviser","u":"https://zdrav.expert/index.php/Статья:Промышленные_роботы_в_России","d":"2025"},{"id":"dodo-bitrobotics","c":"Битроботикс → «Додо Пицца»","t":"Робот формовки тестовых заготовок: 60 заготовок/мин, до 3600 ватрушек/час","ind":"Промышленность","ty":"пищевой робот","r":"Россия","y":2025,"e":"Пример серийного российского пищевого робота (Минпромторг)","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Производство_промышленных_роботов_в_России","d":"08.2025"},{"id":"robotech","c":"Роботех","t":"Линия машинного зрения для контроля шпона: 29 типов дефектов","ind":"Промышленность","ty":"контроль качества","r":"Россия","y":2025,"e":"Точность распознавания дефектов до 98%","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Производство_промышленных_роботов_в_России","d":"08.2025"},{"id":"kamaz","c":"КАМАЗ","t":"15 отечественных роботов на производственном участке","ind":"Промышленность","ty":"промроботы (рос.)","r":"Набережные Челны","y":2024,"e":"Производительность участка +15% (Минпромторг)","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Промышленные_роботы_в_России","d":"2024"}]},{"id":"Транспорт и логистика","indId":"Транспорт и логистика","label":"Транспорт и логистика","n":12,"cases":[{"id":"m11-total","c":"«Беспилотные логистические коридоры» (Минтранс, Автодор)","t":"90 беспилотных грузовиков на М-11 «Нева» и ЦКАД; суммарный пробег 7,2+ млн км, 800 тыс. м³ грузов без аварий","ind":"Транспорт и логистика","ty":"беспилотные магистральные тягачи","r":"Москва — Петербург","y":2026,"e":"В 2026 — выход на М-12; цель — полностью автономные перевозки с 2028","s":"Минтранс / TAdviser / Interfax","u":"https://www.tadviser.ru/index.php/Статья:Беспилотные_грузовики_в_России","d":"01.2026"},{"id":"natcar","c":"NatCar (дочка КАМАЗа)","t":"9300+ коммерческих рейсов беспилотных КамАЗ-54901 по М-11; 5400 рейсов только за 2025","ind":"Транспорт и логистика","ty":"беспилотные тягачи","r":"М-11","y":2026,"e":"Более 4 млн км без аварий; ориентир полностью автономных рейсов — 2028","s":"Ведомости","u":"https://spb.vedomosti.ru/technology/articles/2026/02/10/1175151-chislo-bespilotnih-perevozok","d":"02.2026"},{"id":"navio","c":"Navio (экс-«Сберавтотех»)","t":"Парк 220 автономных машин; 10 900 коммерческих рейсов, 340 тыс. т грузов","ind":"Транспорт и логистика","ty":"беспилотные тягачи + легковые","r":"М-11","y":2026,"e":"Готовит сервис беспилотных перевозок по подписке (RaaS)","s":"Ведомости / TAdviser","u":"https://spb.vedomosti.ru/technology/articles/2026/02/10/1175151-chislo-bespilotnih-perevozok","d":"10.2025"},{"id":"magnit-trucks","c":"Магнит","t":"Грузоперевозки автономными тягачами: 2000+ рейсов, 42 400 т с начала проекта","ind":"Транспорт и логистика","ty":"беспилотные тягачи","r":"М-11","y":2026,"e":"В 2025 рейсов вдвое больше, чем в 2024 (28 рейсов/нед.)","s":"Ведомости / TAdviser","u":"https://spb.vedomosti.ru/technology/articles/2026/02/10/1175151-chislo-bespilotnih-perevozok","d":"2025"},{"id":"wb-trucks","c":"Wildberries & Russ","t":"9500 рейсов беспилотных грузовиков за 2025 (в 2023 — около 200)","ind":"Транспорт и логистика","ty":"беспилотные тягачи","r":"М-11","y":2026,"e":"Рост перевозок беспилотниками в десятки раз за два года","s":"Ведомости","u":"https://spb.vedomosti.ru/technology/articles/2026/02/10/1175151-chislo-bespilotnih-perevozok","d":"02.2026"},{"id":"novabev","c":"Novabev Group","t":"Роботизированная инвентаризация складских запасов","ind":"Транспорт и логистика","ty":"складская роботизация","r":"Россия","y":2026,"e":"Серия внедрений вместо единичного эксперимента","s":"Logistics.ru","u":"https://logistics.ru/avtomatizaciya-logistiki-upravlenie-logistikoy-i-kompaniey-skladirovanie/skladskaya-robotizaciya","d":"03.2026"},{"id":"jetard","c":"МАИ и МГТУ «Станкин» → РЖД","t":"Робот-проводник Jetard: передвижение по вагону, продажа товаров, проверка билетов; испытания в «Ласточке»","ind":"Транспорт и логистика","ty":"сервисный робот","r":"Россия","y":2026,"e":"Позитивные заключения РЖД по депо-испытаниям; решение о внедрении — после ездовых тестов","s":"Рамблер / Российская газета","u":"https://news.rambler.ru/tech/56577501-v-rossii-sozdayut-robota-dlya-obsluzhivaniya-passazhirov-v-poezdah/","d":"06.2026"},{"id":"wb-astabot","c":"Wildberries + AstaBot","t":"Складские роботы-транспортировщики на складе «Коледино», грузоподъёмность 350 кг","ind":"Транспорт и логистика","ty":"складские AMR","r":"Подмосковье","y":2024,"e":"Ускорение приёмки поставок и доставки заказов","s":"Shoppers Media","u":"https://shoppers.media/news/15043_wildberries-nacal-testirovat-promyslennyx-robotov-na-sklade-koledino","d":"05.2024"},{"id":"wb-agv","c":"Wildberries","t":"Пилот 250 AGV-роботов на складе 25 тыс. м²; стратегия роботизации всех РЦ","ind":"Транспорт и логистика","ty":"AGV/AMR флот","r":"Россия","y":2024,"e":"Снижение зависимости от персонала при удвоении оборота","s":"Logirus","u":"https://logirus.ru/news/warehouses/ozon_zakazal_robota_dlya_mezoninnykh_del.html","d":"06.2024"},{"id":"ozon-valdai","c":"Ozon + Валдай Робот","t":"Разработка мезонинного складского робота (соглашение на ПМЭФ); сортировочные линии до 4450 отправлений/час","ind":"Транспорт и логистика","ty":"складской робот","r":"Россия","y":2024,"e":"Собственная робототехническая лаборатория с 2021, масштабирование на все объекты","s":"Logirus","u":"https://logirus.ru/news/warehouses/ozon_zakazal_robota_dlya_mezoninnykh_del.html","d":"06.2024"},{"id":"x5-lab","c":"X5 Group","t":"Собственная лаборатория складских роботов в Подольске: тесты AMR и автономных вилочных погрузчиков (FMR)","ind":"Транспорт и логистика","ty":"AMR/FMR","r":"Подольск","y":2024,"e":"Цель — полностью роботизированный РЦ; тираж на «Пятёрочку», «Перекрёсток», «Чижик»","s":"Shoppers Media","u":"https://shoppers.media/news/15043_wildberries-nacal-testirovat-promyslennyx-robotov-na-sklade-koledino","d":"2024"},{"id":"rzd-rpa","c":"РЖД","t":"2039 программных роботов и 738 чат-ботов в контуре компании (RPA-роботизация процессов)","ind":"Транспорт и логистика","ty":"программные роботы (RPA)","r":"Россия","y":2024,"e":"Типовые процессы с 2 дней до 2 часов; один робот освобождал 10 человек на месяц","s":"RZD Digital","u":"https://rzddigital.ru/projects/roboty-berut-rutinnye-protsessy-na-sebya-/","d":"2024"}]},{"id":"ТЭК и энергетика","indId":"ТЭК","label":"ТЭК и энергетика","n":3,"cases":[{"id":"gpn-burovaya","c":"Газпром нефть","t":"Первая в России роботизированная буровая (Чонская группа месторождений): автоматические спуск/подъём и сборка колонн без человека","ind":"ТЭК и энергетика","ty":"буровой роботокомплекс","r":"Восточная Сибирь","y":2026,"e":"Строительство скважин +30% быстрее; в 2026 — ещё 6 роботизированных буровых в Зап. и Вост. Сибири","s":"ComNews","u":"https://www.comnews.ru/content/245602/2026-06-02/2026-w23/1009/gazprom-neft-zapustila-pervyy-rossii-robotizirovannyy-kompleks-dlya-bureniya","d":"06.2026"},{"id":"gpn-svarka","c":"Газпром нефть","t":"Роботизированная сварка трубопроводов: роботы весом 10 кг, работа при −40…+40 °C","ind":"ТЭК и энергетика","ty":"сварочные роботы","r":"ХМАО-Югра → ЯНАО","y":2025,"e":"Соединения в 3 раза быстрее ручной сварки, дефекты сведены к нулю; тираж на активы ЯНАО","s":"ComNews","u":"https://www.comnews.ru/digital-economy/content/238941/2025-04-22/2025-w17/1012/gazprom-neft-vnedryaet-robotizirovannye-kompleksy-dlya-stroitelstva-truboprovodov","d":"04.2025"},{"id":"tek-2030","c":"ТЭК РФ (отрасль)","t":"Отраслевой план: 22 тыс. роботов до 2030 года","ind":"ТЭК и энергетика","ty":"целевой показатель","r":"Россия","y":2025,"e":"Совокупный экономический эффект ~100 млрд ₽","s":"Электропресс (энергетика)","u":"https://eprussia.ru/news/base/2025/5313922.htm","d":"2025"}]},{"id":"Сельское хозяйство","indId":"Сельское хозяйство","label":"Сельское хозяйство","n":5,"cases":[{"id":"doilnye-roboty","c":"Животноводство РФ (отрасль)","t":"Парк роботизированных доильных комплексов — 7–8 тыс. установок","ind":"Сельское хозяйство","ty":"доильные роботы","r":"Россия","y":2025,"e":"Крупнейший сегмент агророботизации; мировой рынок $2,5–3,5 млрд","s":"Strategy Partners / Агроэксперт","u":"https://agroexpert.press/tehnika/agrarii-v-rossii-ispolzuyut-15-tys-edinicz-bespilotnoj-selhoztehniki/","d":"05.2026"},{"id":"agrodrony","c":"АПК РФ (отрасль)","t":"24 тыс. агродронов в работе; продажи агродронов 17,6 млрд ₽ (+45,6% за год); ЭПР на тяжёлые БПЛА расширен","ind":"Сельское хозяйство","ty":"агродроны","r":"Россия","y":2025,"e":"Обработка сотен тысяч га; регулярный мониторинг полей — у 60% хозяйств-пользователей БПЛА","s":"Минсельхоз / TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Дроны_в_сельском_хозяйстве","d":"2025"},{"id":"cognitive-mini","c":"Cognitive Pilot","t":"Первый в РФ бескабинный робот-трактор (серийное производство заявлено с 2025); автопилот Cognitive Agro Pilot на серийной технике","ind":"Сельское хозяйство","ty":"робот-трактор, автопилоты","r":"Россия","y":2025,"e":"5 тракторов с автопилотом работают как 6 обычных; навигация без GPS/ГЛОНАСС","s":"Cognitive Pilot","u":"https://cognitivepilot.com/cognitive-news/blog/","d":"2025"},{"id":"belozerie","c":"Экоферма «Белозерье»","t":"Доильные автоматы и роботизированные кормораздатчики","ind":"Сельское хозяйство","ty":"животноводческие роботы","r":"Республика Марий Эл","y":2025,"e":"Затраты на персонал −30%, надои молока +12% (обзорные данные)","s":"Cleverence (обзор)","u":"https://www.cleverence.ru/articles/promyshlennaya-avtomatizatsiya/-robotizatsiya-selskogo-hozyaystva-sovremennye-tehnologii-v-apk/","d":"12.2025"},{"id":"yuzhnoepole","c":"Агрохолдинг «Южное Поле»","t":"Агродроны для обработки полей и мониторинга","ind":"Сельское хозяйство","ty":"агродроны","r":"Юг России","y":2025,"e":"Урожайность +25%, затраты на пестициды −18% (обзорные данные)","s":"Cleverence (обзор)","u":"https://www.cleverence.ru/articles/promyshlennaya-avtomatizatsiya/-robotizatsiya-selskogo-hozyaystva-sovremennye-tehnologii-v-apk/","d":"12.2025"}]},{"id":"Безопасность","indId":"Безопасность","label":"Безопасность","n":1,"cases":[{"id":"rzd-robopsy","c":"РЖД / НИИАС / Ространснадзор","t":"Робопсы на грузовых станциях Московского региона (камеры + лидары + ИИ); с ноября 2025 данные робопсов используются Ространснадзором для допуска…","ind":"Безопасность","ty":"биоморфные роботы-инспекторы","r":"Москва и область","y":2025,"e":"Осмотр подвижного состава на опасных для людей участках, до 20 км/ч","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Проект:Роботы-собаки_в_РЖД","d":"11.2025"}]},{"id":"Строительство","indId":"Строительство","label":"Строительство","n":4,"cases":[{"id":"minstroy-3d","c":"Минстрой РФ","t":"Цель: 1 млн м² зданий, напечатанных на 3D-принтерах, к 2030 году; представлен принтер для зданий до 5 этажей","ind":"Строительство","ty":"строительная 3D-печать","r":"Россия","y":2025,"e":"Снижение сроков, затрат и зависимости от ручного труда","s":"Деловой Петербург","u":"https://www.dp.ru/a/2025/06/13/roboti-nachali-zamenjat-ljudej","d":"06.2025"},{"id":"setl","c":"Setl Group","t":"Роботы заливки, 3D-печати и кладки на малоэтажных объектах; робопсы на ЖК «Пульс Премьер» для контроля монолита, стяжки, кладки и отделки","ind":"Строительство","ty":"строительные роботы, робопсы","r":"Санкт-Петербург","y":2025,"e":"Мониторинг качества и скорости строительства","s":"Деловой Петербург","u":"https://www.dp.ru/a/2025/06/13/roboti-nachali-zamenjat-ljudej","d":"06.2025"},{"id":"samolet","c":"Самолёт","t":"Роботы-штукатуры на жилых объектах (на фоне острого дефицита рабочих)","ind":"Строительство","ty":"отделочные роботы","r":"Россия","y":2025,"e":"Честный кейс: эффективность пока ограничена — «робота-штукатура ловили по всей квартире»; итерации продолжаются","s":"TAdviser","u":"https://www.tadviser.ru/index.php/Статья:Строительные_роботы","d":"09.2025"},{"id":"innopolis-3d","c":"Университет Иннополис","t":"Тросовый строительный 3D-принтер: печать зданий до 8 м (2 этажа), дистанционное управление","ind":"Строительство","ty":"3D-принтер","r":"Иннополис","y":2023,"e":"Задел под высотную печать","s":"Профхолод (обзор)","u":"https://profholod.ru/press/news/publikatsii/roboty-na-stroyke-5-mashin-kotorye-skoro-zamenyat-stroiteley/","d":"10.2023"}]},{"id":"ЖКХ и город","indId":"ЖКХ","label":"ЖКХ и город","n":1,"cases":[{"id":"sgk-teplo","c":"Сибирская генерирующая компания","t":"Роботы для диагностики теплосетей, контракт 105 млн ₽","ind":"ЖКХ и город","ty":"диагностические роботы","r":"Сибирь","y":2025,"e":"Обследование теплотрасс без раскопок и риска для персонала","s":"TAdviser","u":"https://zdrav.expert/index.php/Статья:Промышленные_роботы_в_России","d":"2025"}]},{"id":"Здравоохранение","indId":null,"label":"Здравоохранение","n":2,"cases":[{"id":"davinci","c":"Клиники РФ (отрасль)","t":"25 хирургических систем da Vinci; более 25 000 робот-ассистированных операций, из них 4500 за последние 4 года в Москве","ind":"Здравоохранение","ty":"хирургические роботы","r":"Россия","y":2025,"e":"Робот-хирургия доступна в рамках ВМП и платно","s":"Robot-DaVinci.ru","u":"https://robot-davinci.ru/materialy/robot-da-vinchi-v-rossii/","d":"09.2025"},{"id":"ast-surgical","c":"Российский проект AST","t":"Отечественный роботизированный хирургический комплекс в испытаниях — конкурент da Vinci","ind":"Здравоохранение","ty":"хирургический робот","r":"Россия","y":2025,"e":"Цель — включение роботических операций в ОМС","s":"Robosobaka.ru (экспертиза)","u":"https://robosobaka.ru/expertise/articles/roboty-v-meditcine/","d":"01.2025"}]}],"mediaTotal":47,"mstats":[{"k":"Рынок промышленных роботов РФ, 2025","v":"7,86 млрд ₽ (+14% г/г)","s":"Университет Иннополис / Т1-Kept","u":"https://www.kommersant.ru/doc/8339152","y":2026},{"k":"Прогноз рынка РФ к 2030","v":"15,1 млрд ₽ (консерв.) / 47,6 млрд ₽ (при господдержке)","s":"Университет Иннополис","u":"https://www.interfax.ru/business/1090122","y":2026},{"k":"Плотность роботизации РФ, 2025","v":"40 роботов на 10 тыс. работников (+36% за год; в 2024 — 29)","s":"Университет Иннополис","u":"https://www.kommersant.ru/doc/8339095","y":2026},{"k":"Парк промышленных роботов в РФ, 2024","v":"20 864 шт. (+62% за год)","s":"НИУ ВШЭ","u":"https://www.tadviser.ru/index.php/Статья:Промышленные_роботы_в_России","y":2025},{"k":"Структура установок по отраслям РФ","v":"фарма 35% · пищёвка 25% · автопром 15% · металлургия 15%","s":"Т1 / Kept","u":"https://www.interfax.ru/business/1090122","y":2026},{"k":"Экономика внедрения","v":"робот от 1,5 млн ₽ · ячейка 8–30 млн ₽ · окупаемость 2,5–6 лет · 41% выбирают российских производителей","s":"Т1 / Interfax","u":"https://www.interfax.ru/business/1090122","y":2026},{"k":"Мировой рынок, 2025","v":"621 тыс. новых установок (рекорд); электроника 161 тыс. впервые обогнала автопром (139 тыс.)","s":"Kept / KUKA","u":"https://prokazan.ru/russia/view/roboty-idut-na-proizvodstvo-rynok-obnovil-rekord-i-menaet-promyslennost","y":2026},{"k":"Господдержка","v":"нацпроект «Средства производства и автоматизации» ~350 млрд ₽ до 2030 · кешбэк 20% · лизинг 3–5% · субсидии 912 млн ₽ (2026) · ФЦК сопровождают 1500 предприятий · 4 центра робототехники на 1,1 млрд ₽","s":"Минпромторг / Клерк.Ру / TAdviser","u":"https://www.klerk.ru/buh/articles/659008/","y":2026},{"k":"Цель национального проекта","v":"вхождение РФ в топ-25 стран по плотности роботизации к 2030 году","s":"Указ о национальных целях / Минпромторг","u":"https://weldex.ru/ru/media/news/2025/june/17/rynok-promyshlennykh-robotov-sostoyanie-trendy-perspektivy/","y":2025},{"k":"Сервисная робототехника РФ","v":"563 компании-разработчика (2025, +21,5%); клининг-сегмент 51–60 млрд ₽ (2025) → 77–90 млрд к 2030; RaaS от 100 тыс. ₽/мес","s":"Kama Flow / НАУРР / ComNews","u":"https://www.comnews.ru/content/247089/2026-08-27/2026-w35/1008/rynok-kliningovoy-robototekhniki-mozhet-vyrasti-do-90-mlrd-rub-k-2030-g","y":2026}]};
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const STC = {op:'#3BE68F', pil:'#38D6F0', rnd:'#B49AF8'};
+const STRU = {op:'в эксплуатации', pil:'пилот', rnd:'НИОКР'};
+const state = {view:'ind', sel:null};
+const CAN_DEEP = location.protocol !== 'file:'; // deep-link в каталог только на платформе
+AGG.industries.push(...window.MAP_EXTRA_SECTORS(AGG));
+const fmtN = n => n.toLocaleString('ru-RU');
+const fmtM = v => !v ? '—' : v >= 1e6 ? (v/1e6).toLocaleString('ru-RU',{maximumFractionDigits:1}) + ' млн ₽' : fmtN(v) + ' ₽';
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+/* ---------- KPI count-up ---------- */
+$$('[data-nu]').forEach(el => {
+  const target = parseFloat(el.dataset.nu), dec = +(el.dataset.dec || 0), t0 = performance.now(), D = 1300;
+  (function tick(t){
+    const p = Math.min((t - t0) / D, 1), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = (target * e).toLocaleString('ru-RU', {minimumFractionDigits: dec, maximumFractionDigits: dec});
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+});
+
+/* ---------- тултип ---------- */
+const tip = $('#tip');
+function showTip(html, x, y){
+  tip.innerHTML = html; tip.classList.add('on');
+  moveTip(x, y);
+}
+function moveTip(x, y){
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let tx = x + 16, ty = y + 18;
+  if (tx + w > innerWidth - 12) tx = x - w - 14;
+  if (ty + h > innerHeight - 12) ty = y - h - 14;
+  tip.style.left = Math.max(8, tx) + 'px'; tip.style.top = Math.max(8, ty) + 'px';
+}
+function hideTip(){ tip.classList.remove('on'); }
+
+/* ---------- хелперы статуса ---------- */
+function stackSegs(d, barW){
+  const tot = d.n || 1;
+  return [['op', d.op], ['pil', d.pil], ['rnd', d.rnd]].filter(s => s[1] > 0)
+    .map(s => '<i class="' + s[0] + '" style="width:' + (barW != null ? (s[1] / tot * barW).toFixed(1) + 'px' : (s[1] / tot * 100).toFixed(1) + '%') + ';background:' + STC[s[0]] + '"></i>').join('');
+}
+function capCounts(d){
+  return [['op', d.op], ['pil', d.pil], ['rnd', d.rnd]].filter(s => s[1] > 0)
+    .map(s => '<b><i style="background:' + STC[s[0]] + '"></i>' + s[1] + ' — ' + STRU[s[0]] + '</b>').join('');
+}
+function tipCounts(d){
+  return '<div class="st">' + [['op', d.op], ['pil', d.pil], ['rnd', d.rnd]].filter(s => s[1] > 0)
+    .map(s => '<span><i style="background:' + STC[s[0]] + '"></i><b>' + s[1] + '</b> ' + STRU[s[0]] + '</span>').join('') + '</div>';
+}
+function exCards(list){
+  return list.map(e => {
+    const st = '<span class="stq" style="background:' + STC[e.st] + '26;color:' + STC[e.st] + '">' +
+      (e.st === 'op' ? 'РАБОТАЕТ' : e.st === 'pil' ? 'ПИЛОТ' : 'НИОКР') + '</span>';
+    return '<div class="excard"><div class="t">' + esc(e.name) + '</div>' +
+      '<div class="m">' + st + '<span class="ugt">УГТ ' + e.trl + '</span>' +
+      (e.price ? '<span class="pr">' + fmtM(e.price) + '</span>' : '') + '<span>' + esc(e.vendor) + '</span></div>' +
+      '<p>' + esc(e.text) + '</p></div>';
+  }).join('');
+}
+
+/* ---------- ВИД 1: отрасли-пузыри ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+const svg = $('#bubbles');
+function buildBubbles(){
+  const sorted = [...AGG.industries].sort((a, b) => b.n - a.n || AGG.industries.indexOf(a) - AGG.industries.indexOf(b));
+  const groups = [
+     {items: sorted.slice(0, 4), y: 24, h: 208, tier: 0},
+     {items: sorted.slice(4, 8), y: 246, h: 172, tier: 1},
+     {items: sorted.slice(8, 12), y: 432, h: 168, tier: 2},
+  ];
+  svg.innerHTML = '';
+  const mob = innerWidth < 761;
+   svg.setAttribute('viewBox', mob ? '0 0 360 568' : '0 0 1200 620');
+  const geom = new Map();
+  if (mob) sorted.forEach((d, i) => geom.set(d.id, {x: (i % 3) * 124, y: Math.floor(i / 3) * 142 + 4, w: 112, h: 132, tier: 3, variant: 0}));
+  if (!mob) {
+   const mapW = 1152, startX = 24, gap = 12, minW = 170;
+  groups.forEach(group => {
+    const total = group.items.reduce((sum, item) => sum + item.n, 0);
+     const free = mapW - gap * (group.items.length - 1) - minW * group.items.length;
+    let x = startX;
+    group.items.forEach((d, index) => {
+      const w = minW + free * (d.n / total);
+      geom.set(d.id, {x, y: group.y, w, h: group.h, tier: group.tier, variant: (index + group.tier) % 3});
+      x += w + gap;
+    });
+  });
+  }
+  const tilePath = (x, y, w, h, variant, expand = 0) => {
+    const r = (mob ? 12 : 16) + expand, cut = (mob ? 12 : 20) + expand;
+    const x1 = x - expand, y1 = y - expand, x2 = x + w + expand, y2 = y + h + expand;
+    if (variant === 1) {
+      return `M ${x1 + cut} ${y1} H ${x2 - r} Q ${x2} ${y1} ${x2} ${y1 + r} V ${y2 - r} Q ${x2} ${y2} ${x2 - r} ${y2} H ${x1 + r} Q ${x1} ${y2} ${x1} ${y2 - r} V ${y1 + cut} L ${x1 + cut} ${y1} Z`;
+    }
+    if (variant === 2) {
+      return `M ${x1 + r} ${y1} H ${x2 - cut} L ${x2} ${y1 + cut} V ${y2 - r} Q ${x2} ${y2} ${x2 - r} ${y2} H ${x1 + cut} L ${x1} ${y2 - cut} V ${y1 + r} Q ${x1} ${y1} ${x1 + r} ${y1} Z`;
+    }
+    return `M ${x1 + r} ${y1} H ${x2 - cut} L ${x2} ${y1 + cut} V ${y2 - r} Q ${x2} ${y2} ${x2 - r} ${y2} H ${x1 + r} Q ${x1} ${y2} ${x1} ${y2 - r} V ${y1 + r} Q ${x1} ${y1} ${x1 + r} ${y1} Z`;
+  };
+  const wrapLabel = (label, maxChars) => {
+    const words = (mob ? label.replace('Промышленность', 'Промыш- ленность').replace('Строительство', 'Строи- тельство') : label).split(' ');
+    const lines = [];
+    let line = '';
+    words.forEach(word => {
+      const next = line ? line + ' ' + word : word;
+      if (line && next.length > maxChars) {
+        lines.push(line); line = word;
+      } else line = next;
+    });
+    if (line) lines.push(line);
+     return lines.slice(0, 3);
+  };
+  AGG.industries.forEach((d, i) => {
+    const layout = geom.get(d.id);
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('class', 'bub'); g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button');
+    g.dataset.kind = 'ind'; g.dataset.id = d.id;
+     g.setAttribute('aria-label', d.label + ', ' + d.n + ' записей' + (d.thematic ? ', тематический срез' : ''));
+    const inner = document.createElementNS(NS, 'g');
+    inner.setAttribute('class', 'tile-inner');
+    const pop = document.createElementNS(NS, 'g');
+     pop.setAttribute('class', 'pop');
+    const {x, y, w, h, tier, variant} = layout;
+    const nameLines = wrapLabel(d.label, mob ? 11 : tier === 0 ? 19 : 16);
+    const px = mob ? 11 : 24;
+    const barX = x + px, barW = w - px * 2, barY = y + h - (mob ? 16 : 30), tot = d.n || 1;
+     const titleSize = mob ? 14 : tier === 0 ? 23 : tier === 1 ? 21 : 19;
+     const numberSize = mob ? 28 : tier === 0 ? 45 : tier === 1 ? 39 : 35;
+    const title = nameLines.map((line, lineIndex) => '<tspan x="' + (x + px) + '" dy="' + (lineIndex === 0 ? 0 : titleSize + 3) + '">' + esc(line) + '</tspan>').join('');
+     const titleY = y + (mob ? 24 : 33);
+    const numberY = barY - (mob ? 26 : 30);
+    pop.innerHTML =
+      '<path class="halo" d="' + tilePath(x, y, w, h, variant, 7) + '" stroke="' + d.color + '"></path>' +
+      '<path class="plate" d="' + tilePath(x + 6, y + 6, w, h, variant) + '"></path>' +
+      '<path class="core" d="' + tilePath(x, y, w, h, variant) + '" stroke="' + d.color + '"></path>' +
+      '<defs><linearGradient id="tg-' + d.id + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + d.color + '"/><stop offset=".7" stop-color="' + d.color + '" stop-opacity="0"/></linearGradient></defs>' +
+      '<path class="tint" d="' + tilePath(x, y, w, h, variant) + '" fill="url(#tg-' + d.id + ')"></path>' +
+      '<text class="tile-title" x="' + (x + px) + '" y="' + titleY + '" font-size="' + titleSize + '" font-weight="650" fill="#F1F5F9">' + title + '</text>' +
+      '<text class="tile-number" x="' + (x + px) + '" y="' + numberY + '" font-family="ui-monospace,monospace" font-weight="800" font-size="' + numberSize + '" fill="#FFFFFF">' + d.n + '</text>' +
+      (mob
+         ? '<text class="tile-unit" x="' + (x + px) + '" y="' + (numberY + 15) + '" font-size="11.5" fill="#B7C6DC">записей · <tspan fill="#3BE68F" font-weight="700">' + Math.round(d.op / tot * 100) + '%</tspan></text>'
+         : '<text class="tile-unit" x="' + (x + px) + '" y="' + (numberY + 18) + '" font-size="13" fill="#B7C6DC">записей</text>' +
+           '<text class="tile-unit" x="' + (x + w - px) + '" y="' + (numberY + 18) + '" text-anchor="end" font-size="13" font-weight="700" fill="#3BE68F">' + Math.round(d.op / tot * 100) + '% в работе</text>') +
+      '<rect x="' + barX + '" y="' + barY + '" width="' + barW + '" height="' + (mob ? 6 : 8) + '" rx="' + (mob ? 3 : 4) + '" fill="#18253A"></rect>' +
+      '<rect x="' + barX + '" y="' + barY + '" width="' + (d.op / tot * barW) + '" height="' + (mob ? 6 : 8) + '" rx="' + (mob ? 3 : 4) + '" fill="#3BE68F"></rect>' +
+      '<rect x="' + (barX + d.op / tot * barW) + '" y="' + barY + '" width="' + (d.pil / tot * barW) + '" height="' + (mob ? 6 : 8) + '" fill="#38D6F0"></rect>' +
+      '<rect x="' + (barX + (d.op + d.pil) / tot * barW) + '" y="' + barY + '" width="' + (d.rnd / tot * barW) + '" height="' + (mob ? 6 : 8) + '" rx="' + (mob ? 3 : 4) + '" fill="#B49AF8"></rect>';
+    inner.appendChild(pop); g.appendChild(inner); svg.appendChild(g);
+    const dsc = tipCounts(d) + '<div class="ft">ср. УГТ ' + String(d.trlAvg).replace('.', ',') + ' · медианная цена ' + fmtM(d.medianPrice) + '<br>клик — досье отрасли</div>';
+    g.addEventListener('mouseenter', e => { svg.classList.add('focus'); g.classList.add('hot'); showTip('<h5>' + esc(d.label) + ' · ' + d.n + '</h5>' + dsc, e.clientX, e.clientY); });
+    g.addEventListener('mousemove', e => moveTip(e.clientX, e.clientY));
+    g.addEventListener('mouseleave', () => { svg.classList.remove('focus'); g.classList.remove('hot'); hideTip(); });
+    act(g, () => toggleSel('ind', d.id));
+  });
+}
+
+/* ---------- ВИД 2: применения ---------- */
+function buildApps(){
+  const box = $('#approws');
+  box.innerHTML = '';
+  AGG.apps.forEach(d => {
+    const subs = (d.scenarios || []).slice(0, 3).map(s => s.s.toLowerCase()).join(' · ');
+    const row = document.createElement('div');
+    row.className = 'row'; row.tabIndex = 0; row.setAttribute('role', 'button');
+    row.dataset.kind = 'app'; row.dataset.id = d.id;
+    row.innerHTML =
+      '<div class="nm">' + esc(d.name) + '<small>' + subs + '</small></div>' +
+      '<div class="bar">' + stackSegs(d, null) + '<span>' + d.n + '</span></div>' +
+      '<div class="num"><b>' + d.n + '</b><small>решений</small></div>';
+    const dsc = tipCounts(d) + '<div class="ft">ср. УГТ ' + String(d.trlAvg).replace('.', ',') + ' · медианная цена ' + fmtM(d.medianPrice) + '<br>клик — досье применения</div>';
+    row.addEventListener('mouseenter', e => showTip('<h5>' + esc(d.name) + ' · ' + d.n + '</h5>' + dsc, e.clientX, e.clientY));
+    row.addEventListener('mousemove', e => moveTip(e.clientX, e.clientY));
+    row.addEventListener('mouseleave', hideTip);
+    act(row, () => toggleSel('app', d.id));
+    box.appendChild(row);
+  });
+}
+function playApps(){
+  $$('#approws .bar').forEach((b, i) => {
+    const segs = [...b.children].filter(c => c.tagName === 'I');
+    const target = segs.map(s => s.style.width); segs.forEach(s => s.style.width = '0%');
+    setTimeout(() => segs.forEach((s, k) => s.style.width = target[k]), 60 + i * 55);
+  });
+}
+
+/* ---------- ВИД 3: УГТ ---------- */
+function buildTrl(){
+  const zc = $('#zones'), cc = $('#cols');
+  const zoneOf = t => t <= 4 ? 0 : t <= 7 ? 1 : 2;
+  const zmeta = [
+    {id:'z14', label:'ЛАБОРАТОРИЯ', color:'rgba(180,154,248,.14)', ln:'#B49AF8', trls:[1,2,3,4]},
+    {id:'z57', label:'ПИЛОТЫ', color:'rgba(56,214,240,.12)', ln:'#38D6F0', trls:[5,6,7]},
+    {id:'z89', label:'СЕРИЯ', color:'rgba(59,230,143,.14)', ln:'#3BE68F', trls:[8,9]},
+  ];
+  zc.innerHTML = ''; cc.innerHTML = '';
+  zmeta.forEach(z => {
+    const zone = document.createElement('div');
+    zone.className = 'zone'; zone.dataset.kind = 'zone'; zone.dataset.id = z.id;
+    zone.style.background = z.color;
+    zone.style.gridColumn = (z.trls[0]) + ' / span ' + z.trls.length;
+    const zn = AGG.zones.find(q => q.id === z.id);
+    zone.innerHTML = '<span class="zl" style="color:' + z.ln + '">' + z.label + '</span><span class="zn">' + zn.n + ' реш.</span>';
+    zone.addEventListener('mouseenter', () => zone.style.filter = 'brightness(1.4)');
+    zone.addEventListener('mouseleave', () => zone.style.filter = '');
+    act(zone, () => toggleSel('zone', z.id));
+    zc.appendChild(zone);
+  });
+  const maxc = Math.max(...AGG.trl.map(t => t.op + t.pil + t.rnd));
+  AGG.trl.forEach((t) => {
+    const n = t.op + t.pil + t.rnd, h = n ? Math.max(28, n / maxc * 210) : 14;
+    const col = document.createElement('div'); col.className = 'col';
+    let dots = [];
+    for (let k = 0; k < t.op; k++) dots.push('op');
+    for (let k = 0; k < t.pil; k++) dots.push('pil');
+    for (let k = 0; k < t.rnd; k++) dots.push('rnd');
+    const dotsHtml = dots.map(s => '<span class="dot" style="background:' + STC[s] + ';box-shadow:0 0 6px ' + STC[s] + '77"></span>').join('');
+    col.innerHTML = '<span class="cnum" style="color:' + (n ? '#F1F5F9' : '#5A6B85') + '">' + (n || '') + '</span>' +
+      '<div class="dots" style="height:' + h + 'px">' + dotsHtml + '</div><span class="clab">УГТ ' + t.trl + '</span>';
+    if (n){
+      const zl = ['Лаборатория', 'Пилоты', 'Серия'][zoneOf(t.trl)];
+      col.addEventListener('mouseenter', e => showTip('<h5>УГТ ' + t.trl + ' · ' + n + ' решений</h5>' +
+        tipCounts(t) + '<div class="ft">' + zl + '</div>', e.clientX, e.clientY));
+      col.addEventListener('mousemove', e => moveTip(e.clientX, e.clientY));
+      col.addEventListener('mouseleave', hideTip);
+    }
+    cc.appendChild(col);
+  });
+  $('#zcards').innerHTML = AGG.zones.map((z, i) => {
+    const c = ['#B49AF8', '#38D6F0', '#3BE68F'][i];
+    return '<div class="zcard" data-kind="zone" data-id="' + z.id + '" tabindex="0" role="button">' +
+      '<h4><i style="background:' + c + '"></i>УГТ ' + z.trls[0] + '–' + z.trls[z.trls.length - 1] + ' · ' + z.label + '</h4>' +
+      '<p>' + z.hint + '</p><div class="b">' + z.n + ' <small>решений · ' + z.op + ' работают</small></div></div>';
+  }).join('');
+  $$('#zcards .zcard').forEach(zc2 => act(zc2, () => toggleSel('zone', zc2.dataset.id)));
+}
+function playTrl(){
+  $$('#cols .dot').forEach((d, i) => setTimeout(() => d.classList.add('in'), 40 + i * 7));
+}
+
+/* ---------- ВИД 4: СМИ-кейсы ---------- */
+function buildMedia(){
+  const box = $('#medrows');
+  box.innerHTML = '<div class="mstats">' + AGG.mstats.slice(0, 10).map(s =>
+    '<div class="mstat"><div class="v">' + esc(s.v) + '</div><div class="k">' + esc(s.k) + '</div>' +
+    '<a href="' + s.u + '" target="_blank" rel="noopener">' + esc(s.s) + ' ↗</a></div>').join('') + '</div>' +
+    AGG.media.map(g =>
+      '<div class="mgroup"><h4>' + esc(g.label) + ' <small>' + g.n + ' ' + plural(g.n) + '</small></h4>' +
+      g.cases.map(x =>
+        '<a class="mrow" href="' + x.u + '" target="_blank" rel="noopener">' +
+        '<span class="yr">' + x.y + '</span>' +
+        '<span class="mc"><b>' + esc(x.c) + '</b> — ' + esc(x.t) + '<i class="eff">' + esc(x.e) + (x.r ? ' · ' + esc(x.r) : '') + '</i></span>' +
+        '<span class="src">' + esc(x.s) + ' ↗</span></a>').join('') + '</div>').join('');
+}
+function plural(n){
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return 'кейс';
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'кейса';
+  return 'кейсов';
+}
+function medCardsFor(indId, max){
+   const g = AGG.media.find(m => m.indId === indId || (indId === 'sector-medicine' && m.label === 'Здравоохранение'));
+  if (!g) return '';
+  const list = g.cases.slice(0, max).map(x =>
+    '<div class="medx"><div class="top"><b>' + esc(x.c) + '</b><i>' + x.y + '</i></div>' +
+    '<span>' + esc(x.t) + '</span>' +
+    '<a href="' + x.u + '" target="_blank" rel="noopener">' + esc(x.s) + ' ↗</a></div>').join('');
+  const more = g.n > max ? '<div style="color:var(--dim);font-size:12.5px;margin-top:8px">…и ещё ' + (g.n - max) + ' — вкладка «СМИ-кейсы»</div>' : '';
+  return '<div class="ph">Из открытых источников · ' + g.n + '</div>' + list + more;
+}
+
+/* ---------- вспомогательное: активация ---------- */
+function act(el, fn){
+  el.addEventListener('click', e => { e.stopPropagation(); fn(); });
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fn(); } });
+}
+
+/* ---------- выделение и панель ---------- */
+function toggleSel(kind, id){
+  if (state.sel && state.sel.kind === kind && state.sel.id === id) state.sel = null;
+  else state.sel = {kind, id};
+  syncSel(); renderPanel();
+}
+function syncSel(){
+  $$('.bub,.row,.zone,.zcard').forEach(el => {
+    const on = state.sel && el.dataset.kind === state.sel.kind && el.dataset.id === state.sel.id;
+    el.classList.toggle('sel', !!on);
+  });
+}
+function nodeData(){
+  if (!state.sel) return null;
+  if (state.sel.kind === 'ind') return AGG.industries.find(d => d.id === state.sel.id);
+  if (state.sel.kind === 'app') return AGG.apps.find(d => d.id === state.sel.id);
+  return AGG.zones.find(d => d.id === state.sel.id);
+}
+function renderPanel(){
+  const p = $('#panel'), d = nodeData();
+  if (!d){
+    const tops = AGG.industries.filter(i => i.n >= 10).sort((a, b) => b.op / b.n - a.op / a.n).slice(0, 5);
+    p.innerHTML =
+      '<div class="phead"><span class="badge">ОБЗОР</span><h3>Как читать карту</h3></div><div class="pbody">' +
+      '<div class="legend2">' +
+      '<div><i style="background:#3BE68F"></i><span>Уже работают<small>можно закупать сегодня</small></span></div>' +
+      '<div><i style="background:#38D6F0"></i><span>Пилоты<small>технология доказана на площадке</small></span></div>' +
+      '<div><i style="background:#B49AF8"></i><span>Разработки<small>будущее · окно для партнёрства</small></span></div>' +
+      '</div>' +
+       '<div class="clicktip"><b>Клик</b> по элементу — досье. Три новых направления пересекаются с исходными отраслями; их числа нельзя прибавлять к 223 записям базового каталога.</div>' +
+      '<div class="ph">Лидеры по зрелости</div>' +
+      tops.map(t => '<div class="toprow"><div class="nm">' + esc(t.label) + '<small>' + t.op + ' из ' + t.n + ' работают</small></div>' +
+        '<div class="pc">' + Math.round(t.op / t.n * 100) + '%</div>' +
+        '<div class="mbar"><i style="width:' + Math.round(t.op / t.n * 100) + '%"></i></div></div>').join('') +
+      '<div class="ph">Средний УГТ каталога</div>' +
+      '<div class="ugtbig">' + String(AGG.avgTrl).replace('.', ',') +
+      ' <small>из 9 — отрасль вышла из лаборатории</small></div>' +
+      '</div>';
+    return;
+  }
+   let kindRu = state.sel.kind === 'ind' ? (d.thematic ? 'ТЕМАТИЧЕСКИЙ СРЕЗ' : 'ОТРАСЛЬ') : state.sel.kind === 'app' ? 'ПОЛЕ ПРИМЕНЕНИЯ' : 'УРОВЕНЬ ГОТОВНОСТИ';
+  let title = d.label || d.name || (d.id === 'z14' ? 'Лаборатория · УГТ 1–4' : d.id === 'z57' ? 'Пилоты · УГТ 5–7' : 'Серия · УГТ 8–9');
+  let chips = '', mixTitle = '';
+  if (state.sel.kind === 'ind'){
+    mixTitle = 'Что делают роботы в отрасли';
+    chips = d.mix.map(m => '<span class="chip">' + esc(m.name) + ' <small>' + m.n + '</small></span>').join('');
+  } else if (state.sel.kind === 'app'){
+    mixTitle = 'Где применяется';
+    chips = d.mix.map(m => '<span class="chip">' + esc(m.name) + ' <small>' + m.n + '</small></span>').join('');
+  } else {
+    mixTitle = 'Отрасли в этой зоне';
+    chips = d.inds.map(m => '<span class="chip">' + esc(m.name) + ' <small>' + m.n + '</small></span>').join('');
+  }
+  const vend = d.vendors ? '<div class="ph">Кто делает</div><div class="chips">' +
+    d.vendors.map(v => '<span class="chip">' + esc(v.v) + ' <small>' + v.n + '</small></span>').join('') + '</div>' : '';
+  const scen = (state.sel.kind === 'app' && d.scenarios) ? '<div class="ph">Типовые сценарии</div><div class="chips">' +
+    d.scenarios.map(s => '<span class="chip">' + esc(s.s) + ' <small>' + s.n + '</small></span>').join('') + '</div>' : '';
+  const trlV = d.trlAvg != null ? String(d.trlAvg).replace('.', ',') : '—';
+  p.innerHTML =
+    '<div class="phead"><span class="badge">' + kindRu + '</span><h3>' + esc(title) + '</h3>' +
+    '<button class="cl" title="Сбросить" aria-label="Сбросить">✕</button></div>' +
+    '<div class="pbody">' +
+    '<div class="pstack">' + stackSegs(d, null) + '</div><div class="pcap">' + capCounts(d) + '</div>' +
+    '<div class="pgrid">' +
+       '<div class="pg"><div class="v">' + d.n + '</div><div class="l">' + (d.thematic ? 'ЗАПИСЕЙ · ' + d.uniqueModels + ' МОДЕЛЕЙ' : 'ЗАПИСЕЙ') + '</div></div>' +
+      '<div class="pg"><div class="v">' + trlV + '</div><div class="l">СРЕДНИЙ УГТ</div></div>' +
+      '<div class="pg"><div class="v" style="font-size:15.5px;padding-top:4px">' + fmtM(d.medianPrice) + '</div><div class="l">МЕДИАННАЯ ЦЕНА</div></div>' +
+    '</div>' + vend + scen +
+     '<div class="ph">' + mixTitle + '</div><div class="chips">' + chips + '</div>' +
+     (d.thematic ? '<div class="ph">Из каких отраслей каталога</div><div class="chips">' +
+       d.origin.map(m => '<span class="chip">' + esc(m.name) + ' <small>' + m.n + '</small></span>').join('') + '</div>' +
+       '<div class="clicktip">' + esc(d.sourceNote) + '</div>' : '') +
+     '<div class="ph">Примеры из каталога</div>' + exCards(d.ex) +
+     (state.sel.kind === 'ind' ? medCardsFor(d.id, 4) : '') +
+     (state.sel.kind === 'ind' && CAN_DEEP
+       ? '<a class="deeplink" href="../quick-select?sector=' + encodeURIComponent(d.id) +
+         '" target="_top">Продолжить исследование: описать свой объект →</a>' : '') +
+     (state.sel.kind === 'ind' && CAN_DEEP ? '<a class="deeplink" href="../solutions?' +
+       (d.thematic ? 'sector=' + encodeURIComponent(d.id) + '&ids=' + encodeURIComponent([...new Set(d.records.map(record => record.split('|')[0]))].join(',')) : 'industry=' + encodeURIComponent(d.id)) +
+       '" target="_top">Открыть ' + (d.thematic ? d.uniqueModels + ' моделей направления' : d.n + ' записей отрасли') + ' в каталоге →</a>' : '') +
+    '<div style="color:var(--dim);font-size:12px;margin-top:12px">Каталог внедрений ФЦ БАС, 2026 · цены с НДС, без доставки и ПНР</div>' +
+    '</div>';
+  p.querySelector('.cl').addEventListener('click', () => { state.sel = null; syncSel(); renderPanel(); });
+  p.scrollTop = 0;
+}
+
+/* ---------- табы ---------- */
+const HINTS = {
+  ind: '<b>Кликните на отрасль</b> — изучите досье и перейдите к параметрам своего объекта.',
+  app: '<b>Кликните на поле</b> — увидите отрасли, сценарии и кейсы.',
+  trl: '<b>Зелёная зона — закупать можно уже сегодня.</b> Голубая — время пилотов и партнёрства.',
+  med: '<b>Каждая строка — ссылка на публикацию.</b> Цифры компаний не проверялись независимо.'
+};
+function setView(v){
+  state.view = v;
+  $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === v));
+  $$('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
+  $('#hint').innerHTML = HINTS[v];
+   $('#sznote').textContent = v === 'ind' ? 'размер плитки ≈ число записей' : v === 'app' ? 'длина полосы = число решений' : v === 'med' ? 'публикации с указанным источником' : 'точка = решение';
+   if (v === 'app') playApps();
+  if (v === 'trl') playTrl();
+}
+$$('.tab').forEach(t => t.addEventListener('click', () => setView(t.dataset.v)));
+
+/* ---------- сборка ---------- */
+buildBubbles(); buildApps(); buildTrl(); buildMedia();
+$('.tab[data-v="med"] span').textContent = 'СМИ +' + AGG.mediaTotal;
+$('#hint').innerHTML = HINTS.ind;
+$('#sznote').textContent = 'размер плитки ≈ число записей';
+let ovOpen = false;
+const _renderPanel = renderPanel;
+renderPanel = function(){
+  _renderPanel();
+  const p = $('#panel');
+  const open = !!state.sel || ovOpen;
+  document.body.classList.toggle('sheet', open);
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'mback'; b.textContent = '\u2190 К карте отраслей';
+  b.addEventListener('click', closeSheet);
+  p.prepend(b);
+  if (open && innerWidth < 761) b.focus({preventScroll: true});
+};
+function closeSheet(){ ovOpen = false; state.sel = null; syncSel(); renderPanel(); }
+$('#ovbtn').addEventListener('click', () => { ovOpen = true; renderPanel(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && (ovOpen || state.sel)) closeSheet(); });
+let lastMob = innerWidth < 761;
+addEventListener('resize', () => { const m = innerWidth < 761; if (m !== lastMob){ lastMob = m; buildBubbles(); syncSel(); } });
+renderPanel();
+</script>
+</body>
+</html>
