@@ -4,11 +4,11 @@
 
 ## Запуск для проверяющего: Docker Compose
 
-Понадобятся Docker с Compose v2, доступ к Docker Hub и npm при первой сборке, свободный порт 8080 и рекомендуемые 4 ГБ оперативной памяти для сборки.
+Понадобятся Docker с Compose v2, доступ к Docker Hub и npm при первой сборке, свободный порт 8080 и рекомендуемые 4 ГБ оперативной памяти для сборки. Репозиторий закрытый: владелец должен заранее дать проверяющему доступ в GitHub.
 
 ```bash
-git clone <URL_РЕПОЗИТОРИЯ>
-cd <ИМЯ_КАТАЛОГА>
+git clone https://github.com/Shurik-9/robotshub.git
+cd robotshub
 docker compose up --build --wait
 ```
 
