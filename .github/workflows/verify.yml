@@ -1,0 +1,42 @@
+name: Проверка проекта
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - uses: browser-actions/setup-chrome@v2
+        id: setup-chrome
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm --filter @workspace/robotshub run test:map
+      - run: pnpm --filter @workspace/robotshub run test:calc
+      - run: pnpm --filter @workspace/robotshub run test:journey
+      - run: pnpm --filter @workspace/robotshub run build
+      - run: docker compose up --build --wait
+      - name: Smoke test
+        run: |
+          curl --fail --show-error http://localhost:8080/healthz
+          curl --fail --show-error http://localhost:8080/map/map-data.json > /dev/null
+          curl --fail --show-error http://localhost:8080/solutions > /dev/null
+      - name: Browser test against the Docker release
+        run: pnpm --filter @workspace/robotshub run test:operation-economics
+        env:
+          CHROMIUM_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+          OPERATION_ECONOMICS_BROWSER_URL: http://localhost:8080
+      - if: always()
+        run: docker compose down
