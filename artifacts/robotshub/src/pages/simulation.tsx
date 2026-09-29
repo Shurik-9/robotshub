@@ -177,12 +177,19 @@ export default function Simulation() {
   }, []);
 
   useEffect(() => {
-    if (!state.objectType || selectedSolutions.length === 0) {
+    if (!state.objectType && selectedSolutions.length > 0) {
       setLocation('/solutions');
     }
   }, [state.objectType, selectedSolutions.length, setLocation]);
 
-  if (!state.objectType || selectedSolutions.length === 0 || !selectedSolution) return null;
+  if (!selectedSolution) return (
+    <div className="container mx-auto max-w-3xl px-4 py-12" data-testid="simulation-empty-fleet">
+      <h1 className="text-2xl font-bold">Симуляция строится под выбранный флот</h1>
+      <p className="mt-4 text-muted-foreground">Выберите решения в каталоге — и увидите, как они работают на схеме вашего объекта</p>
+      <Button className="mt-6" onClick={() => setLocation('/solutions')} data-testid="button-simulation-choose-fleet">Перейти в каталог</Button>
+    </div>
+  );
+  if (!state.objectType) return null;
   const simulationLimit = (operationFor(state.sectorId, selectedSolution?.id)
     ? 'Для этой операции нет маршрутной симуляции: сцена склада, аэропорта или больницы не описывает реальную работу.'
     : null) ?? evaluationLimit(

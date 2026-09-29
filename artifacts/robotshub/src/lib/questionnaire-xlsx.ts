@@ -141,8 +141,48 @@ export async function parseQuestionnaire(data: ArrayBuffer): Promise<Questionnai
       }).on('error', reject).on('end', resolve).resume();
     });
   }
+  // openpyxl can save text cells as <c t="inlineStr"><is><t>text</t></is></c>
+  // instead of referencing sharedStrings. Normalize simple inline text before
+  // ExcelJS reads the worksheets; formula/rich-text cells remain untouched.
+  let hasNormalizedXml = false;
+  for (const [name, entry] of Object.entries(zip.files)) {
+    if (!/^xl\/worksheets\/[^/]+\.xml$/.test(name)) continue;
+    const xml = await entry.async('string');
+    if (!xml.includes('inlineStr')) continue;
+    const normalized = xml.replace(
+      /<c\b([^>]*\bt="inlineStr"[^>]*)>\s*<is>\s*<t(?:\s[^>]*)?>([^<]*)<\/t>\s*<\/is>\s*<\/c>/g,
+      (_cell, attributes: string, text: string) =>
+        `<c${attributes.replace(/\bt="inlineStr"/, 't="str"')}><v>${text}</v></c>`,
+    );
+    if (normalized !== xml) {
+      zip.file(name, normalized);
+      hasNormalizedXml = true;
+    }
+  }
+  // openpyxl renames comment/VML parts and uses absolute relationship targets.
+  // ExcelJS 4 only indexes commentsN.xml/vmlDrawingN.vml and otherwise crashes
+  // before it can read answers. Cell notes are not questionnaire answers or
+  // specialist evidence (the latter lives in columns L–N), so skip only these
+  // unsupported in-memory relationships and keep every worksheet cell intact.
+  for (const [name, entry] of Object.entries(zip.files)) {
+    if (!/^xl\/worksheets\/_rels\/sheet\d+\.xml\.rels$/.test(name)) continue;
+    const xml = await entry.async('string');
+    const normalized = xml.replace(/<Relationship\b[^>]*\/>/g, relationship => {
+      if (relationship.includes('/comments"') && !/Target="\.\.\/comments\d+\.xml"/.test(relationship)) return '';
+      if (relationship.includes('/vmlDrawing"') && !/Target="\.\.\/drawings\/vmlDrawing\d+\.vml"/.test(relationship)) return '';
+      return relationship;
+    });
+    if (normalized !== xml) {
+      zip.file(name, normalized);
+      hasNormalizedXml = true;
+    }
+  }
   const book = new ExcelJS.Workbook();
-  try { await book.xlsx.load(data); } catch { throw new Error('Не удалось прочитать XLSX. Скачайте новую анкету и перенесите ответы.'); }
+  try {
+    await book.xlsx.load(hasNormalizedXml
+      ? await zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' })
+      : data);
+  } catch { throw new Error('Не удалось прочитать XLSX. Скачайте новую анкету и перенесите ответы.'); }
   const presentSheets = new Set(book.worksheets.map(sheet => sheet.name));
   const missingSheets = SHEETS.filter(name => !presentSheets.has(name));
   const extraSheets = book.worksheets.map(sheet => sheet.name).filter(name => !SHEETS.includes(name as typeof SHEETS[number]));

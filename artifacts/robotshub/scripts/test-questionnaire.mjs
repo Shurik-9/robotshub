@@ -33,6 +33,37 @@ async function bookFor(type, filled = true, sectorId = sector) {
   return book;
 }
 async function parsedBook(book) { return read(await book.xlsx.writeBuffer()); }
+test('openpyxl-style save imports inline answer text without losing questionnaire checks', async () => {
+  const book = await bookFor('custom');
+  const original = await parsedBook(book);
+  assert.deepEqual(original.errors, []);
+  const zip = await JSZip.loadAsync(await book.xlsx.writeBuffer());
+  const sheetPath = 'xl/worksheets/sheet3.xml';
+  const xml = await zip.file(sheetPath).async('string');
+  const originalCell = xml.match(/<c\b[^>]*\br="D2"[^>]*>[\s\S]*?<\/c>/)?.[0];
+  assert.ok(originalCell);
+  zip.file(sheetPath, xml.replace(
+    originalCell,
+    '<c r="D2" s="3" t="inlineStr"><is><t>Новая площадка &amp; цех</t></is></c>',
+  ));
+  // openpyxl uses absolute targets and different names for comment/VML parts.
+  const relPath = 'xl/worksheets/_rels/sheet3.xml.rels';
+  const rels = await zip.file(relPath).async('string');
+  assert.match(rels, /\.\.\/comments3\.xml/);
+  zip.file(relPath, rels
+    .replace('../comments3.xml', '/xl/comments/comment1.xml')
+    .replace('../drawings/vmlDrawing3.vml', '/xl/drawings/commentsDrawing1.vml'));
+  zip.file('xl/comments/comment1.xml', await zip.file('xl/comments3.xml').async('uint8array'));
+  zip.remove('xl/comments3.xml');
+  zip.file('xl/drawings/commentsDrawing1.vml', await zip.file('xl/drawings/vmlDrawing3.vml').async('uint8array'));
+  zip.remove('xl/drawings/vmlDrawing3.vml');
+
+  const imported = await read(await zip.generateAsync({ type: 'uint8array' }));
+  assert.equal(imported.rawAnswers.site_name, 'Новая площадка & цех');
+  assert.equal(imported.values.site_name, 'Новая площадка & цех');
+  assert.deepEqual(imported.errors, []);
+  assert.deepEqual(imported.missing, []);
+});
 const officeSavedFixtures = [
   { file: 'airport-excel.xlsx', type: 'airport', application: /Microsoft Excel/ },
   { file: 'warehouse-libreoffice.xlsx', type: 'warehouse', application: /LibreOffice/ },
