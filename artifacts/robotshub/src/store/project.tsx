@@ -2,10 +2,13 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, Re
 import solutionsData from '@/data/solutions.json';
 import { customBriefChanged, mergeCustomBrief, withoutOperationFields, type OperationKey } from '@/lib/operationEconomics';
 import type { SceneGeometrySummary } from '@/sim/scene-builder';
+import { applyQuestionnaireToProject, projectFingerprint } from '@/lib/questionnaire-state';
+import type { AnswerEvidence, QuestionnaireImport } from '@/lib/questionnaire-xlsx';
 
 export type ObjectType = 'warehouse' | 'airport' | 'medical' | 'custom' | null;
 
 export interface ProjectState {
+  questionnaireEvidence?: AnswerEvidence;
   objectType: ObjectType;
   sectorId: string | null;
   objectParams: Record<string, number | string | boolean>;
@@ -49,6 +52,7 @@ type SimulationSignatureState = Pick<
 type SimulationSnapshotState = SimulationSignatureState & Pick<ProjectState, 'simulationKpis'>;
 
 interface ProjectContextType {
+  applyQuestionnaire: (staged: QuestionnaireImport, expected: string) => boolean;
   state: ProjectState;
   projectRecoveryNotice: boolean;
   projectStorageUnavailable: boolean;
@@ -294,6 +298,10 @@ export function normalizeProjectState(value: unknown): ProjectState {
 
   return {
     objectType,
+    questionnaireEvidence: isRecord(value.questionnaireEvidence)
+      ? Object.fromEntries(Object.entries(value.questionnaireEvidence).filter(([, entry]) =>
+          isRecord(entry) && ['comment', 'source', 'date'].every(key => typeof entry[key] === 'string'))) as AnswerEvidence
+      : {},
     sectorId: typeof value.sectorId === 'string' && /^[\p{L}\p{N} _-]{1,80}$/u.test(value.sectorId)
       ? value.sectorId : null,
     objectParams: normalizePrimitiveRecord(value.objectParams),
@@ -510,6 +518,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const setObjectType = (type: ObjectType) => {
     setState((s) => s.objectType === type ? s : ({
       ...s, objectType: type, objectParams: {}, selectedSolutions: [], activeSolutionId: null,
+      questionnaireEvidence: {},
       whatIfOverrides: {}, assumptionsOverrides: {}, simulationKpis: null,
     }));
   };
@@ -519,6 +528,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       ...s, sectorId: id,
       ...(id === null ? {} : {
         objectType: null, objectParams: {},
+        questionnaireEvidence: {},
         selectedSolutions: [], activeSolutionId: null,
         whatIfOverrides: {}, assumptionsOverrides: {}, simulationKpis: null,
       }),
@@ -631,10 +641,18 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   const resetProject = () => setState(defaultState);
 
+  const applyQuestionnaire = (staged: QuestionnaireImport, expected: string) => {
+    if (projectFingerprint(state) !== expected) return false;
+    const next = applyQuestionnaireToProject(state, staged, expected);
+    setState(current => projectFingerprint(current) === expected ? next : current);
+    return true;
+  };
+
   return (
     <ProjectContext.Provider
       value={{
         state,
+        applyQuestionnaire,
         projectRecoveryNotice,
         projectStorageUnavailable,
         retryProjectStorage,

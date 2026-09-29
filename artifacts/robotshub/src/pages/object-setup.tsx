@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, ArrowRight, Info } from 'lucide-react';
@@ -13,16 +13,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSectorMap, sectorCatalogPath } from '@/lib/useSectorMap';
 import { useProject } from '@/store/project';
-import warehouseTemplate from '@/data/object-templates/warehouse.json';
-import airportTemplate from '@/data/object-templates/airport.json';
-import medicalTemplate from '@/data/object-templates/medical.json';
+import { ObjectQuestionnaire } from '@/components/object-questionnaire';
+import { questionnaireTemplates as templates, fieldsFor, type Template } from '@/lib/questionnaire-schema';
 
-type Field = { key: string; label: string; type: string; base: string | number | boolean; unit?: string; min?: number; max?: number; note?: string; options?: string[] };
-type Template = { name: string; groups: { id: string; name: string; fields: Field[] }[] };
 type Params = Record<string, string | number | boolean>;
-const templates: Record<string, Template> = { warehouse: warehouseTemplate, airport: airportTemplate, medical: medicalTemplate };
+type DraftReader = MutableRefObject<() => Params>;
 
-function CustomSite({ initial, onSave }: { initial: Params; onSave: (data: Params) => void }) {
+function CustomSite({ initial, onSave, draftReader }: { initial: Params; onSave: (data: Params) => void; draftReader: DraftReader }) {
   const form = useForm<{ site_name: string; task: string; site_area_m2: string; shifts_per_day: string; constraints: string }>({
     defaultValues: {
       site_name: String(initial.site_name ?? ''),
@@ -32,6 +29,7 @@ function CustomSite({ initial, onSave }: { initial: Params; onSave: (data: Param
       constraints: String(initial.constraints ?? ''),
     },
   });
+  useEffect(() => { draftReader.current = () => form.getValues(); }, [form, draftReader]);
   const submit = form.handleSubmit(values => onSave({
     site_name: values.site_name.trim(),
     task: values.task.trim(),
@@ -43,11 +41,16 @@ function CustomSite({ initial, onSave }: { initial: Params; onSave: (data: Param
     <Card>
       <CardHeader><CardTitle>Исследовательский бриф площадки</CardTitle><CardDescription>Только ваши фактические данные. Базовые значения для нестандартного объекта не подставляются.</CardDescription></CardHeader>
       <CardContent className="grid gap-5 sm:grid-cols-2">
-        <div className="space-y-2 sm:col-span-2"><Label htmlFor="site-name">Название объекта</Label><Input id="site-name" placeholder="Например, корпус сборки № 2" required maxLength={120} {...form.register('site_name')} data-testid="input-site-name" /></div>
-        <div className="space-y-2 sm:col-span-2"><Label htmlFor="site-task">Задача робота</Label><Textarea id="site-task" placeholder="Что именно нужно перемещать, контролировать или обслуживать?" required rows={3} maxLength={1000} {...form.register('task')} data-testid="input-site-task" /></div>
-        <div className="space-y-2"><Label htmlFor="site-area">Площадь площадки, м²</Label><Input id="site-area" type="number" inputMode="decimal" min="0.01" step="any" placeholder="Если известна" {...form.register('site_area_m2')} data-testid="input-site-area" /></div>
-        <div className="space-y-2"><Label htmlFor="site-shifts">Смен в сутки</Label><Input id="site-shifts" type="number" inputMode="numeric" min="1" max="4" step="1" placeholder="Если известно" {...form.register('shifts_per_day')} data-testid="input-site-shifts" /></div>
-        <div className="space-y-2 sm:col-span-2"><Label htmlFor="site-constraints">Ограничения и условия</Label><Textarea id="site-constraints" rows={3} placeholder="Ширина проходов, покрытие, безопасность, интеграции и другие известные условия" maxLength={1500} {...form.register('constraints')} data-testid="input-site-constraints" /></div>
+        {fieldsFor('custom').map(field => {
+          const key = field.key as 'site_name' | 'task' | 'site_area_m2' | 'shifts_per_day' | 'constraints';
+          const ids = { site_name: 'site-name', task: 'site-task', site_area_m2: 'site-area', shifts_per_day: 'site-shifts', constraints: 'site-constraints' };
+          return <div key={key} className={`space-y-2 ${field.type === 'text' ? 'sm:col-span-2' : ''}`}>
+            <Label htmlFor={ids[key]}>{field.label}{field.unit ? `, ${field.unit}` : ''}</Label>
+            {key === 'task' || key === 'constraints'
+              ? <Textarea id={ids[key]} rows={3} required={field.required} maxLength={field.maxLength} placeholder={String(field.example ?? '')} {...form.register(key)} data-testid={`input-${ids[key]}`} />
+              : <Input id={ids[key]} type={field.type === 'text' ? 'text' : 'number'} required={field.required} maxLength={field.maxLength} min={field.min} max={field.max} step={field.type === 'int' ? '1' : 'any'} placeholder={field.required ? String(field.example ?? '') : 'Если известно'} {...form.register(key)} data-testid={`input-${ids[key]}`} />}
+          </div>;
+        })}
       </CardContent>
     </Card>
     <p className="rounded-md border border-accent/40 bg-accent/5 p-4 text-sm leading-6" data-testid="status-custom-brief">Это исследовательский бриф, а не исходные данные для ТЭО. Для четырёх поддерживаемых операций отдельный расчёт откроется после выбора подходящей модели в каталоге; в нём потребуются измерения площадки и финансовые документы. Для остальных задач расчёт недоступен.</p>
@@ -55,11 +58,12 @@ function CustomSite({ initial, onSave }: { initial: Params; onSave: (data: Param
   </form></Form>;
 }
 
-function TemplateSite({ template, initial, onSave, onProgress }: { template: Template; initial: Params; onSave: (data: Params) => void; onProgress: (data: Params) => void }) {
+function TemplateSite({ template, initial, onSave, onProgress, draftReader }: { template: Template; initial: Params; onSave: (data: Params) => void; onProgress: (data: Params) => void; draftReader: DraftReader }) {
   const [activeGroup, setActiveGroup] = useState(0);
   const [openEnumKey, setOpenEnumKey] = useState<string | null>(null);
   const defaults = useMemo(() => Object.fromEntries(template.groups.flatMap(group => group.fields.map(field => [field.key, field.base]))), [template]);
   const form = useForm<Params>({ defaultValues: { ...defaults, ...initial }, shouldUnregister: false });
+  useEffect(() => { draftReader.current = () => form.getValues(); }, [form, draftReader]);
 
   useEffect(() => {
     if (!openEnumKey) return;
@@ -123,6 +127,8 @@ export default function ObjectSetup() {
   const { state, updateObjectParams } = useProject();
   const { sectors, error } = useSectorMap();
   const [waitingForCatalog, setWaitingForCatalog] = useState(false);
+  const [importRevision, setImportRevision] = useState(0);
+  const draftReader = useRef<() => Params>(() => state.objectParams);
   const sector = sectors?.find(item => item.id === state.sectorId);
   const destination = sector ? sectorCatalogPath(sector) : '/solutions';
   const template = state.objectType && state.objectType !== 'custom' ? templates[state.objectType] : null;
@@ -138,7 +144,7 @@ export default function ObjectSetup() {
     setLocation(destination);
   };
 
-  if (!state.objectType) return <div className="container mx-auto max-w-5xl px-4 py-12" data-testid="page-object-setup"><Card><CardContent className="space-y-4 py-8"><h1 className="text-xl font-semibold">Объект ещё не выбран</h1><p className="text-sm text-muted-foreground">Сначала укажите направление и тип площадки.</p><Button onClick={() => setLocation('/quick-select')} data-testid="button-choose-object">К выбору объекта<ArrowRight className="ml-2 h-4 w-4" /></Button></CardContent></Card></div>;
+  if (!state.objectType) return <div className="container mx-auto max-w-5xl px-4 py-12" data-testid="page-object-setup"><Card><CardContent className="space-y-4 py-8"><h1 className="text-xl font-semibold">Объект ещё не выбран</h1><p className="text-sm text-muted-foreground">Сначала укажите направление и тип площадки или загрузите анкету для текущего направления.</p><Button onClick={() => setLocation('/quick-select')} data-testid="button-choose-object">К выбору объекта<ArrowRight className="ml-2 h-4 w-4" /></Button></CardContent></Card><ObjectQuestionnaire /></div>;
 
   return <div className="container mx-auto w-full max-w-none px-4 py-8" data-testid="page-object-setup">
     <div className="mx-auto max-w-6xl">
@@ -148,6 +154,7 @@ export default function ObjectSetup() {
       </div>
       <p className="mb-2 font-mono text-xs uppercase tracking-widest text-primary">Маршрут подбора / 02 — Площадка</p>
       <h1 className="mb-3 text-3xl font-bold tracking-tight">Опишите объект</h1>
+      <ObjectQuestionnaire readCurrent={() => draftReader.current()} onApplied={() => { setImportRevision(value => value + 1); setWaitingForCatalog(false); }} />
       <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-secondary/30 p-4">
         <div><p className="text-xs uppercase tracking-widest text-muted-foreground">Направление карты</p><p className="mt-1 font-medium" data-testid="text-object-sector">{sector?.label ?? (error ? 'Данные направлений недоступны' : sectors ? 'Не выбрано' : 'Загрузка направления…')}</p><p className="mt-1 text-xs text-muted-foreground">Направление определяет каталог; шаблон объекта описывает физическую площадку.</p></div>
         <Button type="button" variant="outline" size="sm" onClick={() => setLocation('/quick-select')} data-testid="button-change-sector">Изменить направление</Button>
@@ -155,7 +162,8 @@ export default function ObjectSetup() {
       {!sectors && !error && state.sectorId && <p className="mb-5 rounded-md border border-border p-3 text-sm text-muted-foreground" role="status" data-testid="status-object-sector-loading">Загружаем направление для фильтрации каталога…</p>}
       {error && state.sectorId && <p className="mb-5 rounded-md border border-destructive/40 p-3 text-sm" role="alert" data-testid="status-object-sector-error">Не удалось проверить направление: {error}. Параметры сохранятся, но переход в отраслевой каталог возможен после загрузки карты. <button type="button" className="underline" onClick={() => window.location.reload()} data-testid="button-retry-object-sector">Повторить загрузку</button></p>}
       {waitingForCatalog && <p className="mb-5 rounded-md border border-border bg-secondary/30 p-3 text-sm" role="status" data-testid="status-waiting-catalog">Параметры сохранены. Ожидаем данные направления, чтобы открыть отфильтрованный каталог.</p>}
-      {state.objectType === 'custom' ? <CustomSite initial={state.objectParams} onSave={save} /> : template ? <TemplateSite key={state.objectType} template={template} initial={state.objectParams} onSave={save} onProgress={updateObjectParams} /> : null}
+      {!!Object.keys(state.questionnaireEvidence ?? {}).length && <details className="mb-6 rounded border p-4" data-testid="questionnaire-saved-evidence"><summary>Сведения специалиста из анкеты (не участвуют в расчёте)</summary><ul className="space-y-2 pt-3">{Object.entries(state.questionnaireEvidence ?? {}).map(([key, evidence]) => <li key={key} className="break-words text-sm"><strong>{fieldsFor(state.objectType!).find(field => field.key === key)?.label ?? key}</strong>: {evidence.comment} / {evidence.source} / {evidence.date}</li>)}</ul></details>}
+      {state.objectType === 'custom' ? <CustomSite key={`custom-${importRevision}`} initial={state.objectParams} onSave={save} draftReader={draftReader} /> : template ? <TemplateSite key={`${state.objectType}-${importRevision}`} template={template} initial={state.objectParams} onSave={save} onProgress={updateObjectParams} draftReader={draftReader} /> : null}
     </div>
   </div>;
 }

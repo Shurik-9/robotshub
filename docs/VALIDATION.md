@@ -10,6 +10,7 @@ pnpm run typecheck
 pnpm --filter @workspace/robotshub run test:map
 pnpm --filter @workspace/robotshub run test:calc
 pnpm --filter @workspace/robotshub run test:journey
+pnpm --filter @workspace/robotshub run test:questionnaire
 pnpm --filter @workspace/robotshub run build
 docker compose up --build --wait
 curl -f http://localhost:8080/healthz

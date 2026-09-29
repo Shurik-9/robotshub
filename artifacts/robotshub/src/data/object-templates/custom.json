@@ -1,0 +1,15 @@
+{
+  "id": "custom",
+  "name": "Свой объект",
+  "groups": [{
+    "id": "brief",
+    "name": "Исследовательский бриф",
+    "fields": [
+      {"key":"site_name","label":"Название объекта","type":"text","base":"","required":true,"maxLength":120,"example":"Корпус сборки № 2"},
+      {"key":"task","label":"Задача робота","type":"text","base":"","required":true,"maxLength":1000,"example":"Перемещение комплектующих между постами"},
+      {"key":"site_area_m2","label":"Площадь площадки","unit":"м²","type":"number","base":"","required":false,"min":0.01,"example":1000},
+      {"key":"shifts_per_day","label":"Смен в сутки","type":"int","unit":"смен","base":"","required":false,"min":1,"max":4,"example":2},
+      {"key":"constraints","label":"Ограничения и условия","type":"text","base":"","required":false,"maxLength":1500,"example":"Совместное движение с персоналом"}
+    ]
+  }]
+}

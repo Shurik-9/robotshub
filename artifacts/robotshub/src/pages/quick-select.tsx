@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSectorMap, sectorCatalogPath, type MapSector } from '@/lib/useSectorMap';
 import { useProject, type ObjectType } from '@/store/project';
+import { ObjectQuestionnaire } from '@/components/object-questionnaire';
 
 const objects: { type: Exclude<ObjectType, null>; title: string; description: string; icon: typeof Warehouse }[] = [
   { type: 'warehouse', title: 'Склад', description: 'Склад, распределительный центр или зона хранения.', icon: Warehouse },
@@ -88,6 +89,7 @@ export default function QuickSelect() {
           <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">Сначала выберите направление карты и изучите подтверждённые сценарии. Затем укажите физический объект, для которого нужен робот. Отрасль и тип объекта — разные признаки.</p>
         </div>
 
+        <ObjectQuestionnaire onApplied={() => setLocation('/object')} />
         {error ? (
           <Card className="border-destructive/40" data-testid="status-sectors-error"><CardContent className="space-y-4 py-8">
             <p className="font-semibold">Данные карты не загрузились</p>
