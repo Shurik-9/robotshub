@@ -4,7 +4,7 @@ import { operationFor, operationScopeError } from './operationEconomics.ts';
 // Only the clinic-cleaning record has a task compatible with the existing
 // staff-based medical estimate. The other medical records concern drones
 // or rehabilitation and must not inherit that estimate.
-const CLINIC_CLEANER_ID = '5a5b3599-bd64-4330-9bbb-4f8ce7d780b9';
+export const CLINIC_CLEANER_ID = '5a5b3599-bd64-4330-9bbb-4f8ce7d780b9';
 
 export function evaluationLimit(
   sectorId: string | null,

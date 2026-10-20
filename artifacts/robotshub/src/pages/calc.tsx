@@ -129,6 +129,17 @@ export default function Calc() {
       }}
     />
   );
+  if (solution && (evaluationWarning || !state.objectType || Object.keys(state.objectParams).length === 0)) return (
+    <CalculationIntentState
+      solution={solution}
+      hasObject={Boolean(state.objectType && Object.keys(state.objectParams).length)}
+      limitation={evaluationWarning}
+      onCalculate={() => {
+        selectSolutionForCalculation(solution.id);
+        setLocation('/calc');
+      }}
+    />
+  );
   if (!state.objectType || state.selectedSolutions.length === 0) return <ProjectStartState mode="calc" />;
   if (evaluationWarning) return (
     <div className="container mx-auto max-w-3xl px-4 py-12" data-testid="alert-calculation-unavailable">
@@ -194,7 +205,7 @@ export default function Calc() {
           >
             Новый расчёт
           </Button>
-          <Button onClick={() => setLocation('/simulation')} className="w-full sm:w-auto">
+          <Button onClick={() => setLocation('/simulation')} className="w-full sm:w-auto" data-testid="button-go-simulation">
             Перейти к симуляции <IconVisualization size={18} className="ml-2" />
           </Button>
         </div>

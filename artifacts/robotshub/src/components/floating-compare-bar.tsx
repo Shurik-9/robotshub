@@ -18,9 +18,9 @@ export function FloatingCompareBar() {
           <GitCompareArrows className="h-5 w-5" />
         </span>
         <div>
-          <p className="text-sm font-semibold">Сравнение решений</p>
+          <p className="text-sm font-semibold">Таблица характеристик</p>
           <p className="text-xs text-muted-foreground" data-testid="text-compare-bar-count">
-            Выбрано {ids.length} из 3
+            {ids.length === 1 ? 'Добавьте ещё одну модель в каталоге' : `Выбрано ${ids.length} из 3 · без расчёта парка`}
           </p>
         </div>
       </div>

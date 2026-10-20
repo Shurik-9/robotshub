@@ -121,7 +121,7 @@ export default function StartBrief({ draft, objectId, objectLabel, scopeLabel, p
       </div>
     </div>
 
-    {focus && <Workbench key={focus.id} wb={wb} process={focus} readOnly={readOnly} />}
+    {focus && <Workbench key={focus.id} wb={wb} process={focus} readOnly={readOnly} objectId={objectId} />}
 
     {focus && brief && division && <article className="sb-panel" data-testid={`brief-panel-${focus.id}`} aria-labelledby={`brief-process-${focus.id}`}>
       <div className="sb-kicker">ГЛУБЖЕ · {focus.name.toLocaleUpperCase('ru-RU')}</div>

@@ -2,6 +2,40 @@
 
 Сравнение с предыдущим состоянием публичного репозитория на момент синхронизации 20 октября 2026. Смысл изменений: [CHANGELOG.md](CHANGELOG.md), результаты и ограничения: [VALIDATION.md](VALIDATION.md).
 
+## Дополнение: возврат в каталог, расчёт модели и живой результат `/start`
+
+В повторную передачу включены следующие изменения относительно предыдущей синхронизации. Dockerfile, Compose и серверный образ сохранены; оба образа пересобраны с актуальным интерфейсом. Новые тесты подключены через существующую команду `test:journey`, без изменения удалённого workflow.
+
+- `artifacts/robotshub/package.json`
+- `artifacts/robotshub/scripts/test-catalog-journey.mjs`
+- `artifacts/robotshub/scripts/test-start-workbench-simulation.mjs`
+- `artifacts/robotshub/src/components/calculation-intent-state.tsx`
+- `artifacts/robotshub/src/components/floating-compare-bar.tsx`
+- `artifacts/robotshub/src/components/start-scope/start-brief/index.tsx`
+- `artifacts/robotshub/src/components/start-scope/start-brief/workbench.tsx`
+- `artifacts/robotshub/src/components/start-scope/start-brief/workbench-simulation.tsx`
+- `artifacts/robotshub/src/components/start-scope/start-brief/workbench.css`
+- `artifacts/robotshub/src/lib/calculation-objects.ts`
+- `artifacts/robotshub/src/lib/catalog-navigation.ts`
+- `artifacts/robotshub/src/lib/evaluationScope.ts`
+- `artifacts/robotshub/src/lib/start-workbench-simulation.ts`
+- `artifacts/robotshub/src/lib/start-value-docx.ts`
+- `artifacts/robotshub/src/pages/calc.tsx`
+- `artifacts/robotshub/src/pages/object-setup.tsx`
+- `artifacts/robotshub/src/pages/simulation.tsx`
+- `artifacts/robotshub/src/pages/solution-detail.tsx`
+- `artifacts/robotshub/src/pages/solutions.tsx`
+- `artifacts/mockup-sandbox/src/.generated/mockup-components.ts` — обновлён автоматически формируемый реестр превью.
+- `docs/CHANGELOG.md`
+- `docs/CHANGED_FILES.md`
+- `docs/GITHUB_ACTIONS.md`
+- `docs/REVIEWER_GUIDE.md`
+- `docs/START_SIMULATION.md`
+- `docs/STATUS.md`
+- `docs/VALIDATION.md`
+
+## Предыдущая синхронизация
+
 Файл GitHub Actions подготовлен локально, но удалённый workflow сохранён из-за ограничения доступа; новая конфигурация опубликована в docs/github-actions-verify.yml.
 
 ## Добавлены или обновлены

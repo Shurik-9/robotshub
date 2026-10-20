@@ -6,12 +6,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import WorkbenchField from './workbench-field';
 import WorkbenchKpis from './workbench-kpis';
 import WorkbenchCompare from './workbench-compare';
+import WorkbenchSimulation from './workbench-simulation';
 import { ADVANCED_FIELDS, FLOW_FIELDS, LABOR_FIELDS, num, toTexts, type WbField } from './workbench-fields';
 import { MAX_VARIANTS, type useWorkbench } from './use-workbench';
 
 type Wb = ReturnType<typeof useWorkbench>;
 
-export default function Workbench({ wb, process, readOnly }: { wb: Wb; process: SiteProcess; readOnly?: boolean }) {
+export default function Workbench({ wb, process, readOnly, objectId = null }: { wb: Wb; process: SiteProcess; readOnly?: boolean; objectId?: string | null }) {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const unit = workbenchUnit(process);
   const sel = wb.selected;
@@ -23,6 +24,11 @@ export default function Workbench({ wb, process, readOnly }: { wb: Wb; process: 
   const field = (f: WbField) => <WorkbenchField key={f.key} field={f} unit={unit} value={t[f.key] ?? ''} error={errs[f.key]} onChange={v => wb.edit(f.key, v)} />;
   const unitNote = process.kind === 'cleaning' ? 'м² убранной площади в час' : process.kind === 'inspection' ? 'проверок в час' : process.kind === 'picking'
     ? 'перемещений тары/тележек в час — только транспорт, не захват отдельных товаров' : 'перемещений в час';
+  const LIVE: string[] = ['loadPerHour', 'robotCount', 'batteryHours', 'chargeHours'];
+  const live = LIVE.map(k => [...FLOW_FIELDS, ...ADVANCED_FIELDS].find(f => f.key === k)!).filter(Boolean);
+  const flowRest = FLOW_FIELDS.filter(f => !LIVE.includes(f.key));
+  const advRest = ADVANCED_FIELDS.filter(f => !LIVE.includes(f.key));
+  const liveErr = LIVE.some(k => errs[k as keyof typeof errs]);
   const confirmVariant = wb.plan.variants.find(v => v.id === confirmId);
 
   return <section className="wb" data-testid="workbench">
@@ -49,19 +55,24 @@ export default function Workbench({ wb, process, readOnly }: { wb: Wb; process: 
       </button>
     </div>
 
+    <WorkbenchSimulation objectId={objectId} process={process} inputs={inputs ?? null} hasErrors={!inputs || liveErr}>{live.map(field)}</WorkbenchSimulation>
+
     <WorkbenchKpis result={result} unit={unit} />
     {wb.plan.variants.some(v => !v.name.trim()) && <p className="sv-warn" role="alert">У каждого варианта должно быть название. Пустое название не сохраняется и блокирует утверждение.</p>}
     {result && <p className="wb-verdict" data-testid="workbench-verdict">{result.verdict}</p>}
     {result && !result.meetsDemand && <p className="sv-warn" data-testid="workbench-undercapacity">Мощность {num(result.capacityPerHour)} {unit}, требуется с резервом {num(result.peakDemandPerHour)} {unit}. Окупаемость не подтверждена.</p>}
     {result && <p className="wb-fine">Объём за смену: {num(result.operationsPerShift)}. Годовое рабочее окно: {num(result.annualOperatingHours)} ч. Поток в час задаётся отдельно от длительности смены.</p>}
 
-    <div className="wb-cols">
-      <fieldset className="wb-group"><legend>Поток и парк <small>· {unitNote}</small></legend>{FLOW_FIELDS.map(field)}</fieldset>
-      <fieldset className="wb-group"><legend>Люди и деньги <small>· человеко-часы</small></legend>{LABOR_FIELDS.map(field)}</fieldset>
-    </div>
-    <details className="wb-adv" open={Object.keys(errs).some(k => ADVANCED_FIELDS.some(f => f.key === k)) || undefined}>
-      <summary><ChevronDown size={15} /> Режим работы, зарядка, сервис, энергия</summary>
-      <div className="wb-adv-grid">{ADVANCED_FIELDS.map(field)}</div>
+    <details className="wb-adv" open={Object.keys(errs).some(k => [...flowRest, ...LABOR_FIELDS].some(f => f.key === k)) || undefined}>
+      <summary><ChevronDown size={15} /> Экономика: темп по формуле, цена, люди и деньги</summary>
+      <div className="wb-cols">
+        <fieldset className="wb-group"><legend>Темп и цена <small>· {unitNote}; темп — допущение формулы, не скорость в модели</small></legend>{flowRest.map(field)}</fieldset>
+        <fieldset className="wb-group"><legend>Люди и деньги <small>· человеко-часы</small></legend>{LABOR_FIELDS.map(field)}</fieldset>
+      </div>
+    </details>
+    <details className="wb-adv" open={Object.keys(errs).some(k => advRest.some(f => f.key === k)) || undefined}>
+      <summary><ChevronDown size={15} /> Режим работы, сервис, энергия</summary>
+      <div className="wb-adv-grid">{advRest.map(field)}</div>
     </details>
 
     <details className="wb-adv">

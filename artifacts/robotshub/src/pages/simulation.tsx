@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
+import { withCalculationIntent } from '@/lib/calculation-intent';
 import { getSimulationSignature, useProject } from '@/store/project';
 import { evaluationLimit } from '@/lib/evaluationScope';
 import { operationFor } from '@/lib/operationEconomics';
@@ -551,9 +552,9 @@ export default function Simulation() {
 
   useEffect(() => {
     if (!state.objectType && selectedSolutions.length > 0) {
-      setLocation('/solutions');
+      setLocation(withCalculationIntent('/calc', selectedSolution?.id));
     }
-  }, [state.objectType, selectedSolutions.length, setLocation]);
+  }, [state.objectType, selectedSolutions.length, selectedSolution?.id, setLocation]);
 
   if (!selectedSolution) return (
     <div className="container mx-auto max-w-3xl px-4 py-12" data-testid="simulation-empty-fleet">
@@ -582,6 +583,7 @@ export default function Simulation() {
     <div className="container mx-auto max-w-3xl px-4 py-12" data-testid="alert-simulation-unavailable">
       <h1 className="text-2xl font-bold">Для этой задачи нет проверенной симуляции</h1>
       <p className="mt-4 text-muted-foreground">{simulationLimit}</p>
+      <Button className="mt-6 mr-3" onClick={() => setLocation(withCalculationIntent('/calc', selectedSolution.id))} data-testid="button-simulation-setup">К параметрам и экономике этой модели</Button>
       <Button className="mt-6" onClick={() => setLocation('/solutions')} data-testid="button-simulation-back-evidence">Вернуться к решениям</Button>
     </div>
   );

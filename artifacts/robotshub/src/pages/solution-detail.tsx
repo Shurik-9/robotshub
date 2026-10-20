@@ -1,5 +1,7 @@
 import { useLocation, useParams } from 'wouter';
 import { useState } from 'react';
+import { catalogReturnUrl } from '@/lib/catalog-navigation';
+import { withCalculationIntent } from '@/lib/calculation-intent';
 import './solutions-cards.css';
 import { CatalogDescriptionSource } from '@/components/catalog-description-source';
 import { ArrowLeft, ArrowRight, Check, ExternalLink, FileText, Layers, ShieldCheck, AlertTriangle } from 'lucide-react';
@@ -8,7 +10,6 @@ import { QuoteCta } from '@/components/quote-cta';
 import { FloatingCompareBar } from '@/components/floating-compare-bar';
 import { IconRobotAmr } from '@/components/brand-icons';
 import { useComparisonSelection } from '@/hooks/use-comparison-selection';
-import { useProject } from '@/store/project';
 import {
   getCompanyProfile,
   getSolutionDataStatus,
@@ -49,7 +50,6 @@ export default function SolutionDetail() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const comparison = useComparisonSelection();
-  const { state, toggleSolution } = useProject();
   const [failedImage, setFailedImage] = useState<string | null>(null);
   const variants = solutionsData.items.filter(item => item.id === id);
   const solution = variants[0];
@@ -59,7 +59,7 @@ export default function SolutionDetail() {
       <main className="min-h-[70dvh] px-4 py-16 text-center" data-testid="solution-detail-not-found">
         <h1 className="text-2xl font-semibold">Решение не найдено</h1>
         <p className="mt-2 text-muted-foreground">Модель могла быть удалена из каталога или ссылка неполная.</p>
-        <Button type="button" className="mt-5" onClick={() => setLocation('/solutions')}>Вернуться в каталог</Button>
+        <Button type="button" className="mt-5" onClick={() => setLocation(catalogReturnUrl())}>Вернуться в каталог</Button>
       </main>
     );
   }
@@ -74,7 +74,6 @@ export default function SolutionDetail() {
   const company = getCompanyProfile(solution);
   const industries = Array.from(new Set(variants.map(v => v.industry).filter(Boolean)));
   const regions = Array.from(new Set(variants.map(v => v.region).filter(Boolean)));
-  const isSelected = state.selectedSolutions.includes(solution.id);
   const inComparison = comparison.ids.includes(solution.id);
   const price = solution.price_rub
     ? `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(solution.price_rub)} ₽`
@@ -85,7 +84,7 @@ export default function SolutionDetail() {
   return (
     <main className="min-h-[70dvh] px-4 py-8 sm:px-6" data-testid={`page-solution-detail-${solution.id}`}>
       <article className="mx-auto max-w-6xl">
-        <button type="button" onClick={() => setLocation('/solutions')} className="mb-5 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" data-testid="button-detail-back">
+        <button type="button" onClick={() => setLocation(catalogReturnUrl())} className="mb-5 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" data-testid="button-detail-back">
           <ArrowLeft className="h-4 w-4" /> Каталог решений
         </button>
 
@@ -140,15 +139,16 @@ export default function SolutionDetail() {
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <QuoteCta solutionId={solution.id} className="w-full" />
                 <QuoteCta solutionId={solution.id} variant="leasing" className="w-full" />
-                <Button type="button" variant={isSelected ? 'default' : 'outline'} aria-pressed={isSelected}
-                  onClick={() => toggleSolution(solution.id)} className="w-full" data-testid="button-detail-toggle-calc">
-                  {isSelected ? 'В расчёте' : 'Добавить в расчёт'}
+                <Button type="button"
+                  onClick={() => setLocation(withCalculationIntent('/calc', solution.id))} className="w-full" data-testid="button-detail-toggle-calc">
+                  Рассчитать для объекта
                 </Button>
                 <Button type="button" variant={inComparison ? 'secondary' : 'outline'} aria-pressed={inComparison}
                   onClick={() => comparison.toggle(solution.id)} className="w-full" data-testid="button-detail-compare">
-                  {inComparison ? 'Выбрано для сравнения' : 'Добавить к сравнению'}
+                  {inComparison ? 'Убрать из сравнения' : 'Сравнить характеристики'}
                 </Button>
               </div>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">Расчёт: выберите объект → задайте параметры → откройте экономику и симуляцию. Сравнение: только таблица характеристик 2–3 моделей.</p>
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@ import type { SiteProcess } from './start-processes.ts';
 import { calculateWorkbench, isWorkbenchApproved, parseWorkbenchPlan, workbenchContext, workbenchUnit,
   WORKBENCH_LABELS, type WorkbenchInputs, type WorkbenchPlan } from './start-workbench.ts';
 import { fieldsForProcess } from './start-processes.ts';
+import { startSimulationConditions } from './start-workbench-simulation.ts';
 
 const escape = (text: string) => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;')
   .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '');
@@ -97,6 +98,7 @@ function compareTable(plan: WorkbenchPlan): string {
 function workbenchSection(draft: StartScopeDraft, process: SiteProcess, plan: WorkbenchPlan): string {
   const selected = plan.variants.find(item => item.id === plan.selectedId)!;
   const input = selected.inputs, r = calculateWorkbench(input), unit = workbenchUnit(process);
+  const simulation = startSimulationConditions(draft.objectId, process, input);
   const facts = draft.details[process.id];
   const evidence = briefForProcess(draft.objectId, process).evidence;
   const body = [
@@ -108,6 +110,12 @@ function workbenchSection(draft: StartScopeDraft, process: SiteProcess, plan: Wo
     paragraph(`Высвобождение с поправкой на обслуживаемый поток: ${n(r.freedHoursPerShift)} чел·ч/смену. До эксплуатации денежный эффект: ${n(r.annualGrossCashRub)} ₽/год. Это не автоматическое сокращение должностей.`),
     paragraph('Утверждённые параметры — допущения до проверки источников и замеров', true),
     ...Object.entries(input).map(([key, value]) => paragraph(`${WORKBENCH_LABELS[key as keyof WorkbenchInputs]}: ${value === null ? (key === 'robotCount' ? 'автоподбор' : 'не указано') : n(value)}.`)),
+    paragraph('Условия наглядного просмотра', true),
+    ...(simulation.supported ? [
+      paragraph(`Маршрутный просмотр: ${n(input.loadPerHour)} перемещений/ч, ${n(simulation.robotCount)} машин, автономность ${n(input.batteryHours)} ч, зарядка ${n(input.chargeHours)} ч. Начальная очередь: ${simulation.initialTasks} заданий.`),
+      ...simulation.assumptions.map(text => paragraph(text)),
+      paragraph('Краткие живые KPI не включены в задание как доказанная производительность. Проверить на площадке цикл рейса, загрузку, зарядку и устойчивое выполнение потока; сопоставить с допущением темпа одного робота.'),
+    ] : [paragraph(simulation.reason)]),
     paragraph('Сравнение альтернатив на тех же правилах', true),
     compareTable(plan),
     ...plan.variants.filter(item => item.id !== plan.selectedId).map(variant => {

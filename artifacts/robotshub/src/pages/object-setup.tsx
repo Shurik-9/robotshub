@@ -16,6 +16,9 @@ import { useSectorMap, sectorCatalogPath } from '@/lib/useSectorMap';
 import { useProject } from '@/store/project';
 import { ObjectQuestionnaire } from '@/components/object-questionnaire';
 import { questionnaireTemplates as templates, fieldsFor, type Template } from '@/lib/questionnaire-schema';
+import { evaluationLimit } from '@/lib/evaluationScope';
+import { calculationObjectsFor } from '@/lib/calculation-objects';
+import { operationFor } from '@/lib/operationEconomics';
 import { requestedCalculationSolution, withCalculationIntent } from '@/lib/calculation-intent';
 
 type Params = Record<string, string | number | boolean>;
@@ -127,7 +130,7 @@ function TemplateSite({ template, initial, onSave, onProgress, draftReader }: { 
 export default function ObjectSetup() {
   const [, setLocation] = useLocation();
   const requestedSolution = requestedCalculationSolution(useSearch());
-  const { state, updateObjectParams } = useProject();
+  const { state, updateObjectParams, selectSolutionForCalculation } = useProject();
   const { sectors, error } = useSectorMap();
   const [waitingForCatalog, setWaitingForCatalog] = useState(false);
   const [importRevision, setImportRevision] = useState(0);
@@ -141,6 +144,14 @@ export default function ObjectSetup() {
   }, [waitingForCatalog, sector, destination, setLocation]);
   const save = (data: Params) => {
     updateObjectParams(data);
+    if (requestedSolution
+      && !evaluationLimit(state.sectorId, state.objectType, data, requestedSolution.id)
+      && (calculationObjectsFor(requestedSolution.id).some(option => option.type === state.objectType)
+        || operationFor(state.sectorId, requestedSolution.id))) {
+      selectSolutionForCalculation(requestedSolution.id);
+      setLocation('/calc');
+      return;
+    }
     if (state.sectorId && !sector) {
       setWaitingForCatalog(true);
       return;
@@ -159,7 +170,7 @@ export default function ObjectSetup() {
       </div>
       <p className="mb-2 font-mono text-xs uppercase tracking-widest text-primary">Маршрут подбора / 02 — Площадка</p>
       <h1 className="mb-3 text-3xl font-bold tracking-tight">Опишите объект</h1>
-      {requestedSolution && <p className="mb-6 rounded-md border border-primary/30 bg-primary/5 p-4 text-sm leading-6" data-testid="object-calculation-intent">После сохранения параметров откроется подтверждение расчёта для <strong>{requestedSolution.name}</strong>. Применимость модели будет проверена по выбранному объекту и направлению.</p>}
+      {requestedSolution && <p className="mb-6 rounded-md border border-primary/30 bg-primary/5 p-4 text-sm leading-6" data-testid="object-calculation-intent">Выбранная модель: <strong>{requestedSolution.name}</strong>. Сохраните параметры — откроется расчёт для этого объекта. Следом можно перейти к симуляции. Начальные значения шаблона — допущения: уточните их под свою площадку.</p>}
       <ObjectQuestionnaire readCurrent={() => draftReader.current()} onApplied={() => { setImportRevision(value => value + 1); setWaitingForCatalog(false); }} />
       <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-secondary/30 p-4">
         <div><p className="text-xs uppercase tracking-widest text-muted-foreground">Направление карты</p><p className="mt-1 font-medium" data-testid="text-object-sector">{sector?.label ?? (error ? 'Данные направлений недоступны' : sectors ? 'Не выбрано' : 'Загрузка направления…')}</p><p className="mt-1 text-xs text-muted-foreground">Направление определяет каталог; шаблон объекта описывает физическую площадку.</p></div>

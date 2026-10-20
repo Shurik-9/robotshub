@@ -29,6 +29,8 @@ import { scoreSolutionMatch, type MatchReasonStatus } from '@/lib/solutionScorin
 import { evaluationLimit } from '@/lib/evaluationScope';
 import { useSectorMap } from '@/lib/useSectorMap';
 import { matchesWarehouseCatalog, warehouseCatalogPriority } from '@/lib/catalogObjectScope';
+import { readCatalogView, saveCatalogView, useRestoreCatalogView } from '@/lib/catalog-navigation';
+import { withCalculationIntent } from '@/lib/calculation-intent';
 
 import solutionsData from '@/data/solutions.json';
 
@@ -194,20 +196,25 @@ function SolutionImage({
 
 export default function Solutions() {
   const [, setLocation] = useLocation();
+  const [savedView] = useState(() => {
+    const view = readCatalogView();
+    return view?.url === window.location.pathname + window.location.search ? view : null;
+  });
+  useRestoreCatalogView(savedView);
   const comparison = useComparisonSelection();
   const {
     state,
     setSectorId,
     projectRecoveryNotice,
-    toggleSolution,
-    selectSolutionForCalculation,
     clearSelectedSolutions,
   } = useProject();
-  const [personalizedMode, setPersonalizedMode] = useState(state.objectType === 'warehouse');
+  const [personalizedMode, setPersonalizedMode] = useState(savedView?.filters.personalized ?? state.objectType === 'warehouse');
   const [industryFilter, setIndustryFilter] = useState(
-    () => new URLSearchParams(window.location.search).get('industry')?.trim() ?? '',
+    () => savedView?.filters.industry ?? new URLSearchParams(window.location.search).get('industry')?.trim() ?? '',
   );
-  const [sectorFilter, setSectorFilter] = useState(readMapSectorFilter);
+  const [sectorFilter, setSectorFilter] = useState(() => savedView
+    ? savedView.filters.sector ? { ...savedView.filters.sector, ids: new Set(savedView.filters.sector.ids) } : null
+    : readMapSectorFilter());
   const { sectors, error: sectorLoadError } = useSectorMap();
   const storedSector = sectors?.find(item => item.id === state.sectorId);
   const unresolvedSector = Boolean(state.sectorId && !storedSector && !industryFilter && !sectorFilter);
@@ -224,27 +231,48 @@ export default function Solutions() {
     ? `/quick-select?sector=${encodeURIComponent(returnDirectionId)}`
     : '/quick-select';
   const directionMismatch = Boolean(activeDirectionId && state.objectType && state.sectorId !== activeDirectionId);
-  const [warehouseFilter, setWarehouseFilter] = useState(true);
+  const [warehouseFilter, setWarehouseFilter] = useState(savedView?.filters.warehouse ?? true);
   const warehouseScope = warehouseFilter && state.objectType === 'warehouse' && !directionMismatch && !activeSector;
   const directionWarning = 'Текущий объект был выбран вне этого направления. Перед расчётом подтвердите отрасль и параметры площадки.';
   
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(savedView?.filters.search ?? '');
   const urlArea = new URLSearchParams(window.location.search).get('area');
   const initialArea = areaDefinitions.find(item => item.id === urlArea)?.id ?? null;
-  const [areaFilter, setAreaFilter] = useState(initialArea ?? 'all');
+  const [areaFilter, setAreaFilter] = useState(savedView?.filters.area ?? initialArea ?? 'all');
   const areaIsPrimary = initialArea !== null && areaFilter !== 'all';
-  const [evidenceOpen, setEvidenceOpen] = useState(false);
-  const [operationFilter, setOperationFilter] = useState('all');
-  const [brandFilter, setBrandFilter] = useState('all');
-  const [companyFilter, setCompanyFilter] = useState('all');
-  const [roleFilter, setRoleFilter] = useState<'all' | CompanyRoleId>('all');
-  const [openFilters, setOpenFilters] = useState({
+  const [evidenceOpen, setEvidenceOpen] = useState(savedView?.filters.evidence ?? false);
+  const [operationFilter, setOperationFilter] = useState(savedView?.filters.operation ?? 'all');
+  const [brandFilter, setBrandFilter] = useState(savedView?.filters.brand ?? 'all');
+  const [companyFilter, setCompanyFilter] = useState(savedView?.filters.company ?? 'all');
+  const [roleFilter, setRoleFilter] = useState<'all' | CompanyRoleId>((savedView?.filters.role as 'all' | CompanyRoleId) ?? 'all');
+  const [openFilters, setOpenFilters] = useState(savedView?.filters.open ?? {
     area: true,
     operation: true,
     brand: false,
     company: false,
   });
 
+  const rememberCard = (id: string) => {
+    const card = document.querySelector(`[data-testid="card-solution-${id}"]`);
+    saveCatalogView({
+      url: window.location.pathname + window.location.search, cardId: id,
+      cardTop: card?.getBoundingClientRect().top ?? 80, scrollY: window.scrollY, pending: true,
+      filters: {
+        search, area: areaFilter, operation: operationFilter, brand: brandFilter, company: companyFilter,
+        role: roleFilter, industry: industryFilter, warehouse: warehouseFilter, personalized: personalizedMode,
+        evidence: evidenceOpen, open: openFilters,
+        sector: sectorFilter ? { ...sectorFilter, ids: [...sectorFilter.ids] } : null,
+      },
+    });
+  };
+  const openModel = (id: string) => {
+    rememberCard(id);
+    setLocation(`/solutions/${id}`);
+  };
+  const startCalculation = (id: string) => {
+    rememberCard(id);
+    setLocation(withCalculationIntent('/calc', id));
+  };
   const toggleFilter = (section: keyof typeof openFilters) => {
     setOpenFilters(current => ({ ...current, [section]: !current[section] }));
   };
@@ -532,7 +560,7 @@ export default function Solutions() {
             {personalizedMode ? 'По объекту: вкл.' : 'По параметрам объекта'}
           </Button>
           <div className="bg-secondary/50 border border-border px-3 py-1.5 rounded-md text-sm flex items-center gap-2">
-            <span className="text-muted-foreground">В расчёте:</span>
+            <span className="text-muted-foreground">Моделей в текущем проекте:</span>
             <span className="text-primary font-bold" data-testid="text-selected-count">{state.selectedSolutions.length}</span>
           </div>
           <Button
@@ -547,20 +575,21 @@ export default function Solutions() {
             Очистить расчёт
           </Button>
           <Button 
-            disabled={state.selectedSolutions.length === 0 || directionMismatch || Boolean(evaluationLimit(
-              activeDirectionId || state.sectorId,
-              state.objectType,
-              state.objectParams,
-              state.activeSolutionId ?? state.selectedSolutions[0],
-            ))}
-            onClick={() => setLocation('/calc')}
+            disabled={state.selectedSolutions.length === 0}
+            onClick={() => setLocation(withCalculationIntent('/calc', state.activeSolutionId ?? state.selectedSolutions[0]))}
             data-testid="button-go-calc"
           >
-            Расчёт экономики <ArrowRight className="w-4 h-4 ml-2" />
+            Продолжить расчёт <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
       </div>
 
+      <section className="mb-5 grid shrink-0 gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:grid-cols-2" data-testid="catalog-action-guide">
+        <div><h2 className="font-semibold text-foreground">Нужны экономика и симуляция?</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">Нажмите «Рассчитать для объекта» у модели. Далее: параметры площадки → расчёт → симуляция.</p></div>
+        <div><h2 className="font-semibold text-foreground">Хотите сопоставить модели?</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">Отметьте 2–3 модели кнопкой «Сравнить характеристики». Снизу появится кнопка открытия таблицы. Это не подбор парка.</p></div>
+      </section>
       {unresolvedSector && (
         <Alert className="mb-4 shrink-0 border-amber-500/40 bg-amber-500/10" data-testid="alert-sector-unavailable">
           <Info className="h-4 w-4" />
@@ -928,7 +957,7 @@ export default function Solutions() {
                       <div className="min-w-0">
                         <button
                           type="button"
-                          onClick={() => setLocation(`/solutions/${sol.id}`)}
+                          onClick={() => openModel(sol.id)}
                           className="break-words text-left text-xl font-semibold leading-7 text-foreground hover:text-primary"
                           data-testid={`link-solution-detail-${sol.id}`}
                           title={sol.name}
@@ -968,7 +997,7 @@ export default function Solutions() {
                         )}
                       </div>
 
-                      <SolutionConnectionsSummary solution={sol} onOpen={() => setLocation(`/solutions/${sol.id}`)} />
+                      <SolutionConnectionsSummary solution={sol} onOpen={() => openModel(sol.id)} />
 
                       <footer className="mt-auto border-t border-border pt-4">
                         <p className="font-mono text-lg font-bold text-[#3BE68F]" data-testid={`text-price-${sol.id}`}>{price}</p>
@@ -976,38 +1005,11 @@ export default function Solutions() {
                         <div className="solution-card-actions mt-4 grid gap-2">
                           <Button
                             type="button"
-                            onClick={() => {
-                              if (estimateLimit) {
-                                if (!state.objectType || Object.keys(state.objectParams).length === 0) {
-                                  setLocation(activeDirectionId
-                                    ? `/quick-select?sector=${encodeURIComponent(activeDirectionId)}`
-                                    : '/quick-select');
-                                }
-                                return;
-                              }
-                              selectSolutionForCalculation(sol.id);
-                              setLocation('/calc');
-                            }}
-                            disabled={Boolean(estimateLimit && state.objectType
-                              && Object.keys(state.objectParams).length > 0)}
+                            onClick={() => startCalculation(sol.id)}
                             className="w-full"
                             data-testid={`button-calculate-${sol.id}`}
                           >
-                            {estimateLimit
-                              ? (!state.objectType || Object.keys(state.objectParams).length === 0
-                                ? 'Описать объект'
-                                : 'Нет модели ТЭО для задачи')
-                              : 'Предварительное ТЭО'}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={isSelected ? 'default' : 'outline'}
-                            onClick={() => toggleSolution(sol.id)}
-                            aria-pressed={isSelected}
-                            className="w-full"
-                            data-testid={`button-toggle-${sol.id}`}
-                          >
-                            {isSelected ? 'В расчёте' : 'Добавить в расчёт'}
+                            Рассчитать для объекта <ArrowRight className="ml-2 h-4 w-4" />
                           </Button>
                           <Button
                             type="button"
@@ -1017,13 +1019,13 @@ export default function Solutions() {
                             aria-pressed={comparison.ids.includes(sol.id)}
                             data-testid={`button-compare-${sol.id}`}
                           >
-                            {comparison.ids.includes(sol.id) ? 'Выбрано для сравнения' : 'Добавить к сравнению'}
+                            {comparison.ids.includes(sol.id) ? 'Убрать из сравнения' : 'Сравнить характеристики'}
                           </Button>
                           <QuoteCta solutionId={sol.id} className="w-full" />
                           <Button
                             type="button"
                             variant="ghost"
-                            onClick={() => setLocation(`/solutions/${sol.id}`)}
+                            onClick={() => openModel(sol.id)}
                             className="w-full gap-2 border border-primary/30 text-primary hover:bg-primary/10"
                             data-testid={`button-model-page-${sol.id}`}
                           >
