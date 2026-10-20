@@ -1,6 +1,8 @@
-import { ArrowLeft, Check, ExternalLink, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ExternalLink, ShieldCheck } from 'lucide-react';
 import { Link, useRoute } from 'wouter';
 import { CASES, type CaseStudy } from '@/pages/cases';
+import { Button } from '@/components/ui/button';
+import { findCaseCatalogSolution, withCalculationIntent } from '@/lib/calculation-intent';
 
 function Passport({ item }: { item: CaseStudy }) {
   return (
@@ -55,6 +57,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function CaseArticle() {
   const [, params] = useRoute('/cases/:id');
   const item = CASES.find((caseStudy) => caseStudy.id === params?.id);
+  const catalogSolution = item ? findCaseCatalogSolution(item.solutionName) : null;
 
   if (!item) {
     return (
@@ -143,6 +146,25 @@ export default function CaseArticle() {
             <Passport item={item} />
           </aside>
         </div>
+
+        <section className="mx-auto mt-10 max-w-5xl rounded-lg border border-primary/30 bg-primary/5 p-5 sm:p-7" data-testid="case-next-steps">
+          <h2 className="text-xl font-semibold">Роботизация вашей площадки</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">Эффект из этого кейса не гарантирует такой же результат на другом объекте. Уточните стоимость внедрения или подготовьте оценку на своих исходных данных.</p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            {catalogSolution ? (
+              <>
+                <Button asChild className="h-auto min-h-10 whitespace-normal py-3">
+                  <a href={`${import.meta.env.BASE_URL}lead?solution=${encodeURIComponent(catalogSolution.id)}&via=case`} data-testid="case-request-quote">Запросить КП по этой технике<ArrowRight className="ml-2 h-4 w-4 shrink-0" /></a>
+                </Button>
+                <Button asChild variant="outline" className="h-auto min-h-10 whitespace-normal py-3">
+                  <Link href={withCalculationIntent('/calc', catalogSolution.id)} data-testid="case-calculate">Рассчитать экономику решения<ArrowRight className="ml-2 h-4 w-4 shrink-0" /></Link>
+                </Button>
+              </>
+            ) : (
+              <Button asChild><Link href="/quick-select" data-testid="case-start-selection">Подобрать решение для своего объекта<ArrowRight className="ml-2 h-4 w-4 shrink-0" /></Link></Button>
+            )}
+          </div>
+        </section>
 
         <div className="mx-auto mt-10 flex max-w-5xl flex-col gap-5 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p data-testid={`case-source-${item.number}`} className="flex min-w-0 items-start gap-2 text-xs leading-5 text-muted-foreground">

@@ -12,4 +12,4 @@
 <text x="920.0" y="456" fill="#94A3B8" font-family="-apple-system,'Segoe UI',Roboto,sans-serif" font-size="14.5" text-anchor="middle">типа объектов в эксплуатации</text>
 <line x1="60" y1="608" x2="1140" y2="608" stroke="#1E293B" stroke-width="1.5"/>
 <text x="60" y="640" fill="#64748B" font-family="-apple-system,'Segoe UI',Roboto,sans-serif" font-size="13">Источник: Каталог внедрений ФЦ БАС, 2026 · данные вендора</text>
-<text x="1140" y="640" fill="#64748B" font-family="-apple-system,'Segoe UI',Roboto,sans-serif" font-size="13" text-anchor="end">Центр подбора роботизации «Железный аргумент» · Было → Стало</text></svg>
+<text x="1140" y="640" font-family="-apple-system,'Segoe UI',Roboto,sans-serif" font-size="13" text-anchor="end">Центр подбора роботизации «Железный аргумент» · Было → Стало</text></svg>

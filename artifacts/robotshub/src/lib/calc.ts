@@ -61,12 +61,14 @@ export interface SimulationInputs {
   unitPrice: number;
   currentStaffCost: number;
   newStaffCost: number;
+  laborEquivalent: number;
 }
 
 export interface PaybackRiskAssumption {
   key: string;
   label: string;
   unit: string;
+  distribution: 'uniform' | 'triangular';
   base: number;
   range: [number, number];
   source: string;
@@ -220,7 +222,7 @@ export function calculateEconomics({
   currentStaffCost = targetStaff * annualSalaryCostPerPerson;
   
   // Assume robots replace 70% of staff
-  const staffRemaining = Math.max(1, Math.floor(targetStaff * 0.3));
+  const staffRemaining = remainingStaff(targetStaff);
   newStaffCost = staffRemaining * annualSalaryCostPerPerson;
   
   const annualSavings = currentStaffCost - newStaffCost;
@@ -478,10 +480,8 @@ export function calculateSimulationInputs({
         : 100000;
   const annualSalaryCostPerPerson = simulationBaseSalary * 12 * 1.302 * whatIf.salaryMultiplier;
   const currentStaffCost = targetStaff * annualSalaryCostPerPerson;
-  const newStaffCost = Math.max(1, Math.floor(targetStaff * 0.3)) * annualSalaryCostPerPerson;
-  const requiredThroughputPerHour = isWarehouse
-    ? (Number(objectParams.inbound_pallets_per_day || 1000) * whatIf.volumeMultiplier) / Math.max(1, hoursPerDay)
-    : 0;
+  const newStaffCost = remainingStaff(targetStaff) * annualSalaryCostPerPerson;
+  const requiredThroughputPerHour = tasksPerHour;
   const unitPrice = (solution.price_rub || 2500000) * whatIf.priceMultiplier;
   const taxonomy = getSolutionTaxonomy(solution);
   const confirmedRuntime = typeof solution.specs?.runtime_h === 'number' && solution.specs.runtime_h > 0
@@ -518,7 +518,12 @@ export function calculateSimulationInputs({
     unitPrice,
     currentStaffCost,
     newStaffCost,
+    laborEquivalent: Math.max(0, targetStaff - remainingStaff(targetStaff)),
   };
+}
+
+function remainingStaff(targetStaff: number) {
+  return Math.max(1, Math.floor(targetStaff * 0.3));
 }
 
 const PAYBACK_HISTOGRAM_BINS = [
@@ -580,6 +585,22 @@ function sampleRange(
   return range[0] + (range[1] - range[0]) * random();
 }
 
+function sampleTriangularMultiplier(
+  rangePct: [number, number],
+  random: () => number,
+  baseProbability: number,
+) {
+  const [min, max] = rangePct;
+  const mode = 100;
+  if (random() < baseProbability) return 1;
+  const draw = random();
+  const split = (mode - min) / (max - min);
+  const value = draw < split
+    ? min + Math.sqrt(draw * (max - min) * (mode - min))
+    : max - Math.sqrt((1 - draw) * (max - min) * (max - mode));
+  return value / 100;
+}
+
 /**
  * Runs a deterministic Monte Carlo layer on top of the purchase scenario.
  * The deterministic calculation above is intentionally not called with sampled
@@ -599,32 +620,11 @@ export function simulatePaybackRisk(inputs: CalcInputs): PaybackRiskResult {
   let nonPayback = 0;
 
   for (let iteration = 0; iteration < config.iterations; iteration += 1) {
-    const peakReservePct = sampleRange(
-      uncertainty.peak_reserve_pct.range as [number, number],
-      random,
-      undefined,
-      uncertainty.peak_reserve_pct.base,
-      config.base_probability,
-    );
-    const robotUtilization = sampleRange(
-      uncertainty.robot_utilization.range as [number, number],
-      random,
-      undefined,
-      uncertainty.robot_utilization.base,
-      config.base_probability,
-    );
     const servicePct = sampleRange(
       uncertainty.service_pct.range as [number, number],
       random,
       overrides?.servicePct,
       uncertainty.service_pct.base,
-      config.base_probability,
-    );
-    const electricityTariff = sampleRange(
-      uncertainty.electricity_tariff_rub_kwh.range as [number, number],
-      random,
-      overrides?.electricityTariff,
-      uncertainty.electricity_tariff_rub_kwh.base,
       config.base_probability,
     );
     const integrationPct = sampleRange(
@@ -641,23 +641,30 @@ export function simulatePaybackRisk(inputs: CalcInputs): PaybackRiskResult {
       uncertainty.commissioning_pct.base,
       config.base_probability,
     );
+    const volumeMultiplier = sampleTriangularMultiplier(
+      uncertainty.volume_multiplier.range as [number, number],
+      random,
+      config.base_probability,
+    );
+    const priceMultiplier = sampleRange(
+      uncertainty.price_multiplier.range as [number, number],
+      random,
+      undefined,
+      uncertainty.price_multiplier.base,
+      config.base_probability,
+    ) / 100;
 
-    const robotCount = simulationInputs.robotCountMode === 'warehouse'
-      ? Math.max(1, Math.round(
-        simulationInputs.robotCount
-        * ((1 + peakReservePct / 100) / (1 + 15 / 100))
-        * (0.78 / robotUtilization),
-      ))
-      : simulationInputs.robotCount;
-    const equipmentCapex = robotCount * simulationInputs.unitPrice;
+    const robotCount = Math.max(1, Math.round(simulationInputs.robotCount * volumeMultiplier));
+    const equipmentCapex = robotCount * simulationInputs.unitPrice * priceMultiplier;
     const capex = equipmentCapex
       + equipmentCapex * (integrationPct / 100)
       + robotCount * 100000
       + equipmentCapex * (commissioningPct / 100);
+    const electricityTariff = purchase?.assumptions.electricityTariffRubKwh ?? 8;
     const opex = equipmentCapex * (servicePct / 100)
       + robotCount * 8 * 24 * 365 * electricityTariff
-      + simulationInputs.newStaffCost;
-    const annualBenefit = simulationInputs.currentStaffCost - opex;
+      + simulationInputs.newStaffCost * volumeMultiplier;
+    const annualBenefit = simulationInputs.currentStaffCost * volumeMultiplier - opex;
     const paybackYears = annualBenefit > 0 ? capex / annualBenefit : null;
 
     if (paybackYears === null) {
@@ -686,11 +693,13 @@ export function simulatePaybackRisk(inputs: CalcInputs): PaybackRiskResult {
       key: item.key,
       label: item.label,
       unit: item.unit,
+      distribution: item.distribution as PaybackRiskAssumption['distribution'],
       base: item.base,
       range: item.range as [number, number],
       source: item.source,
       overridden: (item.key === 'service_pct' && typeof overrides?.servicePct === 'number')
-        || (item.key === 'electricity_tariff_rub_kwh' && typeof overrides?.electricityTariff === 'number'),
+        || (item.key === 'volume_multiplier' && inputs.whatIf.volumeMultiplier !== 1)
+        || (item.key === 'price_multiplier' && inputs.whatIf.priceMultiplier !== 1),
     })),
   };
 }

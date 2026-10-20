@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Кабинет партнёра | Железный аргумент</title>
+<style>
+:root{--bg:#0A0F16;--bg2:#0D141D;--card:#101724;--line:rgba(148,163,184,.14);
+--tx:#E6EDF6;--tx2:#8FA3BB;--acc:#22D3EE;--acc2:#67E8F9;--acc-dk:#06202A;--grn:#34D399;--amb:#FBBF24;--red:#F87171}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:Inter,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.55;font-size:15px}
+a{color:var(--acc2)}
+.wrap{max-width:920px;margin:0 auto;padding:0 20px}
+.topbar{border-bottom:1px solid var(--line);background:rgba(10,15,22,.9);position:sticky;top:0;z-index:5}
+.topbar-in{display:flex;align-items:center;justify-content:space-between;height:56px}
+.logo{font-weight:800;letter-spacing:.4px;text-decoration:none;color:var(--tx)}
+.logo b{color:var(--acc)}
+h1{font-size:22px;font-weight:800;margin:26px 0 4px}
+.h-sub{color:var(--tx2);font-size:13.5px;margin-bottom:20px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:20px;margin-bottom:16px}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:12px}
+.auth-tabs{display:flex;gap:6px;margin-bottom:14px}
+.at{border:1px solid var(--line);background:var(--bg2);color:var(--tx2);border-radius:8px;padding:7px 16px;font:inherit;font-size:13.5px;cursor:pointer}
+.at.active{background:var(--acc);border-color:var(--acc);color:var(--acc-dk);font-weight:700}
+label.f{display:block;font-size:12.5px;color:var(--tx2);margin-top:12px}
+input,select,textarea{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:9px;
+color:var(--tx);font:inherit;font-size:14px;padding:9px 12px;margin-top:5px;outline:none}
+textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+.btn{background:var(--acc);border:none;color:var(--acc-dk);font:inherit;font-weight:700;font-size:14px;
+padding:10px 22px;border-radius:9px;cursor:pointer;margin-top:14px}
+.btn:hover{filter:brightness(1.12)}
+.btn2{background:var(--bg2);border:1px solid var(--line);color:var(--tx);border-radius:8px;
+padding:6px 13px;font:inherit;font-size:12.5px;cursor:pointer}
+.btn2:hover{border-color:var(--acc)}
+.err{color:var(--red);font-size:13px;margin-top:10px}
+.sol{border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-bottom:10px;background:var(--bg2);
+display:flex;gap:13px;align-items:flex-start}
+.sol img{width:74px;height:56px;object-fit:cover;border-radius:8px;background:#070B11;flex:none}
+.sol .nm{font-weight:700;font-size:14.5px}
+.sol .pr{color:var(--acc);font-weight:700;font-size:13.5px;margin-top:2px}
+.sol .ds{color:var(--tx2);font-size:12.5px;margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pill{border-radius:6px;padding:1.5px 9px;font-weight:700;font-size:11.5px}
+.pill.approved{border:1px solid var(--grn);color:var(--grn)}
+.pill.pending{border:1px solid var(--amb);color:var(--amb)}
+.pill.rejected{border:1px solid var(--red);color:var(--red)}
+.pill.trial{border:1px solid var(--tx2);color:var(--tx2)}
+.formrow{margin-top:9px}
+.note{font-size:12.5px;color:var(--tx2);margin-top:6px}
+.statgrid{display:flex;flex-wrap:wrap;gap:9px}
+.stat{background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:8px 13px;font-size:12.5px;color:var(--tx2)}
+.stat b{color:var(--tx);margin-right:5px;font-variant-numeric:tabular-nums}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:#13202E;
+border:1px solid var(--acc);border-radius:10px;padding:9px 18px;font-size:13.5px;transition:transform .3s;z-index:50}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.hidden{display:none!important}
+.dr{border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:9px;background:var(--bg2);font-size:13px}
+.dr .fld{margin-top:7px;font-size:12.5px}
+.dr .fld b{color:var(--tx2);font-weight:600}
+.dr .cur{color:var(--tx2)}
+.dr .prop{color:var(--acc2)}
+@media(max-width:600px){.sol{flex-direction:column}}
+</style>
+<link rel="stylesheet" href="/brand/brand.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap topbar-in">
+ <a class="site-brand" href="/" aria-label="Центр подбора роботизации «Железный аргумент»"><img src="/brand/logo.jpg" alt="" width="40" height="40"><span><strong>Железный аргумент</strong><small>Центр подбора роботизации</small></span></a>
+ <span id="whoami" style="color:var(--tx2);font-size:13.5px"></span>
+</div></header>
+
+<div class="wrap">
+ <div id="auth" class="panel" style="max-width:430px;margin:50px auto">
+  <div class="auth-tabs">
+   <button class="at active" data-a="login">Вход</button>
+   <button class="at" data-a="reg">Регистрация</button>
+  </div>
+  <div id="regOrgWrap" class="hidden">
+   <label class="f">Компания<textarea id="regOrg" style="min-height:52px" placeholder='ООО «Ронави Роботикс»'></textarea></label>
+   <label class="f">Тип партнёра<select id="regRole"><option value="vendor">Вендор / производитель</option><option value="integrator">Интегратор</option></select></label>
+  </div>
+  <label class="f">E-mail<input id="email" type="email" autocomplete="username"></label>
+  <label class="f">Пароль<input id="pass" type="password" autocomplete="current-password"></label>
+  <button class="btn" id="authBtn">Войти</button>
+  <p class="err hidden" id="authErr"></p>
+  <p class="note hidden" id="regNote">После регистрации напишите нам — мы закрепим за вами ваши карточки в каталоге.</p>
+ </div>
+
+ <div id="app" class="hidden">
+  <h1 id="orgName"></h1>
+  <p class="h-sub" id="orgSub"></p>
+
+  <section class="panel">
+   <h2>Мои решения в каталоге</h2>
+   <div id="sols"></div>
+   <p class="note">Правки не публикуются сразу: вы предлагаете изменения, команда Железный аргумент проверяет данные и применяет их. Название, производитель и категория карточки правкам не подлежат.</p>
+  </section>
+
+  <section class="panel">
+   <h2>Мои предложения правок</h2>
+   <div id="drafts"></div>
+  </section>
+
+  <section class="panel">
+   <h2>Лиды «Запросить КП»</h2>
+   <div id="leads"></div>
+   <div class="row" style="margin-top:10px"><button class="btn2 hidden" id="csvBtn">Скачать CSV</button></div>
+  </section>
+
+  <section class="panel">
+   <h2>Статистика (30 дней)</h2>
+   <div class="statgrid" id="stats"></div>
+  </section>
+
+  <div class="row" style="margin:6px 0 40px"><button class="btn2" id="logout">Выйти</button></div>
+ </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2400)}
+function fmtPrice(v){return v==null?'—':String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,'\u2009')+' ₽'}
+
+var mode='login';
+$$('.at').forEach(function(b){b.addEventListener('click',function(){
+  mode=b.dataset.a;
+  $$('.at').forEach(function(x){x.classList.toggle('active',x===b)});
+  $('#regOrgWrap').classList.toggle('hidden',mode!=='reg');
+  $('#authBtn').textContent=mode==='reg'?'Зарегистрироваться':'Войти';
+  $('#regNote').classList.toggle('hidden',mode!=='reg');
+})});
+$('#authBtn').addEventListener('click',function(){
+  $('#authErr').classList.add('hidden');
+  var url=mode==='reg'?'/api/cabinet/auth/register':'/api/cabinet/auth/login';
+  var body={email:$('#email').value.trim(),password:$('#pass').value};
+  if(mode==='reg'){body.org_name=$('#regOrg').value.trim();body.role=$('#regRole').value}
+  fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+   .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})})
+   .then(function(d){ if(!d.ok) throw new Error(d.j.error||'Ошибка'); boot(); })
+   .catch(function(e){var el=$('#authErr');el.textContent=e.message;el.classList.remove('hidden')});
+});
+
+$('#logout').addEventListener('click',function(){
+  fetch('/api/cabinet/auth/logout',{method:'POST'}).then(function(){location.reload()});
+});
+
+function fieldRow(k,label,val){return '<label class="f formrow">'+label+'<input data-k="'+k+'" value="'+esc(val)+'"></label>'}
+
+function renderSols(items){
+  $('#sols').innerHTML=items.length?items.map(function(s){
+    var approved=s.claim_status==='approved';
+    return '<div class="sol" data-id="'+esc(s.solution_id)+'">'+
+      (s.img?'<img src="'+esc(s.img)+'" alt="" onerror="this.style.visibility=\'hidden\'">':'')+
+      '<div style="flex:1;min-width:0"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+      '<span class="nm">'+esc(s.name)+'</span><span class="pill '+esc(s.claim_status)+'">'+
+      ({approved:'активна',pending:'ожидает подтверждения',revoked:'отозвана'}[s.claim_status]||s.claim_status)+'</span></div>'+
+      '<div class="pr">'+fmtPrice(s.price_rub)+'</div><div class="ds">'+esc(s.description)+'</div>'+
+      (approved?'<button class="btn2" style="margin-top:9px" data-e="edit">Предложить правку</button>':'')+
+      '<div class="editbox"></div></div></div>';
+  }).join(''):'<p class="note">Пока ни одной карточки. Напишите нам — закрепим ваши решения за вашей организацией.</p>';
+}
+function renderDrafts(items){
+  $('#drafts').innerHTML=items.length?items.map(function(d){
+    var rows=d.diff.map(function(f){
+      return '<div class="fld"><b>'+esc(f.field)+':</b><br><span class="cur">было: '+esc(f.current.slice(0,140))+'</span><br><span class="prop">стало: '+esc(f.proposed.slice(0,140))+'</span></div>';
+    }).join('')||'<div class="fld cur">без изменений полей</div>';
+    return '<div class="dr"><span class="pill '+esc(d.status)+'">'+({pending:'на рассмотрении',approved:'принято',rejected:'отклонено'}[d.status]||d.status)+
+      '</span> <b>'+esc(d.solution_name)+'</b><span class="cur" style="color:var(--tx2)"> · '+esc((d.created_at||'').slice(0,10))+'</span>'+
+      rows+(d.review_note?'<div class="fld"><b>Комментарий:</b> '+esc(d.review_note)+'</div>':'')+'</div>';
+  }).join(''):'<p class="note">Правок ещё не было.</p>';
+}
+function renderStats(st){
+  $('#stats').innerHTML='<span class="stat"><b>'+st.total_views_30d+'</b>просмотров</span>'+
+    (st.leads_total!=null?'<span class="stat"><b>'+st.leads_total+'</b>лидов передано</span>':'')+
+    st.per.slice(0,8).map(function(p){return '<span class="stat"><b>'+p.views_30d+'</b>'+esc(p.name.slice(0,42))+'</span>'}).join('');
+}
+var leadsCache=[];
+function renderLeads(items){
+  leadsCache=items;
+  var box=$('#leads');
+  box.innerHTML=items.length?items.map(function(x){
+    return '<div class="dr"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+      '<b>'+esc(x.name)+'</b>'+(x.company?'<span class="cur">'+esc(x.company)+'</span>':'')+
+      '<span class="cur" style="color:var(--tx2)">· '+esc((x.given_at||x.created_at||'').slice(0,10))+'</span></div>'+
+      '<div class="fld"><b>Контакты:</b> '+esc(x.email)+(x.phone?' · '+esc(x.phone):'')+'</div>'+
+      '<div class="fld"><b>Решение:</b> '+esc(x.solution_name)+'</div>'+
+      (x.message?'<div class="fld"><b>Задача:</b> '+esc(x.message)+'</div>':'')+
+      '</div>';
+  }).join(''):'<p class="note">Переданных лидов пока нет. Заявки клиенты оставляют на странице вашей карточки («Запросить КП»), затем команда Железный аргумент проверяет и передаёт их сюда.</p>';
+  $('#csvBtn').classList.toggle('hidden',!items.length);
+}
+$('#csvBtn').addEventListener('click',function(){
+  var rows=[['дата','имя','компания','email','телефон','решение','задача']].concat(leadsCache.map(function(x){
+    return [(x.given_at||x.created_at||'').slice(0,10),x.name,x.company,x.email,x.phone,x.solution_name,(x.message||'').replace(/[\r\n]+/g,' ')];
+  }));
+  var csv='\ufeff'+rows.map(function(r){return r.map(function(v){return '"'+String(v||'').replace(/"/g,'""')+'"'}).join(';')}).join('\n');
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='robotshub-leads.csv';a.click();
+});
+
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button[data-e="edit"]');
+  if(!b)return;
+  var root=b.closest('.sol'),box=root.querySelector('.editbox');
+  if(box.innerHTML){box.innerHTML='';return}
+  fetch('/api/cabinet/solutions').then(function(r){return r.json()}).then(function(d){
+    var s=d.items.filter(function(x){return x.solution_id===root.dataset.id})[0]; if(!s)return;
+    box.innerHTML=
+      '<div class="formrow"><label class="f">Цена, ₽<input data-k="price_rub" value="'+(s.price_rub==null?'':Math.round(s.price_rub))+'"></label>'+
+      '<label class="f">Описание<textarea data-k="description">'+esc(s.description)+'</textarea></label>'+
+      '<label class="f">Кейс внедрения<textarea data-k="case_study" style="min-height:60px" placeholder="Что внедрили и какой результат"></textarea></label>'+
+      '<label class="f">Сценарий<input data-k="scenario"></label>'+
+      '<label class="f">Регион<input data-k="region"></label>'+
+      '<label class="f">Отрасль<input data-k="industry"></label>'+
+      '<label class="f">Фото (ссылка http(s)://…)<input data-k="img"></label>'+
+      '<label class="f">Преимущества — по одному в строке<textarea data-k="bullets" style="min-height:60px"></textarea></label>'+
+      '<button class="btn2" data-e="send" style="margin-top:11px">Отправить на проверку</button></div>';
+    b.textContent='Свернуть форму';
+  });
+  document.addEventListener('click',function(ev){
+    if(ev.target!==b&&!box.contains(ev.target)&&!ev.target.closest('button[data-e="edit"]'))
+      { /* no auto-close, keep simple */ }
+  },{once:true});
+});
+
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button[data-e="send"]');if(!b)return;
+  var root=b.closest('.sol'),box=root.querySelector('.editbox');
+  var payload={};
+  $$('[data-k]',box).forEach(function(inp){
+    var k=inp.dataset.k;
+    if(k==='bullets') payload[k]=inp.value.split('\n').map(function(x){return x.trim()}).filter(Boolean);
+    else if(k==='price_rub'){ if(inp.value.trim()!=='')payload[k]=Number(inp.value.replace(/\s/g,'').replace(',','.')) }
+    else payload[k]=inp.value;
+  });
+  fetch('/api/cabinet/solutions/'+root.dataset.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+   .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
+   .then(function(d){ if(!d.ok)throw new Error(d.j.error||'Ошибка'); toast('Правка отправлена на проверку'); load(); })
+   .catch(function(e){toast(e.message)});
+});
+
+function load(){
+  Promise.all([
+    fetch('/api/cabinet/solutions').then(function(r){return r.json()}),
+    fetch('/api/cabinet/drafts').then(function(r){return r.json()}),
+    fetch('/api/cabinet/stats').then(function(r){return r.json()}),
+    fetch('/api/cabinet/auth/me').then(function(r){return r.json()}),
+    fetch('/api/cabinet/leads').then(function(r){return r.json()}),
+  ]).then(function(res){
+    var me=res[3];
+    $('#orgName').textContent=me.org.name;
+    var t={trial:'пилотный тариф',start:'тариф «Старт»',growth:'тариф «Рост»',partner:'тариф «Партнёр»'}[me.org.tariff]||me.org.tariff;
+    $('#orgSub').textContent=(me.org.type==='integrator'?'Интегратор':'Вендор')+' · '+t;
+    $('#whoami').textContent=me.email;
+    renderSols(res[0].items);renderDrafts(res[1].items);renderStats(res[2]);renderLeads(res[4].items);
+    $('#auth').classList.add('hidden');$('#app').classList.remove('hidden');
+  });
+}
+function boot(){load()}
+fetch('/api/cabinet/auth/me').then(function(r){ if(r.ok){boot()} else {$('#auth').classList.remove('hidden')} });
+})();
+</script>
+</body>
+</html>

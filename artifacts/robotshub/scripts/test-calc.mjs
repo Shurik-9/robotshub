@@ -117,7 +117,9 @@ test("симуляция окупаемости воспроизводима и 
   );
 
   for (const profile of profiles) {
+    const startedAt = performance.now();
     const first = simulateProfile(profile);
+    assert.ok(performance.now() - startedAt < 300, `${profile.name}: 1000 прогонов должны занимать менее 300 мс`);
     const second = simulateProfile(profile);
 
     assert.deepEqual(
@@ -150,7 +152,7 @@ test("симуляция окупаемости воспроизводима и 
       first.basePaybackYears !== null,
       `${profile.name}: точечная оценка окупаемости должна быть рассчитана`,
     );
-    const allowedDeviation = Math.max(0.25, first.basePaybackYears * 0.2);
+    const allowedDeviation = first.basePaybackYears * 0.15;
     assert.ok(
       Math.abs(first.medianYears - first.basePaybackYears) <= allowedDeviation,
       `${profile.name}: медиана должна быть в пределах 20% или 0,25 года от точечной оценки`,

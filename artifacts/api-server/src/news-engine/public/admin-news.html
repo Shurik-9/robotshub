@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Админка · Новости | Железный аргумент</title>
+<style>
+:root{--bg:#0A0F16;--bg2:#0D141D;--card:#101724;--line:rgba(148,163,184,.14);
+--tx:#E6EDF6;--tx2:#8FA3BB;--acc:#22D3EE;--acc2:#67E8F9;--acc-dk:#06202A;--grn:#34D399;--amb:#FBBF24;--red:#F87171}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:Inter,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.55;font-size:15px}
+a{color:var(--acc2)}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+.topbar{border-bottom:1px solid var(--line);background:rgba(10,15,22,.9);position:sticky;top:0;z-index:5}
+.topbar-in{display:flex;align-items:center;justify-content:space-between;height:56px}
+.logo{font-weight:800;letter-spacing:.4px}.logo b{color:var(--acc)}
+h1{font-size:22px;font-weight:800;margin:26px 0 4px}
+.h-sub{color:var(--tx2);font-size:13.5px;margin-bottom:22px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:20px;margin-bottom:18px}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.btn{background:var(--acc);border:none;color:var(--acc-dk);font:inherit;font-weight:700;font-size:14px;
+padding:10px 22px;border-radius:9px;cursor:pointer;transition:filter .15s}
+.btn:hover{filter:brightness(1.12)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn2{background:var(--bg2);border:1px solid var(--line);color:var(--tx);border-radius:8px;
+padding:6px 12px;font:inherit;font-size:12.5px;cursor:pointer}
+.btn2:hover{border-color:var(--acc)}
+.btn-danger{color:var(--red)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.statgrid{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+.stat{background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:7px 12px;font-size:12.5px;color:var(--tx2)}
+.stat b{color:var(--tx);margin-right:4px;font-variant-numeric:tabular-nums}
+.log{margin-top:12px;background:#070B11;border:1px solid var(--line);border-radius:9px;padding:11px 13px;
+font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;color:#9FB6CC;max-height:220px;overflow:auto;white-space:pre-wrap}
+.item{border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-bottom:10px;background:var(--bg2)}
+.item-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--tx2);margin-bottom:6px}
+.pill{border-radius:6px;padding:1.5px 9px;font-weight:700}
+.pill.pending{border:1px solid var(--amb);color:var(--amb)}
+.pill.published{border:1px solid var(--grn);color:var(--grn)}
+.pill.hidden{border:1px solid var(--tx2);color:var(--tx2)}
+.item .title{font-weight:700;font-size:14.5px}
+.item .title a{color:var(--tx);text-decoration:none}
+.item .title a:hover{color:var(--acc2)}
+.item .summ{color:#C9D4E3;font-size:13.5px;margin-top:5px}
+.item-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.item textarea,.item input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;
+color:var(--tx);font:inherit;font-size:13px;padding:8px 10px;margin-top:7px;outline:none}
+.item textarea:focus,.item input:focus{border-color:var(--acc)}
+.item textarea{min-height:74px;resize:vertical}
+.src{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;
+padding:10px 13px;margin-bottom:8px;background:var(--bg2);font-size:13px}
+.src .name{font-weight:700}
+.src .u{color:var(--tx2);font-size:12px;word-break:break-all}
+.src .st{font-size:12px}
+.st.ok{color:var(--grn)}.st.fail{color:var(--red)}
+.spacer{flex:1}
+input[type=text],input[type=number],select{background:var(--bg2);border:1px solid var(--line);border-radius:8px;
+color:var(--tx);font:inherit;font-size:13.5px;padding:8px 11px;outline:none}
+input:focus{border-color:var(--acc)}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--tx2)}
+textarea.kw{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--tx);
+font:13px/1.6 inherit;padding:9px 11px;min-height:64px;outline:none}
+textarea.kw:focus{border-color:var(--acc)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.tog{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--tx2);cursor:pointer;user-select:none}
+.tog input{accent-color:var(--acc);width:16px;height:16px}
+#login{max-width:420px;margin:80px auto}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:#13202E;
+border:1px solid var(--acc);border-radius:10px;padding:9px 18px;font-size:13.5px;transition:transform .3s;z-index:50}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.hidden{display:none!important}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--bg2);color:var(--tx2);border-radius:8px;padding:6px 14px;
+font:inherit;font-size:13px;cursor:pointer}
+.tab.active{background:var(--acc);border-color:var(--acc);color:var(--acc-dk);font-weight:700}
+.hint{font-size:12px;color:var(--tx2);margin-top:6px}
+</style>
+<link rel="stylesheet" href="/brand/brand.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap topbar-in">
+ <a class="site-brand" href="/" aria-label="Центр подбора роботизации «Железный аргумент»"><img src="/brand/logo.jpg" alt="" width="40" height="40"><span><strong>Железный аргумент</strong><small>Центр подбора роботизации</small></span></a><span class="site-brand-context">Админка новостей</span>
+ <a href="/news" style="color:var(--tx2);font-size:14px;text-decoration:none">Открыть страницу →</a>
+</div></header>
+
+<div id="login" class="wrap panel">
+ <h2>Вход</h2>
+ <p class="h-sub">Введите админ-токен (env ADMIN_TOKEN). Он сохранится только в этом браузере.</p>
+ <input type="text" id="tok" placeholder="ADMIN_TOKEN" style="width:100%">
+ <div class="row" style="margin-top:12px"><button class="btn" id="loginBtn">Войти</button></div>
+ <p id="loginErr" style="color:var(--red);font-size:13px;margin-top:9px"></p>
+</div>
+
+<div id="app" class="wrap hidden">
+ <nav class="tabs" id="mainTabs" style="margin:22px 0 4px">
+  <button class="tab active" data-t="news">Новости</button>
+  <button class="tab" data-t="cards">Правки карточек <span id="cBadge" class="hidden" style="color:var(--amb)">●</span></button>
+  <button class="tab" data-t="orgs">Организации</button>
+  <button class="tab" data-t="leads">Лиды <span id="lBadge" class="hidden" style="color:var(--amb)">●</span></button>
+ </nav>
+ <div id="tab-news">
+ <h1>Новости роботизации</h1>
+ <p class="h-sub">Еженедельный ритуал: нажать «Запустить сбор» → просмотреть черновики (если автопубликация выключена) → проверить источники. Публикация идёт на страницу /news.</p>
+
+ <section class="panel">
+  <h2>Сбор</h2>
+  <div class="row">
+   <button class="btn" id="runBtn">▶ Запустить сбор</button>
+   <label class="tog"><input type="checkbox" id="autoPub"> публиковать автоматически</label>
+   <span class="spacer"></span>
+   <span id="runState" style="color:var(--tx2);font-size:13px"></span>
+  </div>
+  <div class="statgrid" id="runStats"></div>
+  <div class="log hidden" id="runLog"></div>
+ </section>
+
+ <section class="panel">
+  <h2>Материалы</h2>
+  <div class="tabs" id="stateTabs">
+   <button class="tab active" data-s="published">Опубликованные</button>
+   <button class="tab" data-s="pending">Черновики</button>
+   <button class="tab" data-s="hidden">Скрытые</button>
+   <button class="tab" data-s="all">Все</button>
+  </div>
+  <div id="items"></div>
+ </section>
+
+ <section class="panel">
+  <h2>Источники</h2>
+  <div id="sources"></div>
+  <h2 style="margin-top:18px">Добавить источник</h2>
+  <div class="row" style="gap:10px">
+   <input type="text" id="srcName" placeholder="Название" style="width:220px">
+   <input type="text" id="srcUrl" placeholder="URL RSS или Google News RSS" style="flex:1;min-width:240px">
+   <select id="srcType"><option value="rss">RSS</option><option value="gnews">Google News</option></select>
+   <button class="btn2" id="srcAdd">Добавить</button>
+  </div>
+  <p class="hint">Google News: news.google.com/rss/search?q=запрос+when:30d&amp;hl=ru&amp;gl=RU&amp;ceid=RU:ru</p>
+ </section>
+
+ <section class="panel">
+  <h2>Настройки</h2>
+  <div class="fgrid">
+   <label class="f">Окно свежести, дней<input type="number" id="winDays" min="1" max="60"></label>
+   <label class="f">Макс. публикаций за сбор<input type="number" id="maxPer" min="5" max="200"></label>
+   <label class="f">Порог схожести заголовков (0.3–0.95)<input type="number" step="0.05" id="dupTh" min="0.3" max="0.95"></label>
+  </div>
+  <div style="margin-top:14px" class="fgrid">
+   <label class="f">Ядро темы (хотя бы одно слово обязательно)<textarea class="kw" id="core"></textarea></label>
+   <label class="f">Включающие слова (вес в скоринге)<textarea class="kw" id="include"></textarea></label>
+   <label class="f">Исключения (мусор: армия, бытовуха…)<textarea class="kw" id="exclude"></textarea></label>
+   <label class="f">Модели каталога (автотеги → /solutions)<textarea class="kw" id="models"></textarea></label>
+  </div>
+  <div class="row" style="margin-top:14px"><button class="btn2" id="saveSet">Сохранить настройки</button></div>
+ </section>
+ </div>
+
+ <div id="tab-cards" class="hidden">
+  <h1>Правки карточек каталога</h1>
+  <p class="h-sub">Предложения вендоров и интеграторов. Одобрение применяет изменения к solutions.json (перед записью создаётся бэкап в .data/catalog-backups/). Название, производитель и категория правками не меняются.</p>
+  <section class="panel">
+   <div class="tabs" id="cTabs">
+    <button class="tab active" data-s="pending">На рассмотрении</button>
+    <button class="tab" data-s="approved">Принятые</button>
+    <button class="tab" data-s="rejected">Отклонённые</button>
+   </div>
+   <div id="cList"><p class="hint">Загрузка…</p></div>
+  </section>
+ </div>
+
+ <div id="tab-leads" class="hidden">
+  <h1>Лиды «Запросить КП»</h1>
+  <p class="h-sub">Заявки клиентов с карточек решений. Проверьте качество и передайте вендору — только после «Передать» контакт уходит в его кабинет (ПДн вне оферты не передаются).</p>
+  <section class="panel">
+   <div class="statgrid" id="leadStats" style="margin:0 0 14px"></div>
+   <div class="tabs" id="lTabs">
+    <button class="tab active" data-s="all">Все</button>
+    <button class="tab" data-s="new">Новые</button>
+    <button class="tab" data-s="given">Переданные</button>
+    <button class="tab" data-s="spam">Спам</button>
+   </div>
+   <div id="lList"><p class="hint">Загрузка…</p></div>
+  </section>
+ </div>
+
+ <div id="tab-orgs" class="hidden">
+  <h1>Организации</h1>
+  <p class="h-sub">Вендоры и интеграторы. Закрепление карточки за организацией = право предлагать её правки (через модерацию).</p>
+  <section class="panel">
+   <h2>Добавить организацию</h2>
+   <div class="row" style="gap:10px">
+    <input type="text" id="oName" placeholder="Название" style="width:240px">
+    <select id="oType"><option value="vendor">Вендор</option><option value="integrator">Интегратор</option></select>
+    <select id="oTariff"><option value="trial">trial</option><option value="start">start</option><option value="growth">growth</option><option value="partner">partner</option></select>
+    <button class="btn2" id="oAdd">Добавить</button>
+   </div>
+  </section>
+  <section class="panel">
+   <h2>Закрепить карточку за организацией</h2>
+   <div class="row" style="gap:10px">
+    <select id="claimOrg" style="max-width:260px"></select>
+    <input type="text" id="claimQ" placeholder="Поиск решения по названию…" style="flex:1;min-width:200px">
+    <button class="btn2" id="claimFind">Найти</button>
+   </div>
+   <div id="claimRes" style="margin-top:10px"></div>
+  </section>
+  <section class="panel">
+   <h2>Все организации</h2>
+   <div id="oList"><p class="hint">Загрузка…</p></div>
+  </section>
+ </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+(function(){
+'use strict';
+var TOK=localStorage.getItem('rsh_admin_token')||'';
+var $=function(s){return document.querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2200)}
+function api(method,url,body){
+  return fetch(url,{method:method,headers:{'Content-Type':'application/json','x-admin-token':TOK},
+    body:body?JSON.stringify(body):undefined}).then(function(r){
+      if(r.status===401||r.status===503){showLogin();throw new Error('Нет доступа: проверьте токен')}
+      return r.json().then(function(j){if(j&&j.error)throw new Error(j.error);return j});
+    });
+}
+function showLogin(){$('#login').classList.remove('hidden');$('#app').classList.add('hidden')}
+function showApp(){$('#login').classList.add('hidden');$('#app').classList.remove('hidden')}
+
+var curState='published';
+function loadItems(){
+  api('GET','/api/news/items?state='+curState).then(function(d){
+    $('#items').innerHTML=d.items.length?d.items.map(itemHtml).join(''):'<p class="hint">Пусто.</p>';
+  }).catch(function(e){toast(e.message)});
+}
+function itemHtml(it){
+  var pill='<span class="pill '+esc(it.status)+'">'+({pending:'черновик',published:'опубликовано',hidden:'скрыто'}[it.status]||it.status)+'</span>';
+  return '<div class="item" data-id="'+it.id+'">'+
+    '<div class="item-top">'+pill+'<span>'+esc((it.item_date||'').slice(0,10))+'</span>'+
+    '<span>· скоринг '+it.score+'</span><span class="spacer"></span><span>'+esc(it.source_name)+'</span></div>'+
+    '<div class="title"><a href="'+esc(it.url)+'" target="_blank" rel="noopener">'+esc(it.title)+'</a></div>'+
+    '<p class="summ">'+esc(it.summary)+'</p>'+
+    '<div class="item-actions">'+
+      (it.status!=='published'?'<button class="btn2" data-a="pub">Опубликовать</button>':'<button class="btn2" data-a="hide">Скрыть</button>')+
+      '<button class="btn2" data-a="edit">Править</button>'+
+      '<button class="btn2 btn-danger" data-a="del">Удалить</button>'+
+    '</div><div class="editbox"></div></div>';
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button[data-a]');if(!b)return;
+  var root=b.closest('.item'),id=root.dataset.id,a=b.dataset.a;
+  if(a==='pub'){api('POST','/api/news/items/'+id+'/status',{status:'published'}).then(loadItems)}
+  if(a==='hide'){api('POST','/api/news/items/'+id+'/status',{status:'hidden'}).then(loadItems)}
+  if(a==='del'){if(confirm('Удалить материал?'))api('DELETE','/api/news/items/'+id).then(loadItems)}
+  if(a==='edit'){
+    var box=root.querySelector('.editbox');
+    if(box.innerHTML){box.innerHTML='';return}
+    var it=root.querySelector('.title').textContent,sum=root.querySelector('.summ').textContent;
+    box.innerHTML='<input value="'+esc(it)+'"><textarea>'+esc(sum)+'</textarea>'+
+      '<div class="row" style="margin-top:8px"><button class="btn2" data-a="save">Сохранить</button></div>';
+  }
+  if(b.dataset.a==='save'){
+    var box2=root.querySelector('.editbox');
+    api('POST','/api/news/items/'+id+'/edit',{title:box2.querySelector('input').value,summary:box2.querySelector('textarea').value})
+      .then(function(){toast('Сохранено');loadItems()});
+  }
+});
+$('#stateTabs').addEventListener('click',function(e){
+  var t=e.target.closest('.tab');if(!t)return;
+  document.querySelectorAll('#stateTabs .tab').forEach(function(x){x.classList.toggle('active',x===t)});
+  curState=t.dataset.s;loadItems();
+});
+
+/* сбор */
+var poll=null;
+$('#runBtn').addEventListener('click',function(){
+  api('POST','/api/news/run',{}).then(function(){
+    toast('Сбор запущен');
+    poll=setInterval(pollStatus,1500);
+  }).catch(function(e){toast(e.message)});
+});
+function pollStatus(){
+  api('GET','/api/news/status').then(function(st){
+    $('#runState').textContent=st.state==='running'?'идёт сбор…':(st.state==='done'?'готово · '+st.finishedAt:st.state);
+    $('#runBtn').disabled=st.state==='running';
+    var s=st.stats||{};
+    $('#runStats').innerHTML=Object.keys(s).length?Object.entries(s).map(function(kv){
+      return '<span class="stat"><b>'+kv[1]+'</b>'+({sources_ok:'источников ok',sources_fail:'источников fail',fetched:'получено',kept:'добавлено',dup:'дубли',filtered:'отфильтровано',old:'старые',errors:'ошибки'}[kv[0]]||kv[0])+'</span>';
+    }).join(''):'';
+    var log=$('#runLog');
+    log.classList.remove('hidden');
+    log.textContent=(st.log||[]).join('\n');
+    log.scrollTop=log.scrollHeight;
+    if(st.state!=='running'&&poll){clearInterval(poll);poll=null;loadItems()}
+  }).catch(function(){});
+}
+
+/* источники */
+function loadSources(){
+  api('GET','/api/news/sources').then(function(d){
+    $('#sources').innerHTML=d.sources.map(function(s){
+      var st=s.last_status||'— ещё не запускался';
+      return '<div class="src" data-id="'+s.id+'">'+
+        '<span class="name">'+esc(s.name)+'</span>'+
+        '<span class="pill '+(s.enabled?'published':'hidden')+'">'+(s.enabled?'вкл':'выкл')+'</span>'+
+        '<span class="u">'+esc(s.url)+'</span>'+
+        '<span class="st '+(st.indexOf('ok')===0?'ok':(st.indexOf('fail')===0?'fail':''))+'">'+esc(st)+'</span>'+
+        '<span class="spacer"></span>'+
+        '<button class="btn2" data-e="tog">'+(s.enabled?'Выключить':'Включить')+'</button>'+
+        '<button class="btn2 btn-danger" data-e="del">Удалить</button>'+
+      '</div>';
+    }).join('');
+  }).catch(function(e){toast(e.message)});
+}
+$('#sources').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-e]');if(!b)return;
+  var id=b.closest('.src').dataset.id;
+  if(b.dataset.e==='tog')api('PATCH','/api/news/sources/'+id,{enabled:b.textContent.trim()==='Включить'}).then(loadSources);
+  if(b.dataset.e==='del'){if(confirm('Удалить источник?'))api('DELETE','/api/news/sources/'+id).then(loadSources)}
+});
+$('#srcAdd').addEventListener('click',function(){
+  api('POST','/api/news/sources',{name:$('#srcName').value.trim(),url:$('#srcUrl').value.trim(),type:$('#srcType').value})
+    .then(function(){$('#srcName').value='';$('#srcUrl').value='';toast('Источник добавлен');loadSources()})
+    .catch(function(e){toast(e.message)});
+});
+
+/* настройки */
+function arr(v){return v.split(/[\n,]/).map(function(x){return x.trim()}).filter(Boolean).join('\n')}
+function loadSettings(){
+  api('GET','/api/news/settings').then(function(s){
+    $('#autoPub').checked=!!s.auto_publish;
+    $('#winDays').value=s.window_days;$('#maxPer').value=s.max_per_run;$('#dupTh').value=s.dup_threshold;
+    $('#core').value=(s.core||[]).join('\n');$('#include').value=(s.include||[]).join('\n');
+    $('#exclude').value=(s.exclude||[]).join('\n');$('#models').value=(s.models||[]).join('\n');
+  }).catch(function(e){toast(e.message)});
+}
+$('#saveSet').addEventListener('click',function(){
+  api('POST','/api/news/settings',{
+    auto_publish:$('#autoPub').checked?1:0,window_days:+$('#winDays').value,max_per_run:+$('#maxPer').value,dup_threshold:+$('#dupTh').value,
+    include:$('#include').value,exclude:$('#exclude').value,core:$('#core').value,models:$('#models').value
+  }).then(function(){toast('Настройки сохранены')}).catch(function(e){toast(e.message)});
+});
+
+/* вход */
+$('#loginBtn').addEventListener('click',tryLogin);
+$('#tok').addEventListener('keydown',function(e){if(e.key==='Enter')tryLogin()});
+function tryLogin(){
+  TOK=$('#tok').value.trim();
+  api('GET','/api/news/settings').then(function(){
+    localStorage.setItem('rsh_admin_token',TOK);
+    showApp();boot();
+  }).catch(function(e){$('#loginErr').textContent=e.message});
+}
+
+/* ===== этап 2: вкладки, карточки, организации ===== */
+var cState='pending', orgsCache=[];
+$('#mainTabs').addEventListener('click',function(e){
+  var t=e.target.closest('.tab');if(!t)return;
+  $$('#mainTabs .tab').forEach(function(x){x.classList.toggle('active',x===t)});
+  $('#tab-news').classList.toggle('hidden',t.dataset.t!=='news');
+  $('#tab-cards').classList.toggle('hidden',t.dataset.t!=='cards');
+  $('#tab-orgs').classList.toggle('hidden',t.dataset.t!=='orgs');
+  $('#tab-leads').classList.toggle('hidden',t.dataset.t!=='leads');
+  if(t.dataset.t==='cards')loadCards();
+  if(t.dataset.t==='orgs'){loadOrgs()}
+  if(t.dataset.t==='leads')loadLeads();
+});
+$('#cTabs').addEventListener('click',function(e){
+  var t=e.target.closest('.tab');if(!t)return;
+  $$('#cTabs .tab').forEach(function(x){x.classList.toggle('active',x===t)});
+  cState=t.dataset.s;loadCards();
+});
+function loadCards(){
+  api('GET','/api/cabinet/admin/drafts?status='+cState).then(function(d){
+    $('#cList').innerHTML=d.items.length?d.items.map(function(x){
+      var rows=x.diff.map(function(f){
+        return '<div class="fld" style="margin-top:8px;font-size:12.5px"><b style="color:var(--tx2)">'+esc(f.field)+':</b>'+
+          '<div class="cur" style="color:var(--tx2)">было: '+esc(f.current.slice(0,180)||'—')+'</div>'+
+          '<div class="prop" style="color:var(--acc2)">стало: '+esc(f.proposed.slice(0,180)||'—')+'</div></div>';
+      }).join('')||'<p class="hint">Изменяемых полей нет</p>';
+      return '<div class="item" data-id="'+x.id+'">'+
+        '<div class="item-top"><span class="pill '+esc(x.status)+'">'+({pending:'на рассмотрении',approved:'принято',rejected:'отклонено'}[x.status]||x.status)+'</span>'+
+        '<span>'+esc(x.org_name)+'</span><span>· '+esc((x.created_at||'').slice(0,10))+'</span><span class="spacer"></span>'+
+        '<a href="/solutions?q='+encodeURIComponent(x.solution_id)+'" target="_blank" style="font-size:12px">'+esc(x.solution_name)+'</a></div>'+rows+
+        (x.review_note?'<p class="hint" style="margin-top:7px">Комментарий: '+esc(x.review_note)+'</p>':'')+
+        (x.status==='pending'?'<div class="item-actions"><button class="btn2" data-cmd="approve" data-id="'+x.id+'">Одобрить и применить</button>'+
+        '<button class="btn2 btn-danger" data-cmd="reject" data-id="'+x.id+'">Отклонить</button></div>':'')+
+      '</div>';
+    }).join(''):'<p class="hint">Пусто.</p>';
+    var pend=$('#cBadge');pend.classList.toggle('hidden',cState==='pending'||d.items.length===0);
+  }).catch(function(e){toast(e.message)});
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button[data-cmd]');if(!b)return;
+  var id=b.dataset.cmd==='reject'?b.dataset.id:b.dataset.id;
+  if(b.dataset.cmd==='approve'){
+    api('POST','/api/cabinet/admin/drafts/'+id+'/approve',{}).then(function(){toast('Применено к каталогу');loadCards()}).catch(function(e){toast(e.message)});
+  }
+  if(b.dataset.cmd==='reject'){
+    var note=prompt('Комментарий вендору (необязательно):','')||'';
+    api('POST','/api/cabinet/admin/drafts/'+id+'/reject',{note:note}).then(function(){loadCards()}).catch(function(e){toast(e.message)});
+  }
+});
+function loadOrgs(){
+  api('GET','/api/cabinet/admin/orgs').then(function(d){
+    orgsCache=d.orgs;
+    $('#oList').innerHTML=d.orgs.length?d.orgs.map(function(o){
+      return '<div class="src" data-id="'+o.id+'">'+
+        '<span class="name">'+esc(o.name)+'</span>'+
+        '<span class="pill '+(o.type==='integrator'?'pending':'published')+'">'+(o.type==='platform'?'платформа':esc(o.type))+'</span>'+
+        '<span class="u">'+esc(o.emails||'нет пользователей')+'</span>'+
+        '<span class="st">карточек: '+o.claims+'</span>'+
+        '<span class="spacer"></span>'+
+        '<select data-o="tariff" data-id="'+o.id+'" style="width:auto;padding:5px 8px;font-size:12.5px">'+
+        ['trial','start','growth','partner'].map(function(t){return '<option '+(o.tariff===t?'selected':'')+'>'+t+'</option>'}).join('')+'</select>'+
+      '</div>';
+    }).join(''):'<p class="hint">Организаций пока нет.</p>';
+    var sel=$('#claimOrg');
+    sel.innerHTML=d.orgs.filter(function(o){return o.type!=='platform'}).map(function(o){
+      return '<option value="'+o.id+'">'+esc(o.name)+'</option>'}).join('');
+  }).catch(function(e){toast(e.message)});
+}
+$('#oList').addEventListener('change',function(e){
+  var s=e.target.closest('select[data-o="tariff"]');if(!s)return;
+  api('PATCH','/api/cabinet/admin/orgs/'+s.dataset.id,{tariff:s.value}).then(function(){toast('Тариф обновлён')}).catch(function(e){toast(e.message)});
+});
+$('#oAdd').addEventListener('click',function(){
+  api('POST','/api/cabinet/admin/orgs',{name:$('#oName').value.trim(),type:$('#oType').value,tariff:$('#oTariff').value})
+    .then(function(){$('#oName').value='';toast('Организация добавлена');loadOrgs()})
+    .catch(function(e){toast(e.message)});
+});
+$('#claimFind').addEventListener('click',function(){
+  var q=$('#claimQ').value.trim();
+  if(!$('#claimOrg').value){toast('Сначала выберите организацию');return}
+  api('GET','/api/cabinet/admin/search-solutions?q='+encodeURIComponent(q)).then(function(d){
+    $('#claimRes').innerHTML=d.items.length?d.items.map(function(s){
+      return '<div class="src"><span class="name" style="font-weight:600">'+esc(s.name)+'</span>'+
+        '<span class="spacer"></span><button class="btn2" data-claim="'+esc(s.id)+'">Закрепить</button></div>';
+    }).join(''):'<p class="hint">Ничего не найдено.</p>';
+  }).catch(function(e){toast(e.message)});
+});
+$('#claimRes').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-claim]');if(!b)return;
+  api('POST','/api/cabinet/admin/claims',{org_id:Number($('#claimOrg').value),solution_id:b.dataset.claim,action:'approve'})
+    .then(function(){toast('Закреплено');$('#claimRes').innerHTML='';loadOrgs()})
+    .catch(function(e){toast(e.message)});
+});
+
+/* ===== лиды ===== */
+var lState='all', lItems=[];
+$('#lTabs').addEventListener('click',function(e){
+  var t=e.target.closest('.tab');if(!t)return;
+  $$('#lTabs .tab').forEach(function(x){x.classList.toggle('active',x===t)});
+  lState=t.dataset.s;renderLeads();
+});
+function loadLeads(){
+  api('GET','/api/leads/admin?status=all').then(function(d){
+    lItems=d.items;renderLeads();
+  }).catch(function(e){toast(e.message)});
+}
+function renderLeads(){
+  var items=lState==='all'?lItems:lItems.filter(function(x){return x.status===lState});
+  var nNew=lItems.filter(function(x){return x.status==='new'}).length;
+  var nGiven=lItems.filter(function(x){return x.status==='given'}).length;
+  $('#leadStats').innerHTML=
+    '<span class="stat"><b>'+lItems.length+'</b>всего</span>'+
+    '<span class="stat"><b>'+nNew+'</b>новых</span>'+
+    '<span class="stat"><b>'+nGiven+'</b>передано вендорам</span>';
+  var badge=$('#lBadge');badge.classList.toggle('hidden',nNew===0);
+  $('#lList').innerHTML=items.length?items.map(function(x){
+    var pill={new:'pending',given:'published',closed:'hidden',spam:'hidden'}[x.status]||'hidden';
+    var pl={new:'новый',given:'передан',closed:'закрыт',spam:'спам'}[x.status]||x.status;
+    return '<div class="item" data-id="'+x.id+'">'+
+      '<div class="item-top"><span class="pill '+pill+'">'+pl+'</span><span>'+esc((x.created_at||'').slice(0,16))+'</span>'+
+      '<span class="spacer"></span><span>'+esc(x.org_name||'⚠ организация не закреплена')+'</span></div>'+
+      '<div class="title" style="font-size:14px">'+esc(x.solution_name)+'</div>'+
+      '<div class="summ" style="margin-top:7px"><b>'+esc(x.name)+'</b>'+
+      (x.company?' · '+esc(x.company):'')+' · '+esc(x.email)+
+      (x.phone?' · '+esc(x.phone):'')+'</div>'+
+      (x.message?'<div class="summ">'+esc(x.message)+'</div>':'')+
+      '<div class="item-actions">'+
+      (x.status==='new'?'<button class="btn2" data-l="give" data-id="'+x.id+'">Передать вендору</button>':'')+
+      (x.status!=='closed'?'<button class="btn2" data-l="close" data-id="'+x.id+'">Закрыт</button>':'')+
+      (x.status!=='spam'?'<button class="btn2 btn-danger" data-l="spam" data-id="'+x.id+'">Спам</button>':'')+
+      '<button class="btn2 btn-danger" data-l="del" data-id="'+x.id+'">Удалить</button>'+
+      '</div></div>';
+  }).join(''):'<p class="hint">Лидов пока нет. Проверьте: кнопка «Запросить КП» должна вести на /lead?solution=<id>.</p>';
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button[data-l]');if(!b)return;
+  var id=b.dataset.id,cmd=b.dataset.l;
+  if(cmd==='give')api('POST','/api/leads/admin/'+id+'/give',{}).then(function(){toast('Передано вендору');loadLeads()}).catch(function(e){toast(e.message)});
+  if(cmd==='close')api('POST','/api/leads/admin/'+id+'/status',{status:'closed'}).then(loadLeads);
+  if(cmd==='spam')api('POST','/api/leads/admin/'+id+'/status',{status:'spam'}).then(loadLeads);
+  if(cmd==='del'){if(confirm('Удалить лид безвозвратно?'))api('DELETE','/api/leads/admin/'+id).then(loadLeads)}
+});
+
+function boot(){
+  $('#autoPub').addEventListener('change',pollStatusOnce);
+  loadItems();loadSources();loadSettings();pollStatusOnce();
+  function pollStatusOnce(){setTimeout(pollStatus,300)}
+}
+if(TOK){api('GET','/api/news/settings').then(function(){showApp();boot()}).catch(function(){showLogin();$('#tok').focus()})}
+else{showLogin();$('#tok').focus()}
+})();
+</script>
+</body>
+</html>

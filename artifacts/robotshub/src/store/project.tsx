@@ -4,10 +4,14 @@ import { customBriefChanged, mergeCustomBrief, withoutOperationFields, type Oper
 import type { SceneGeometrySummary } from '@/sim/scene-builder';
 import { applyQuestionnaireToProject, projectFingerprint } from '@/lib/questionnaire-state';
 import type { AnswerEvidence, QuestionnaireImport } from '@/lib/questionnaire-xlsx';
+import { decodeProjectShare } from '@/lib/project-sharing';
+import { SIMULATION_DEMO } from '@/lib/simulation-demo';
 
 export type ObjectType = 'warehouse' | 'airport' | 'medical' | 'custom' | null;
+export type FinancingScenario = 'purchase' | 'leasing' | 'raas';
 
 export interface ProjectState {
+  demoProject?: boolean;
   questionnaireEvidence?: AnswerEvidence;
   objectType: ObjectType;
   sectorId: string | null;
@@ -16,11 +20,13 @@ export interface ProjectState {
   activeSolutionId: string | null;
   whatIfOverrides: Record<string, number>;
   assumptionsOverrides: Record<string, number>;
+  financingScenario: FinancingScenario;
   simulationKpis: SimulationKpiSnapshot | null;
 }
 
 export interface SimulationKpiSnapshot {
   seed: number;
+  initialTasks?: number;
   signature: string;
   verticalTrips: number;
   geometry: SceneGeometrySummary | null;
@@ -46,7 +52,7 @@ export interface SimulationSceneInputs {
 
 type SimulationSignatureState = Pick<
   ProjectState,
-  'objectType' | 'objectParams' | 'selectedSolutions' | 'assumptionsOverrides'
+  'objectType' | 'objectParams' | 'selectedSolutions' | 'assumptionsOverrides' | 'whatIfOverrides' | 'activeSolutionId'
 >;
 
 type SimulationSnapshotState = SimulationSignatureState & Pick<ProjectState, 'simulationKpis'>;
@@ -66,10 +72,13 @@ interface ProjectContextType {
   clearSelectedSolutions: () => void;
   setWhatIfOverrides: (overrides: Record<string, number>) => void;
   setAssumptionsOverrides: (overrides: Record<string, number>) => void;
+  setFinancingScenario: (scenario: FinancingScenario) => void;
   removeAssumptionsOverrides: (keys: string[]) => void;
   resetOperationInputs: (key: OperationKey) => void;
   setSimulationKpis: (snapshot: SimulationKpiSnapshot | null) => void;
   resetProject: () => void;
+  applyDemoProject: () => void;
+  replaceProject: (project: ProjectState) => void;
 }
 
 interface RestoredProject {
@@ -79,6 +88,7 @@ interface RestoredProject {
 }
 
 const defaultState: ProjectState = {
+  demoProject: false,
   objectType: null,
   sectorId: null,
   objectParams: {},
@@ -86,6 +96,7 @@ const defaultState: ProjectState = {
   activeSolutionId: null,
   whatIfOverrides: {},
   assumptionsOverrides: {},
+  financingScenario: 'purchase',
   simulationKpis: null,
 };
 
@@ -199,10 +210,13 @@ export function getSimulationSignature(state: SimulationSignatureState): string 
   );
 
   return JSON.stringify({
+    simulationProtocol: 'space-time-trajectories',
     objectType: state.objectType,
     objectParams: sortRecord(state.objectParams),
     selectedSolutions: state.selectedSolutions,
     assumptionsOverrides: sortRecord(state.assumptionsOverrides),
+    whatIfOverrides: sortRecord(state.whatIfOverrides ?? {}),
+    activeSolutionId: state.activeSolutionId ?? state.selectedSolutions[0] ?? null,
   });
 }
 
@@ -215,6 +229,7 @@ export function getCurrentSimulationKpis(
 
 function isValidStoredProject(value: unknown): value is Record<string, unknown> {
   if (!isRecord(value)) return false;
+  if ('demoProject' in value && typeof value.demoProject !== 'boolean') return false;
 
   if (
     'objectType' in value
@@ -245,6 +260,7 @@ function isValidStoredProject(value: unknown): value is Record<string, unknown> 
   }
   if ('whatIfOverrides' in value && !isValidNumberRecord(value.whatIfOverrides)) return false;
   if ('assumptionsOverrides' in value && !isValidNumberRecord(value.assumptionsOverrides)) return false;
+  if ('financingScenario' in value && !['purchase', 'leasing', 'raas'].includes(String(value.financingScenario))) return false;
   if ('simulationKpis' in value && value.simulationKpis !== null && !isValidSimulationKpiSnapshot(value.simulationKpis)) return false;
 
   return true;
@@ -297,6 +313,7 @@ export function normalizeProjectState(value: unknown): ProjectState {
     : null;
 
   return {
+    demoProject: value.demoProject === true,
     objectType,
     questionnaireEvidence: isRecord(value.questionnaireEvidence)
       ? Object.fromEntries(Object.entries(value.questionnaireEvidence).filter(([, entry]) =>
@@ -309,6 +326,9 @@ export function normalizeProjectState(value: unknown): ProjectState {
     activeSolutionId,
     whatIfOverrides: normalizeNumberRecord(value.whatIfOverrides),
     assumptionsOverrides: normalizeNumberRecord(value.assumptionsOverrides),
+    financingScenario: ['purchase', 'leasing', 'raas'].includes(String(value.financingScenario))
+      ? value.financingScenario as FinancingScenario
+      : 'purchase',
     simulationKpis,
   };
 }
@@ -330,6 +350,19 @@ function isValidSceneGeometrySummary(value: unknown): value is SceneGeometrySumm
 }
 
 function restoreProject(): RestoredProject {
+  if (typeof window !== 'undefined') {
+    const shared = new URLSearchParams(window.location.search).get('p');
+    if (shared !== null) {
+      const decoded = decodeProjectShare(shared);
+      return {
+        state: decoded
+          ? normalizeProjectState({ ...defaultState, ...decoded, simulationKpis: null })
+          : { ...defaultState },
+        recoveredFromCorruption: false,
+        storageAvailable: !!getProjectStorage(),
+      };
+    }
+  }
   const storage = getProjectStorage();
   if (!storage) {
     return {
@@ -398,6 +431,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     !restoredProject.storageAvailable,
   );
   const recoveryChannelRef = useRef<BroadcastChannel | null>(null);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('p')) {
+      url.searchParams.delete('p');
+      window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, []);
 
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
@@ -517,7 +558,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   const setObjectType = (type: ObjectType) => {
     setState((s) => s.objectType === type ? s : ({
-      ...s, objectType: type, objectParams: {}, selectedSolutions: [], activeSolutionId: null,
+      ...s, demoProject: false, objectType: type, objectParams: {}, selectedSolutions: [], activeSolutionId: null,
       questionnaireEvidence: {},
       whatIfOverrides: {}, assumptionsOverrides: {}, simulationKpis: null,
     }));
@@ -525,7 +566,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   const setSectorId = (id: string | null) => {
     setState((s) => s.sectorId === id ? s : ({
-      ...s, sectorId: id,
+      ...s, demoProject: false, sectorId: id,
       ...(id === null ? {} : {
         objectType: null, objectParams: {},
         questionnaireEvidence: {},
@@ -541,6 +582,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       const changed = s.objectType === 'custom' && customBriefChanged(s.objectParams, params, complete);
       return {
         ...s,
+        demoProject: false,
         objectParams: s.objectType === 'custom'
           ? mergeCustomBrief(s.objectParams, params, complete)
           : { ...s.objectParams, ...params },
@@ -559,6 +601,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         const selectedSolutions = s.selectedSolutions.filter((sid) => sid !== id);
         return {
           ...s,
+          demoProject: false,
           selectedSolutions,
           activeSolutionId: s.activeSolutionId === id
             ? selectedSolutions[0] ?? null
@@ -568,6 +611,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       }
       return {
         ...s,
+        demoProject: false,
         selectedSolutions: [...s.selectedSolutions, id],
         activeSolutionId: s.activeSolutionId ?? id,
         simulationKpis: null,
@@ -579,6 +623,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     clearProjectRecoveryNotice();
     setState((s) => ({
       ...s,
+      demoProject: false,
       objectType: s.objectType ?? 'custom',
       selectedSolutions: [id],
       activeSolutionId: id,
@@ -589,13 +634,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const setActiveSolution = (id: string | null) => {
     setState((s) => (
       id === null || s.selectedSolutions.includes(id)
-        ? { ...s, activeSolutionId: id }
+        ? { ...s, demoProject: id === s.activeSolutionId ? s.demoProject : false, activeSolutionId: id }
         : s
     ));
   };
 
   const clearSelectedSolutions = () => {
-    setState((s) => ({ ...s, selectedSolutions: [], activeSolutionId: null, simulationKpis: null }));
+    setState((s) => ({ ...s, demoProject: false, selectedSolutions: [], activeSolutionId: null, simulationKpis: null }));
   };
 
   const setWhatIfOverrides = (overrides: Record<string, number>) => {
@@ -608,6 +653,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       assumptionsOverrides: { ...s.assumptionsOverrides, ...overrides },
       simulationKpis: null,
     }));
+  };
+
+  const setFinancingScenario = (financingScenario: FinancingScenario) => {
+    setState((s) => s.financingScenario === financingScenario ? s : ({ ...s, financingScenario }));
   };
 
   const removeAssumptionsOverrides = (keys: string[]) => {
@@ -641,9 +690,38 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   const resetProject = () => setState(defaultState);
 
+  const applyDemoProject = useCallback(() => {
+    clearProjectRecoveryNotice();
+    setState({
+      ...SIMULATION_DEMO,
+      demoProject: true,
+      questionnaireEvidence: {},
+      objectParams: { ...SIMULATION_DEMO.objectParams },
+      selectedSolutions: [...SIMULATION_DEMO.selectedSolutions],
+      whatIfOverrides: { ...SIMULATION_DEMO.whatIfOverrides },
+      assumptionsOverrides: { ...SIMULATION_DEMO.assumptionsOverrides },
+      simulationKpis: null,
+    });
+  }, [projectStorageUnavailable]);
+
+  const replaceProject = (project: ProjectState) => {
+    clearProjectRecoveryNotice();
+    setState({
+      ...defaultState,
+      ...project,
+      demoProject: project.demoProject === true,
+      questionnaireEvidence: {},
+      objectParams: { ...project.objectParams },
+      selectedSolutions: [...project.selectedSolutions],
+      whatIfOverrides: { ...project.whatIfOverrides },
+      assumptionsOverrides: { ...project.assumptionsOverrides },
+      simulationKpis: null,
+    });
+  };
+
   const applyQuestionnaire = (staged: QuestionnaireImport, expected: string) => {
     if (projectFingerprint(state) !== expected) return false;
-    const next = applyQuestionnaireToProject(state, staged, expected);
+    const next = { ...applyQuestionnaireToProject(state, staged, expected), demoProject: false };
     setState(current => projectFingerprint(current) === expected ? next : current);
     return true;
   };
@@ -665,10 +743,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         clearSelectedSolutions,
         setWhatIfOverrides,
         setAssumptionsOverrides,
+        setFinancingScenario,
         removeAssumptionsOverrides,
         resetOperationInputs,
         setSimulationKpis,
         resetProject,
+        applyDemoProject,
+        replaceProject,
       }}
     >
       {children}

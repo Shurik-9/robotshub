@@ -1,0 +1,626 @@
+import './start-experience.css';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useSearch } from 'wouter';
+import { useSectorMap } from '@/lib/useSectorMap';
+import { DEMO_SOLUTION_ID, isEmptyProject } from '@/lib/demo-project';
+import { estimateWarehouseParams as estimateObjectParams, MIN_START_AREA_M2 as MIN_AREA_M2, MAX_START_AREA_M2 as MAX_AREA_M2 } from '@/lib/start-estimate';
+import { SIMULATION_DEMO, SIMULATION_DEMO_INITIAL_TASKS } from '@/lib/simulation-demo';
+import { useProject, type ProjectState } from '@/store/project';
+import { calculateEconomics, calculateSimulationInputs } from '@/lib/calc';
+import { buildScene } from '@/sim/scene-builder';
+import { buildFleet } from '@/sim/fleet';
+import { SimCanvas } from '@/sim/SimCanvas';
+import { CASES } from '@/pages/cases';
+import solutionsData from '@/data/solutions.json';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { IconCalculator, IconChartRoi, IconClockPayback, IconSliders, IconSourceDoc } from '@/components/brand-icons';
+import { ArrowRight, BookOpenCheck, Building2, CircleHelp, Plane, Stethoscope, Warehouse } from 'lucide-react';
+
+const WAREHOUSE_SECTOR = 'Транспорт и логистика';
+const solution = (() => {
+  const found = solutionsData.items.find(item => item.id === DEMO_SOLUTION_ID);
+  if (!found || !(typeof found.price_rub === 'number' && Number.isFinite(found.price_rub) && found.price_rub > 0)) {
+    throw new Error('Для быстрого расчёта нужен товарный и ценовой источник Ronavi H1500.');
+  }
+  return found;
+})();
+
+function calculateWarehouseEstimate(objectParams: Record<string, number | string | boolean>) {
+  const inputs = {
+    objectParams,
+    solution,
+    whatIf: { salaryMultiplier: 1, priceMultiplier: 1, volumeMultiplier: 1 },
+    assumptionsOverrides: {},
+  };
+  const simulation = calculateSimulationInputs(inputs);
+  const purchase = calculateEconomics(inputs).find(item => item.id === 'purchase') ?? null;
+  return { simulation, purchase };
+}
+
+function formatMillions(value: number | null | undefined) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? `~${(value / 1_000_000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} млн ₽`
+    : '—';
+}
+
+function formatRobotCount(count: number) {
+  const mod100 = count % 100;
+  const mod10 = count % 10;
+  const unit = mod100 >= 11 && mod100 <= 14 ? 'роботов'
+    : mod10 === 1 ? 'робот'
+      : mod10 >= 2 && mod10 <= 4 ? 'робота'
+        : 'роботов';
+  return `${count.toLocaleString('ru-RU')} ${unit}`;
+}
+
+function formatPaybackForPreview(value: number | null | undefined) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    return '—';
+  }
+  const rounded = Math.round(value * 10) / 10;
+  const mod100 = rounded % 100;
+  const mod10 = rounded % 10;
+  const unit = rounded % 1 !== 0 ? 'года'
+    : mod100 >= 11 && mod100 <= 14 ? 'лет'
+      : mod10 === 1 ? 'год'
+        : mod10 >= 2 && mod10 <= 4 ? 'года'
+          : 'лет';
+  return `${rounded.toLocaleString('ru-RU', { maximumFractionDigits: 1 })} ${unit}`;
+}
+
+function WarehouseAssumptions({ area }: { area: number }) {
+  const params = estimateObjectParams(area);
+  const inbound = Number(params.inbound_pallets_per_day);
+  const outbound = Number(params.outbound_pallets_per_day);
+  const currency = (value: number) => `${Math.round(value).toLocaleString('ru-RU')} ₽`;
+  return (
+    <details className="start-assumptions-disclosure" data-testid="start-assumptions-preview">
+      <summary>Показать числовые допущения модели</summary>
+      <ul>
+        <li>
+          <strong>Паллетный поток:</strong> {inbound.toLocaleString('ru-RU')} на приёмку и {outbound.toLocaleString('ru-RU')} на отгрузку в сутки.
+          Модель выводит его из площади ({area.toLocaleString('ru-RU')} ÷ 20, минимум 20), а производительность считает по входящему потоку без сложения двух направлений. Это не замер площадки.
+        </li>
+        <li>
+          <strong>Режим и персонал:</strong> {params.shifts_per_day} смены по {params.shift_duration_h} ч,
+          {' '}{params.working_days_per_year} дней работы в году по модели; {params.pickers_count} комплектовщика по {currency(Number(params.picker_salary_gross))} в месяц,
+          коэффициент начислений {Number(params.payroll_factor).toLocaleString('ru-RU')}.
+        </li>
+        <li>
+          <strong>Планировка для модели:</strong> {Number(params.active_area_m2).toLocaleString('ru-RU')} м² активной зоны,
+          {' '}{params.floors_count} этаж, {params.rack_rows} рядов, {params.docks_count} дока и {params.charge_stations} зарядные станции.
+        </li>
+        <li>
+          <strong>Цена решения:</strong> {currency(solution.price_rub)} за единицу по карточке каталога.
+          Окупаемость и итоговый CAPEX остаются результатом существующей модели, не коммерческим предложением.
+        </li>
+      </ul>
+    </details>
+  );
+}
+
+type PendingWarehouse = {
+  sectorId: string;
+  area: number;
+  objectParams: Record<string, number | string | boolean>;
+};
+
+type StartResult = {
+  sectorId: string;
+  area: number;
+  objectParams: PendingWarehouse['objectParams'] | null;
+};
+
+function hasSavedProject(state: ProjectState) {
+  return !isEmptyProject(state);
+}
+
+function makeWarehouseProject(objectParams: PendingWarehouse['objectParams'], demoProject = false): ProjectState {
+  return {
+    objectType: 'warehouse',
+    sectorId: null,
+    objectParams,
+    selectedSolutions: [DEMO_SOLUTION_ID],
+    activeSolutionId: DEMO_SOLUTION_ID,
+    whatIfOverrides: {},
+    assumptionsOverrides: {},
+    financingScenario: 'purchase',
+    simulationKpis: null,
+    demoProject,
+  };
+}
+
+export default function Start() {
+  const { sectors, error: sectorError } = useSectorMap();
+  const [, setLocation] = useLocation();
+  const search = useSearch();
+  const { state, replaceProject } = useProject();
+  const requestedIndustry = new URLSearchParams(search).get('industry');
+  const [sectorId, setSectorId] = useState<string | null>(requestedIndustry);
+  const [areaRaw, setAreaRaw] = useState(requestedIndustry === WAREHOUSE_SECTOR ? '5200' : '');
+  const [result, setResult] = useState<StartResult | null>(null);
+  const [pendingOverwrite, setPendingOverwrite] = useState<{ estimate: PendingWarehouse; destination: 'result' | 'calc' } | null>(null);
+  const [overwriteOpen, setOverwriteOpen] = useState(false);
+
+  const industries = useMemo(() => (sectors ?? []).filter(item => !item.thematic), [sectors]);
+  const selectedIndustry = industries.find(item => item.id === sectorId) ?? null;
+  const isWarehouse = sectorId === WAREHOUSE_SECTOR;
+  const area = Number(areaRaw.replace(/\s/g, ''));
+  const validArea = Number.isFinite(area) && area >= MIN_AREA_M2 && area <= MAX_AREA_M2;
+
+  useEffect(() => {
+    setSectorId(requestedIndustry);
+    setAreaRaw(requestedIndustry === WAREHOUSE_SECTOR ? '5200' : '');
+    setResult(null);
+  }, [requestedIndustry]);
+
+  useEffect(() => {
+    if (sectors && sectorId && !industries.some(item => item.id === sectorId)) {
+      setSectorId(null);
+      setResult(null);
+    }
+  }, [industries, sectorId, sectors]);
+
+  const exampleEstimate = useMemo(
+    () => calculateWarehouseEstimate(estimateObjectParams(5200)),
+    [],
+  );
+  const liveEstimate = useMemo(() => {
+    if (!isWarehouse || !validArea) return null;
+    return calculateWarehouseEstimate(estimateObjectParams(area));
+  }, [area, isWarehouse, validArea]);
+
+  const calculate = useMemo(() => {
+    if (!result?.objectParams || result.area === 0) return null;
+    return calculateWarehouseEstimate(result.objectParams);
+  }, [result]);
+
+  const scene = useMemo(() => {
+    if (!calculate || !result?.objectParams || result.area === 0) return null;
+    return buildScene({
+      kind: 'warehouse',
+      areaM2: result.area,
+      floors: Number(result.objectParams.floors_count),
+      rackRows: Number(result.objectParams.rack_rows),
+      docks: Number(result.objectParams.docks_count),
+      chargeStations: Number(result.objectParams.charge_stations),
+      elevatorIntegrationReady: false,
+      stationarySolutions: [],
+    }, 42);
+  }, [calculate, result]);
+
+  const fleet = useMemo(
+    () => calculate ? buildFleet([solution], calculate.simulation.robotCount).fleet : [],
+    [calculate],
+  );
+
+  const similarCases = useMemo(
+    () => sectorId ? CASES.filter(item => item.industry === sectorId).slice(0, 2) : [],
+    [sectorId],
+  );
+  const sectorSolutions = useMemo(() => {
+    if (!sectorId || isWarehouse) return [];
+    return solutionsData.items
+      .filter(item => Array.isArray(item.industry) ? item.industry.includes(sectorId) : item.industry === sectorId)
+      .filter(item => typeof item.price_rub === 'number' && item.price_rub > 0)
+      .slice(0, 3);
+  }, [isWarehouse, sectorId]);
+
+  const finishWarehouseEstimate = (next: PendingWarehouse) => {
+    replaceProject(makeWarehouseProject(next.objectParams));
+    setResult(next);
+    window.setTimeout(() => document.getElementById('start-result')?.scrollIntoView({ behavior: 'smooth' }), 60);
+  };
+
+  const requestWarehouseEstimate = (id: string, areaValue: number) => {
+    if (!Number.isFinite(areaValue) || areaValue < MIN_AREA_M2 || areaValue > MAX_AREA_M2) return;
+    const next = { sectorId: id, area: areaValue, objectParams: estimateObjectParams(areaValue) };
+    if (hasSavedProject(state)) {
+      setPendingOverwrite({ estimate: next, destination: 'result' });
+      setOverwriteOpen(true);
+      return;
+    }
+    finishWarehouseEstimate(next);
+  };
+
+  const chooseIndustry = (id: string) => {
+    setSectorId(id);
+    setAreaRaw(id === WAREHOUSE_SECTOR ? '5200' : '');
+    setResult(null);
+  };
+
+  const chooseWarehouseQuickPath = () => {
+    chooseIndustry(WAREHOUSE_SECTOR);
+    window.setTimeout(() => document.getElementById('start-area-input')?.focus(), 0);
+  };
+
+  const showIndustryResults = (id: string) => {
+    setResult({ sectorId: id, area: 0, objectParams: null });
+  };
+
+  const finishDemoCalculation = () => {
+    replaceProject({ ...SIMULATION_DEMO, demoProject: true });
+    setLocation('/calc');
+  };
+
+  const startDemoCalculation = () => {
+    if (hasSavedProject(state)) {
+      setPendingOverwrite({
+        estimate: { sectorId: WAREHOUSE_SECTOR, area: 5200, objectParams: estimateObjectParams(5200) },
+        destination: 'calc',
+      });
+      setOverwriteOpen(true);
+    } else {
+      finishDemoCalculation();
+    }
+  };
+
+  const hasResult = result !== null;
+
+  return (
+    <div className="start-page mx-auto w-full max-w-6xl px-4 pb-16 pt-7 sm:px-6 sm:pt-10" data-testid="page-start">
+      <section className="start-intro" aria-labelledby="start-page-title">
+        <div className="start-intro-copy">
+          <p className="start-eyebrow"><span className="start-led" /> ПЕРВИЧНАЯ ОЦЕНКА / ROBOTSHUB</p>
+          <h1 id="start-page-title">Сначала задача.<br /><em>Потом расчёт.</em></h1>
+          <p className="start-lede">Проверьте, какие данные уже есть, где модель использует допущения и что стоит подтвердить на площадке — прежде чем сравнивать оборудование.</p>
+          <div className="start-intro-links">
+            <Link href="/kak-eto-rabotaet" className="start-article-link" data-testid="start-how-link">
+              <BookOpenCheck aria-hidden="true" size={18} />
+              Как устроен складской поток
+              <ArrowRight aria-hidden="true" size={16} />
+            </Link>
+              <span className="start-time-note">Быстрый просмотр не заменяет сохранённый проект</span>
+          </div>
+        </div>
+        <aside className="start-intro-aside" aria-label="Границы первичной оценки">
+          <div className="start-note-heading"><CircleHelp size={17} aria-hidden="true" /> ЧТО МОЖНО УЗНАТЬ СЕЙЧАС</div>
+          <p><strong>Складская логистика</strong> — ориентир по парку и экономике на базе модели и карточки решения в каталоге.</p>
+          <p><strong>Другие направления</strong> — доступные решения и примеры из базы, без универсального прогноза окупаемости.</p>
+          <div className="start-note-foot">Результат — отправная точка для проверки, не проектное заключение и не смета поставщика.</div>
+        </aside>
+        <div className="start-flow" aria-label="Что происходит в оценке">
+          <div><span>ОБЪЕКТ</span><strong>Вы задаёте контекст</strong></div>
+          <i aria-hidden="true" />
+          <div><span>МОДЕЛЬ</span><strong>Допущения видны отдельно</strong></div>
+          <i aria-hidden="true" />
+          <div><span>СЛЕДУЮЩИЙ ШАГ</span><strong>Уточнение или каталог</strong></div>
+        </div>
+      </section>
+
+      <section className="start-workspace" aria-label="Начать оценку">
+      {!sectorId && (
+        <section aria-labelledby="start-industry-title">
+          <div className="start-section-heading">
+            <div><p className="start-kicker">ВЫБЕРИТЕ НАПРАВЛЕНИЕ</p>
+              <h2 id="start-industry-title">Где находится ваша задача?</h2>
+                <p>Можно начать с типа площадки или сразу выбрать отрасль. Отрасль, физический объект и операция — разные признаки.</p>
+              </div>
+          </div>
+          <div className="start-entry-routes" aria-label="Быстрый вход по типу площадки">
+            <article className="start-entry-route start-entry-route-warehouse" data-testid="start-quick-example">
+              <div className="start-entry-route-top">
+                <Warehouse size={19} aria-hidden="true" />
+                <span>МОДЕЛЬНЫЙ ПРИМЕР · СКЛАД</span>
+              </div>
+              <h3>Проверить складскую логистику</h3>
+              <p className="start-entry-example-label">Расчёт по текущей модели на 5 200 м² — это пример, не параметры вашей площадки.</p>
+              <div className="start-entry-example-metrics">
+                <div><strong>~{formatRobotCount(exampleEstimate.simulation.robotCount)}</strong><span>расчётный парк</span></div>
+                <div><strong>{formatMillions(exampleEstimate.purchase?.capex)}</strong><span>оценка CAPEX</span></div>
+                <div><strong>{formatPaybackForPreview(exampleEstimate.purchase?.paybackYears ?? null)}</strong><span>срок по модели</span></div>
+              </div>
+              <p className="start-entry-disclaimer">Площадь и прочие вводные — модельный сценарий, не данные вашей площадки. Цена решения взята из каталога.</p>
+              <WarehouseAssumptions area={5200} />
+              <button type="button" className="start-entry-action" onClick={chooseWarehouseQuickPath} data-testid="start-quick-warehouse">
+                Задать площадь склада <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            </article>
+            <Link href="/quick-select?objectType=airport" className="start-entry-route" data-testid="start-quick-airport">
+              <div className="start-entry-route-top"><Plane size={19} aria-hidden="true" /><span>ТИП ПЛОЩАДКИ</span></div>
+              <h3>Аэропорт</h3>
+              <p>Выберите отрасль и операцию — универсальную окупаемость для всех аэропортов не подставляем.</p>
+              <span className="start-entry-action">Перейти к подбору <ArrowRight size={16} aria-hidden="true" /></span>
+            </Link>
+            <Link href="/quick-select?objectType=medical" className="start-entry-route" data-testid="start-quick-medical">
+              <div className="start-entry-route-top"><Stethoscope size={19} aria-hidden="true" /><span>ТИП ПЛОЩАДКИ</span></div>
+              <h3>Медучреждение</h3>
+              <p>Выберите направление и задачу: перевозка, уборка и другие операции требуют разных вводных.</p>
+              <span className="start-entry-action">Перейти к подбору <ArrowRight size={16} aria-hidden="true" /></span>
+            </Link>
+            <Link href="/quick-select" className="start-entry-route start-entry-route-custom" data-testid="start-quick-other">
+              <div className="start-entry-route-top"><Building2 size={19} aria-hidden="true" /><span>ДРУГОЙ ОБЪЕКТ</span></div>
+              <h3>Выбрать отрасль и площадку</h3>
+              <p>Сначала изучите данные карты, затем задайте физический тип объекта отдельно.</p>
+              <span className="start-entry-action">Открыть быстрый выбор <ArrowRight size={16} aria-hidden="true" /></span>
+            </Link>
+          </div>
+          <p className="start-entry-or">Или начните с отраслевого контекста:</p>
+          {sectorError ? (
+            <div className="start-status start-error" role="alert">
+              <p>Направления карты пока не загрузились.</p>
+              <span>{sectorError}. Обновите страницу, чтобы повторить загрузку.</span>
+            </div>
+          ) : industries.length === 0 ? (
+            <div className="start-loading" role="status" aria-label="Загрузка направлений">
+              <div /><div /><div />
+            </div>
+          ) : (
+            <div className="start-industries">
+              {industries.map((item, index) => (
+                <button key={item.id} type="button" onClick={() => chooseIndustry(item.id)}
+                  className="start-industry-option" data-testid={`start-industry-${item.id}`}>
+                  <span className="start-option-index">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="start-option-name">{item.id}</span>
+                  <span className="start-option-count">{item.n} записей базы</span>
+                  <ArrowRight size={17} aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {sectorId && !hasResult && (
+        <section aria-labelledby="start-object-title">
+          <div className="start-section-heading">
+            <div><p className="start-kicker">КОНТЕКСТ / {isWarehouse ? 'СКЛАДСКАЯ ЛОГИСТИКА' : 'ОТРАСЛЕВОЙ ОБЗОР'}</p>
+              <h2 id="start-object-title">
+                {isWarehouse ? 'Задайте площадь склада' : `Что автоматизируем в отрасли «${sectorId}»?`}
+              </h2>
+              <p>
+                {isWarehouse
+                  ? 'Площадь — единственный параметр, который вы вводите здесь. Остальные значения создаёт модель; список допущений будет показан рядом с результатом.'
+                  : 'Покажем решения и примеры из базы. Это обзор отрасли, а не расчёт для конкретного типа объекта или операции.'}
+              </p></div>
+          </div>
+          {isWarehouse ? (
+            <div className="start-area-panel">
+              <div className="start-area-label">
+                <label htmlFor="start-area-input">Общая площадь, м²</label>
+                <span>Укажите площадь объекта, который хотите оценить</span>
+              </div>
+              <div className="start-area-controls">
+                <input id="start-area-input" type="number" min={MIN_AREA_M2} max={MAX_AREA_M2} step={100}
+                  value={areaRaw} onChange={event => setAreaRaw(event.target.value)}
+                  placeholder="Например, 5 200"
+                  className="start-area-input"
+                  aria-describedby="start-area-hint"
+                  data-testid="start-area-input" />
+                {[500, 1000, 5000, 10000].map(value => (
+                  <button key={value} type="button" onClick={() => setAreaRaw(String(value))}
+                    className="start-area-preset" data-testid={`start-area-preset-${value}`}>
+                    {value.toLocaleString('ru-RU')}
+                  </button>
+                ))}
+              </div>
+              <label className="start-area-range-label" htmlFor="start-area-range">Быстро изменить площадь</label>
+              <input id="start-area-range" className="start-area-range" type="range" min={MIN_AREA_M2} max={MAX_AREA_M2} step={100}
+                value={validArea ? area : 5200}
+                onChange={event => setAreaRaw(event.target.value)}
+                aria-label="Площадь склада в квадратных метрах"
+                data-testid="start-area-range" />
+              <div className="start-area-bottom">
+                <p id="start-area-hint">Допустимый диапазон: {MIN_AREA_M2.toLocaleString('ru-RU')}–{MAX_AREA_M2.toLocaleString('ru-RU')} м². Ориентир обновляется без сохранения; проект запишется только после нажатия кнопки. Остальные параметры можно уточнить дальше.</p>
+                <Button type="button" disabled={!validArea} onClick={() => requestWarehouseEstimate(sectorId, area)}
+                  className="h-12 px-6 text-base" data-testid="start-submit">
+                  Показать предварительную оценку <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+              {liveEstimate && (
+                <div className="start-live-estimate" data-testid="start-live-estimate" aria-live="polite">
+                  <div className="start-live-estimate-heading">
+                    <div><p className="start-kicker">ПЕРЕСЧЁТ БЕЗ СОХРАНЕНИЯ</p><h3>Предварительный ориентир · {area.toLocaleString('ru-RU')} м²</h3></div>
+                    <span>Модель Ronavi H1500</span>
+                  </div>
+                  <div className="start-entry-example-metrics">
+                    <div><strong>~{liveEstimate.simulation.robotCount}</strong><span>расчётный парк</span></div>
+                    <div><strong>{formatMillions(liveEstimate.purchase?.capex)}</strong><span>оценка CAPEX</span></div>
+                    <div><strong>{formatPaybackForPreview(liveEstimate.purchase?.paybackYears ?? null)}</strong><span>окупаемость по модели</span></div>
+                    <div><strong>{liveEstimate.simulation.requiredThroughputPerHour.toLocaleString('ru-RU', { maximumFractionDigits: 1 })}</strong><span>палл./ч по допущениям</span></div>
+                  </div>
+                  <p>Площадь меняет результат сразу. Остальные значения не введены вами и не подтверждены для конкретного объекта.</p>
+                  <WarehouseAssumptions area={area} />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="start-industry-next">
+              <p>Универсальную окупаемость для этой отрасли не рассчитываем: применимость зависит от физической площадки и конкретной операции.</p>
+              <Button type="button" onClick={() => showIndustryResults(sectorId)}
+                className="h-12 px-6 text-base" data-testid="start-submit-sector">
+                Показать решения и примеры <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          <p className="mt-5">
+            <button type="button" onClick={() => { setSectorId(null); setResult(null); }}
+              className="start-back-link" data-testid="start-change-industry">
+              ← Изменить направление
+            </button>
+          </p>
+        </section>
+      )}
+      </section>
+
+      {result && (
+        <section id="start-result" aria-labelledby="start-result-title">
+          <h1 id="start-result-title" className="text-2xl font-bold text-foreground sm:text-3xl">
+            В базе {selectedIndustry?.n ?? '—'} записей по отрасли «{result.sectorId}»
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {result.area > 0 ? `Площадь склада ${result.area.toLocaleString('ru-RU')} м²` : 'Подбор по отрасли; это не прогноз окупаемости'}
+          </p>
+
+          {result.objectParams && calculate ? (
+            <>
+              <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div className="rounded-xl border border-[rgba(148,163,184,0.16)] bg-[#101724] p-5" data-testid="start-stat-robots">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Расчётный парк</p>
+                  <p className="mt-2 text-3xl font-bold text-foreground">~{calculate.simulation.robotCount}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">роботов по заданному потоку и ТТХ</p>
+                </div>
+                <div className="rounded-xl border border-[rgba(148,163,184,0.16)] bg-[#101724] p-5" data-testid="start-stat-capex">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Оценка CAPEX</p>
+                  <p className="mt-2 text-3xl font-bold text-foreground">
+                    {formatMillions(calculate.purchase?.capex)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">по модели экономики, не коммерческое предложение</p>
+                </div>
+                <div className="rounded-xl border border-[rgba(148,163,184,0.16)] bg-[#101724] p-5" data-testid="start-stat-payback">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Окупаемость</p>
+                  <p className="mt-2 text-3xl font-bold text-foreground">
+                    {formatPaybackForPreview(calculate.purchase?.paybackYears ?? null)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">предварительно, по допущениям ниже</p>
+                </div>
+                <div className="rounded-xl border border-[rgba(148,163,184,0.16)] bg-[#101724] p-5" data-testid="start-stat-flow">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Заданный поток</p>
+                  <p className="mt-2 text-3xl font-bold text-[#22D3EE]">
+                    {calculate.simulation.requiredThroughputPerHour > 0
+                      ? `${calculate.simulation.requiredThroughputPerHour.toLocaleString('ru-RU', { maximumFractionDigits: 1 })} палл/ч`
+                      : '—'}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">рассчитан из допущения об объёме паллет</p>
+                </div>
+              </div>
+
+              <section className="mt-6 rounded-xl border border-border bg-[#101724] p-4" aria-labelledby="start-assumptions-title" data-testid="start-assumptions">
+                <h2 id="start-assumptions-title" className="font-semibold text-foreground">Допущения этой предварительной оценки</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Операции приёмки и отгрузки — по {Number(result.objectParams.inbound_pallets_per_day).toLocaleString('ru-RU')} паллет в сутки каждая; поток в показателе паллет/ч берётся по приёмке, направления не складываются. Режим: {String(result.objectParams.shifts_per_day)} смены по {String(result.objectParams.shift_duration_h)} ч и {String(result.objectParams.working_days_per_year)} дней работы в году по модели. Персонал: {String(result.objectParams.pickers_count)} комплектовщика по {Number(result.objectParams.picker_salary_gross).toLocaleString('ru-RU')} ₽/мес.; коэффициент начислений {Number(result.objectParams.payroll_factor).toLocaleString('ru-RU')}. Планировка: {Number(result.objectParams.active_area_m2).toLocaleString('ru-RU')} м² активной зоны, {String(result.objectParams.floors_count)} этаж, {String(result.objectParams.rack_rows)} рядов, {String(result.objectParams.docks_count)} дока и {String(result.objectParams.charge_stations)} зарядные станции. Это допущения модели, а не сведения о вашем объекте.
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Базовая карточка Ronavi H1500 в каталоге: {(solution.price_rub / 1_000_000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} млн ₽ за единицу. Итоговый CAPEX выше из-за допущений существующей модели; запросите у поставщика подтверждённую смету.
+                </p>
+              </section>
+
+              {scene && (
+                <div className="mt-6">
+                  <h2 className="mb-2 text-lg font-semibold text-foreground">Визуальная модель объекта и парка</h2>
+                  <p className="mb-3 text-sm text-muted-foreground">Начальная очередь из {SIMULATION_DEMO_INITIAL_TASKS} заданий нужна только для короткой демонстрации движения. После неё в модели остаётся заданный поток {calculate.simulation.tasksPerHour.toLocaleString('ru-RU', { maximumFractionDigits: 1 })} оп/ч; показатели не являются доказанным прогнозом производительности.</p>
+                  <SimCanvas
+                    scene={scene}
+                    options={{
+                      tasksPerHour: calculate.simulation.tasksPerHour,
+                      laborCostPerTaskRub: calculate.simulation.laborCostPerTaskRub,
+                      batteryRuntimeHours: calculate.simulation.batteryRuntimeHours,
+                      chargeTimeMinutes: calculate.simulation.chargeTimeMinutes,
+                      initialTasks: SIMULATION_DEMO_INITIAL_TASKS,
+                    }}
+                    fleet={fleet}
+                    sceneKind="warehouse"
+                    seed={42}
+                    title={`Модель склада ${result.area.toLocaleString('ru-RU')} м² · ${calculate.simulation.robotCount} роб.`}
+                    className="min-h-[430px]"
+                  />
+                </div>
+              )}
+
+              <div className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <Link href="/report" className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90" data-testid="start-open-report">
+                  <IconSourceDoc className="h-4 w-4" /> Открыть отчёт
+                </Link>
+                <Link href="/calc" className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-foreground hover:bg-secondary" data-testid="start-open-calc">
+                  <IconSliders className="h-4 w-4" /> Уточнить расчёт
+                </Link>
+                <Link href="/simulation" className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-foreground hover:bg-secondary" data-testid="start-open-sim">
+                  <IconClockPayback className="h-4 w-4" /> Открыть симуляцию
+                </Link>
+                <a href={`/lead?solution=${DEMO_SOLUTION_ID}&via=plan`} className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-foreground hover:bg-secondary" data-testid="start-request-quote">
+                  <IconChartRoi className="h-4 w-4" /> Запросить КП
+                </a>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="mt-4 max-w-2xl text-sm text-muted-foreground">
+                {sectorSolutions.length > 0
+                  ? `В каталоге есть ${sectorSolutions.length} решения с указанной ценой. Это подбор, не расчёт окупаемости.`
+                  : 'В каталоге не нашлось решений с указанной ценой для этого направления. Это не означает, что их нет на рынке.'}
+              </p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                {sectorSolutions.map(item => (
+                  <article key={item.id} className="rounded-xl border border-[rgba(148,163,184,0.16)] bg-[#101724] p-4" data-testid="start-sector-solution">
+                    <p className="text-sm font-semibold leading-snug text-foreground">{item.name}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{item.vendor}</p>
+                    <p className="mt-3 text-sm font-medium text-[#22D3EE]">
+                      от {(item.price_rub / 1_000_000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} млн ₽ по каталогу
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">{item.status_ru}</p>
+                  </article>
+                ))}
+              </div>
+              {similarCases.length > 0 && (
+                <div className="mt-6">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Кейсы в этой отрасли</h2>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {similarCases.map(item => (
+                      <Link key={item.id} href={`/cases/${item.id}`} className="rounded-xl border border-[rgba(148,163,184,0.16)] bg-[#101724] p-4 transition-colors hover:border-[#22D3EE]/50" data-testid="start-sector-case">
+                        <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.lead}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Link href={`/quick-select?sector=${encodeURIComponent(result.sectorId)}`} className="inline-flex h-11 items-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90" data-testid="start-open-catalog">
+                  Открыть каталог отрасли
+                </Link>
+                <Button type="button" variant="outline" className="h-11 px-5" onClick={startDemoCalculation} data-testid="start-demo-calc">
+                  Посчитать на демо-складе 5 200 м²
+                </Button>
+              </div>
+            </>
+          )}
+
+          <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
+            Это предварительная оценка на основе явно перечисленных допущений и каталожных цен. Она не учитывает обследование площадки и не является предложением поставщика. Уточните параметры в «Экономике» и запросите КП.
+          </p>
+          <p className="mt-3">
+            <button type="button" onClick={() => { setResult(null); setSectorId(null); setAreaRaw(''); }} className="text-sm text-muted-foreground hover:text-foreground" data-testid="start-restart">
+              ← Начать заново
+            </button>
+          </p>
+        </section>
+      )}
+
+      <AlertDialog open={overwriteOpen} onOpenChange={open => {
+        setOverwriteOpen(open);
+        if (!open) setPendingOverwrite(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Заменить сохранённый проект?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Результат быстрого расчёта запишет новые параметры склада и заменит текущие данные этого браузера. Если хотите сохранить старый проект, сначала сохраните его ссылку или отмените замену.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="start-overwrite-cancel">Оставить проект</AlertDialogCancel>
+            <AlertDialogAction data-testid="start-overwrite-confirm" onClick={event => {
+              event.preventDefault();
+              if (pendingOverwrite?.destination === 'calc') finishDemoCalculation();
+              else if (pendingOverwrite) finishWarehouseEstimate(pendingOverwrite.estimate);
+              setPendingOverwrite(null);
+              setOverwriteOpen(false);
+            }}>
+              Заменить и продолжить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

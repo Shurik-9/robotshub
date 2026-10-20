@@ -14,9 +14,11 @@ COPY artifacts/robotshub/ artifacts/robotshub/
 COPY lib/api-client-react/ lib/api-client-react/
 ENV BASE_PATH=/ PORT=5173
 RUN pnpm --filter @workspace/robotshub run build
+COPY deploy/nginx.conf deploy/build-nginx-config.mjs deploy/
+RUN node deploy/build-nginx-config.mjs
 
 FROM nginx:1.27-alpine
-COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/deploy/nginx.generated.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/artifacts/robotshub/dist/public/ /usr/share/nginx/html/
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

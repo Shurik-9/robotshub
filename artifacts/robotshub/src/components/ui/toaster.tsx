@@ -5,10 +5,10 @@ export function Toaster() {
   const { toasts } = useToast()
 
   return (
-    <div className="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]">
+    <div className="pointer-events-none fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px] print:hidden" data-print-hide="toast">
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
-          <div key={id} {...props} className="bg-background border border-border shadow-lg rounded-md p-4 mb-4">
+          <div key={id} {...props} className="pointer-events-auto bg-background border border-border shadow-lg rounded-md p-4 mb-4">
             <div className="grid gap-1">
               {title && <div className="text-sm font-semibold">{title}</div>}
               {description && (

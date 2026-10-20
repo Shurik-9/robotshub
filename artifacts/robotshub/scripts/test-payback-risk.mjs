@@ -11,6 +11,8 @@ import warehouseTemplate from "../src/data/object-templates/warehouse.json" with
 import airportTemplate from "../src/data/object-templates/airport.json" with { type: "json" };
 import medicalTemplate from "../src/data/object-templates/medical.json" with { type: "json" };
 import solutionsData from "../src/data/solutions.json" with { type: "json" };
+import { createSharedCalculationUrl } from "../src/lib/project-sharing.ts";
+import { operationFieldKey, operationProfiles } from "../src/lib/operationEconomics.ts";
 
 const projectRoot = fileURLToPath(new URL("..", import.meta.url));
 const port = Number(process.env.PAYBACK_RISK_BROWSER_PORT ?? 4176);
@@ -839,6 +841,144 @@ assert.ok(
   thirdSolution?.id,
   "в каталоге должна быть третья модель «Ronavi H2000 (грузоподъемность до 2 000 кг)»",
 );
+
+test("shared calculation link restores the project in a fresh browser tab", { concurrency: false }, async () => {
+  const server = await startApp();
+  const chromium = await startChromium();
+  const sharedState = {
+    objectType: "warehouse",
+    sectorId: "logistics",
+    objectParams: {
+      ...objectParams,
+      pickers_count: Number(objectParams.pickers_count) + 7,
+    },
+    selectedSolutions: [alternativeSolution.id],
+    assumptionsOverrides: { servicePct: 12 },
+    whatIfOverrides: { salaryMultiplier: 1.1, priceMultiplier: 0.9, volumeMultiplier: 1.2 },
+  };
+
+  try {
+    const shareUrl = createSharedCalculationUrl(sharedState, baseUrl, "/");
+    await chromium.page.enableBrowserDiagnostics();
+    await chromium.page.command("Page.navigate", { url: shareUrl });
+    await chromium.page.waitFor(
+      solutionId => document.querySelector(`[data-testid="button-calc-solution-${solutionId}"]`) !== null,
+      alternativeSolution.id,
+    );
+    await chromium.page.waitFor(
+      expected => {
+        const saved = JSON.parse(localStorage.getItem("robotshub_project") ?? "null");
+        return saved?.objectType === "warehouse"
+          && saved?.objectParams?.pickers_count === expected.pickers
+          && saved?.selectedSolutions?.[0] === expected.solutionId
+          && saved?.whatIfOverrides?.volumeMultiplier === 1.2
+          && saved?.assumptionsOverrides?.servicePct === 12;
+      },
+      { pickers: sharedState.objectParams.pickers_count, solutionId: alternativeSolution.id },
+    );
+    await chromium.page.command("Page.navigate", { url: `${baseUrl}/report` });
+    await chromium.page.waitFor(() => document.querySelector('[data-testid="report-share-link"]') !== null);
+    await chromium.page.waitFor(
+      () => document.querySelector('img[alt="QR-код ссылки на интерактивный расчёт"]')?.getAttribute("src")?.startsWith("data:image/png;base64,") === true,
+    );
+    const reportPrintState = await chromium.page.evaluate(() => {
+      const layout = document.querySelector(".report-print-layout");
+      const toolbar = document.querySelector('[data-testid="button-export-csv"]')?.closest('[class*="print:hidden"]');
+      const cover = document.querySelector(".report-cover");
+      return {
+        shareLink: document.querySelector('[data-testid="report-share-link"]')?.getAttribute("href") ?? "",
+        layoutDisplay: layout ? getComputedStyle(layout).display : "",
+      toolbarDisplay: toolbar ? getComputedStyle(toolbar).display : "",
+        coverBreakAfter: cover ? getComputedStyle(cover).breakAfter : "",
+      };
+    });
+    assert.ok(reportPrintState.shareLink.includes("?p="));
+    await chromium.page.command("Emulation.setEmulatedMedia", { media: "print" });
+    const printMediaState = await chromium.page.evaluate(() => {
+      const toolbar = document.querySelector('[data-testid="button-export-csv"]')?.closest('[class*="print:hidden"]');
+      const layout = document.querySelector(".report-print-layout");
+      return {
+        layoutDisplay: layout ? getComputedStyle(layout).display : "",
+        toolbarDisplay: toolbar ? getComputedStyle(toolbar).display : "",
+        coverBreakAfter: getComputedStyle(document.querySelector(".report-cover")).breakAfter,
+        reportBackground: getComputedStyle(document.querySelector(".report-print-area")).backgroundColor,
+      };
+    });
+    assert.equal(printMediaState.layoutDisplay, "block");
+    assert.equal(printMediaState.toolbarDisplay, "none");
+    assert.match(printMediaState.coverBreakAfter, /page/);
+    assert.ok(["rgb(255, 255, 255)", "rgba(0, 0, 0, 0)"].includes(printMediaState.reportBackground));
+    const standardPdf = await chromium.page.command("Page.printToPDF", {
+      printBackground: true,
+      preferCSSPageSize: true,
+    });
+    const standardPdfBytes = Buffer.from(standardPdf.data, "base64");
+    assert.ok(standardPdfBytes.toString("utf8").startsWith("%PDF-"));
+    assert.ok(standardPdfBytes.toString("utf8").includes("%%EOF"));
+    await chromium.page.command("Emulation.setEmulatedMedia", { media: "screen" });
+
+    const operationProfile = operationProfiles.waterCleanup;
+    const operationState = {
+      objectType: "custom",
+      sectorId: "sector-water",
+      objectParams: {
+        site_name: "Балаклавская бухта",
+        task: "Сбор плавающего мусора",
+        [operationFieldKey(operationProfile, "operationalSource")]: operationProfile.example.operationalBasis,
+        [operationFieldKey(operationProfile, "financialSource")]: operationProfile.example.financialBasis,
+        [operationFieldKey(operationProfile, "journal")]: "[]",
+        [operationFieldKey(operationProfile, "scopeConfirmed")]: false,
+        [operationFieldKey(operationProfile, "example")]: true,
+      },
+      selectedSolutions: ["018cc2dd-3dfe-4bd2-aac6-f54cbebd783e"],
+      assumptionsOverrides: Object.fromEntries(
+        Object.entries(operationProfile.example.values)
+          .map(([key, value]) => [operationFieldKey(operationProfile, key), value]),
+      ),
+      whatIfOverrides: { salaryMultiplier: 1, priceMultiplier: 1, volumeMultiplier: 1 },
+    };
+    const operationReportUrl = new URL(createSharedCalculationUrl(operationState, baseUrl, "/"));
+    operationReportUrl.pathname = "/report";
+    await chromium.page.command("Page.navigate", { url: operationReportUrl.toString() });
+    await chromium.page.waitFor(() => document.querySelector('[data-testid="operation-report-cover"]') !== null);
+    await chromium.page.waitFor(
+      () => document.querySelector('img[alt="QR-код ссылки на интерактивный расчёт"]')?.getAttribute("src")?.startsWith("data:image/png;base64,") === true,
+    );
+    const operationShareLink = await chromium.page.evaluate(
+      () => document.querySelector('[data-testid="operation-report-share-link"]')?.getAttribute("href") ?? "",
+    );
+    assert.ok(operationShareLink.includes("?p="));
+    assert.equal(
+      await chromium.page.evaluate(() => document.querySelector('[data-testid="button-share-calculation"]') !== null),
+      true,
+    );
+    await chromium.page.command("Emulation.setEmulatedMedia", { media: "print" });
+    const operationPrintState = await chromium.page.evaluate(() => {
+      const toolbar = document.querySelector('[data-testid="operation-export-csv"]')?.closest('[class*="print:hidden"]');
+      const cover = document.querySelector('[data-testid="operation-report-cover"]');
+      return {
+        toolbarDisplay: toolbar ? getComputedStyle(toolbar).display : "",
+        coverBreakAfter: cover ? getComputedStyle(cover).breakAfter : "",
+      };
+    });
+    assert.equal(operationPrintState.toolbarDisplay, "none");
+    assert.match(operationPrintState.coverBreakAfter, /page/);
+    const operationPdf = await chromium.page.command("Page.printToPDF", {
+      printBackground: true,
+      preferCSSPageSize: true,
+    });
+    const operationPdfBytes = Buffer.from(operationPdf.data, "base64");
+    assert.ok(operationPdfBytes.toString("utf8").startsWith("%PDF-"));
+    assert.ok(operationPdfBytes.toString("utf8").includes("%%EOF"));
+    await chromium.page.command("Emulation.setEmulatedMedia", { media: "screen" });
+    assert.deepEqual(chromium.page.browserErrors(), []);
+  } finally {
+    chromium.page.close();
+    await stopChild(chromium.browser, true);
+    await rm(chromium.userDataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+    await stopChild(server);
+  }
+});
 
 function parseCsvLine(row) {
   const cells = [];

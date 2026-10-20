@@ -41,12 +41,11 @@
     "seed": 15485863,
     "base_probability": 0.5,
     "uncertainties": [
-      {"key": "peak_reserve_pct", "label": "Резерв пиковой нагрузки", "unit": "%", "base": 15, "range": [10, 25], "source": "calc_constants.peak_reserve_pct.range"},
-      {"key": "robot_utilization", "label": "Коэффициент загрузки робота", "unit": "", "base": 0.78, "range": [0.70, 0.85], "source": "calc_constants.robot_utilization.range"},
-      {"key": "service_pct", "label": "Сервисное обслуживание", "unit": "% CAPEX оборудования/год", "base": 10, "range": [8, 15], "source": "opex_structure.service.basis"},
-      {"key": "electricity_tariff_rub_kwh", "label": "Тариф электроэнергии", "unit": "руб/кВт·ч", "base": 8, "range": [5, 15], "source": "calc_constants.electricity_tariff_rub_kwh.range"},
-      {"key": "integration_pct", "label": "Интеграция", "unit": "% CAPEX оборудования", "base": 20, "range": [20, 50], "source": "capex_structure.integration.basis"},
-      {"key": "commissioning_pct", "label": "Пусконаладка", "unit": "% CAPEX оборудования", "base": 5, "range": [5, 10], "source": "capex_structure.commissioning.basis"}
+      {"key": "service_pct", "label": "Сервисное обслуживание", "unit": "% CAPEX оборудования/год", "distribution": "uniform", "base": 10, "range": [8, 15], "source": "opex_structure.service.basis"},
+      {"key": "integration_pct", "label": "Интеграция", "unit": "% CAPEX оборудования", "distribution": "uniform", "base": 20, "range": [20, 50], "source": "capex_structure.integration.basis"},
+      {"key": "commissioning_pct", "label": "Пусконаладка", "unit": "% CAPEX оборудования", "distribution": "uniform", "base": 5, "range": [5, 10], "source": "capex_structure.commissioning.basis"},
+      {"key": "volume_multiplier", "label": "Объём операций", "unit": "% к исходному", "distribution": "triangular", "base": 100, "range": [80, 120], "source": "допущение ±20%, треугольное распределение"},
+      {"key": "price_multiplier", "label": "Цена техники", "unit": "% к цене каталога", "distribution": "uniform", "base": 100, "range": [85, 115], "source": "допущение ±15%"}
     ]
   },
   "financing_scenarios": [

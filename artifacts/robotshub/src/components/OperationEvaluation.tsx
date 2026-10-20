@@ -1,9 +1,11 @@
 import { useLocation } from 'wouter';
 import { useProject } from '@/store/project';
 import { Button } from '@/components/ui/button';
+import { StepNav } from '@/components/step-nav';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ShareCalculationButton } from '@/components/ShareCalculationButton';
 import {
   calculateOperation, isOperationExample, operationFieldKey, operationFinancialEvidenceStatus,
   operationFinancialReviewDate, operationMonthOptions, operationRecordEvidenceStatus, operationRecordReviewDate,
@@ -44,10 +46,16 @@ export default function OperationEvaluation({
   profile,
   mode,
   solution,
+  shareUrl,
+  qrDataUrl,
+  brandLogo,
 }: {
   profile: OperationProfile;
   mode: 'calc' | 'report';
   solution?: CatalogSolutionReference;
+  shareUrl?: string | null;
+  qrDataUrl?: string | null;
+  brandLogo?: string;
 }) {
   const [, navigate] = useLocation();
   const { state, setAssumptionsOverrides, removeAssumptionsOverrides, resetOperationInputs, updateObjectParams, setWhatIfOverrides, selectSolutionForCalculation } = useProject();
@@ -300,10 +308,43 @@ export default function OperationEvaluation({
 
   return (
     <div className={`container mx-auto max-w-5xl space-y-6 px-4 py-8 ${mode === 'report' ? 'operation-evaluation-print-report' : ''}`} data-testid={`operation-${mode}-${profile.key}`}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <StepNav
+        step={mode === 'calc' ? '04' : '06'}
+        label={mode === 'calc' ? 'Экономика' : 'Отчёт'}
+        backTo={mode === 'calc' ? '/solutions' : '/simulation'}
+        backLabel={mode === 'calc' ? 'К каталогу' : 'К симуляции'}
+        testId={mode === 'calc' ? 'button-back-calc' : 'button-back-report'}
+      />
+      <div className={`flex flex-wrap items-center justify-between gap-3 ${mode === 'report' ? 'print:hidden' : ''}`}>
         <div><h1 className="text-2xl font-bold">{mode === 'report' ? 'Отчёт ТЭО' : 'Расчёт ТЭО'}: {profile.title}</h1><p className="text-sm text-muted-foreground">Объект: {String(state.objectParams.site_name ?? '')} · модель по операции, не универсальный шаблон</p></div>
-        {mode === 'report' ? <div className="flex gap-2 print:hidden"><Button onClick={csv} data-testid="operation-export-csv">Экспорт CSV</Button><Button onClick={() => window.print()}>Печать (PDF)</Button></div> : null}
+        {mode === 'report' ? <div className="flex flex-wrap gap-2 print:hidden"><Button onClick={csv} data-testid="operation-export-csv">Экспорт CSV</Button><ShareCalculationButton state={state} /><Button onClick={() => window.print()}>Скачать PDF</Button></div> : null}
       </div>
+      {mode === 'report' && (
+        <section
+          className="report-print-cover report-cover flex flex-col items-start justify-between gap-5 border-b border-border pb-6 sm:flex-row sm:items-end print:flex-col print:items-center print:justify-center print:text-center print:border-0 print:pb-0"
+          data-testid="operation-report-cover"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            {brandLogo && <img src={brandLogo} alt="" className="h-12 w-12 rounded-lg border border-border object-cover" />}
+            <div className="min-w-0">
+              <h2 className="text-xl font-bold">Отчёт об оценке роботизации</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Операция: {profile.title} · объект: {String(state.objectParams.site_name ?? 'не указан')}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Дата: {new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long' }).format(new Date())}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-lg border border-border p-3 print:border-slate-300">
+            {qrDataUrl
+              ? <img src={qrDataUrl} alt="QR-код ссылки на интерактивный расчёт" className="h-36 w-36 rounded bg-white p-1" />
+              : <div className="flex h-36 w-36 items-center justify-center rounded border border-dashed border-border px-2 text-center text-[10px] text-muted-foreground">QR-код недоступен для этой ссылки</div>}
+            <div className="max-w-44">
+              <p className="text-xs font-semibold text-foreground">Ссылка и QR-код на расчёт</p>
+              {shareUrl
+                ? <a className="mt-1 inline-block text-[10px] text-primary underline underline-offset-2" data-testid="operation-report-share-link" href={shareUrl}>Открыть интерактивную версию</a>
+                : <p className="mt-1 text-[10px] text-muted-foreground" data-testid="operation-report-share-link">Ссылка недоступна</p>}
+            </div>
+          </div>
+        </section>
+      )}
       <Card><CardHeader><CardTitle>Метод и свидетельства применимости</CardTitle></CardHeader><CardContent>{evidence}</CardContent></Card>
       <Card data-testid="operation-financial-evidence">
         <CardHeader><CardTitle>Проверка финансовых документов и состав затрат</CardTitle></CardHeader>

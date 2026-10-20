@@ -1,11 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useSearch } from 'wouter';
 import { ArrowLeft, ArrowRight, Building2, Database, Plane, RotateCcw, Stethoscope, Warehouse } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useSectorMap, sectorCatalogPath, type MapSector } from '@/lib/useSectorMap';
 import { useProject, type ObjectType } from '@/store/project';
 import { ObjectQuestionnaire } from '@/components/object-questionnaire';
+import { requestedCalculationSolution, withCalculationIntent } from '@/lib/calculation-intent';
+import { readStartScopeDraft, startScopeObjectLabel, startScopeProcesses, START_SCOPE_LABELS } from '@/lib/start-scope';
 
 const objects: { type: Exclude<ObjectType, null>; title: string; description: string; icon: typeof Warehouse }[] = [
   { type: 'warehouse', title: 'Склад', description: 'Склад, распределительный центр или зона хранения.', icon: Warehouse },
@@ -15,11 +27,31 @@ const objects: { type: Exclude<ObjectType, null>; title: string; description: st
 ];
 
 export default function QuickSelect() {
+  const search = useSearch();
   const [, setLocation] = useLocation();
+  const fromStart = new URLSearchParams(search).get('from') === 'start';
+  useEffect(() => {
+    if (fromStart) setLocation('/start', { replace: true });
+  }, [fromStart, setLocation]);
+  return fromStart
+    ? <div className="container py-12" role="status">Открываем разбор выбранной площадки…</div>
+    : <IndustryQuickSelect />;
+}
+
+function IndustryQuickSelect() {
+  const [, setLocation] = useLocation();
+  const search = useSearch();
+  const requestedSolution = requestedCalculationSolution(search);
+  const requestedObjectType = new URLSearchParams(search).get('objectType');
+  const suggestedObject = objects.find(item => item.type === requestedObjectType) ?? null;
+  const [startContext] = useState(() => new URLSearchParams(search).get('from') === 'start'
+    ? readStartScopeDraft() : { draft: null, warning: null });
+  const scopeDraft = startContext.draft;
   const { state, setSectorId, setObjectType } = useProject();
   const { sectors, error } = useSectorMap();
   const [selectedId, setSelectedId] = useState<string | null>(state.sectorId);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [pendingObjectType, setPendingObjectType] = useState<Exclude<ObjectType, null> | null>(null);
   const [resetNotice, setResetNotice] = useState(false);
   const [showMobileSectors, setShowMobileSectors] = useState(false);
   const queryHandled = useRef(false);
@@ -67,8 +99,23 @@ export default function QuickSelect() {
 
   const chooseObject = (type: Exclude<ObjectType, null>) => {
     if (!sector) return;
+    if (state.objectType === type) {
+      setLocation(withCalculationIntent('/object', requestedSolution?.id));
+      return;
+    }
+    if (existingWork) {
+      setPendingObjectType(type);
+      return;
+    }
     setObjectType(type);
-    setLocation('/object');
+    setLocation(withCalculationIntent('/object', requestedSolution?.id));
+  };
+
+  const confirmObjectType = () => {
+    if (!pendingObjectType) return;
+    setObjectType(pendingObjectType);
+    setLocation(withCalculationIntent('/object', requestedSolution?.id));
+    setPendingObjectType(null);
   };
 
   return (
@@ -88,8 +135,21 @@ export default function QuickSelect() {
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">От отраслевой практики к вашей площадке</h1>
           <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">Сначала выберите направление карты и изучите подтверждённые сценарии. Затем укажите физический объект, для которого нужен робот. Отрасль и тип объекта — разные признаки.</p>
         </div>
+        {requestedSolution && <p className="mb-6 rounded-md border border-primary/30 bg-primary/5 p-4 text-sm leading-6" data-testid="quick-select-calculation-intent">Подготовка расчёта для <strong>{requestedSolution.name}</strong>. Выберите реальное направление и площадку; модель останется выбранной для следующего шага.</p>}
+        {scopeDraft?.objectId && scopeDraft.scope ? (
+          <section className="mb-6 rounded-lg border border-primary/40 bg-primary/5 p-5" data-testid="quick-select-scope-intent">
+            <h2 className="text-lg font-semibold">{startScopeObjectLabel(scopeDraft)} · {START_SCOPE_LABELS[scopeDraft.scope]}</h2>
+            <p className="mt-2 text-base leading-7 text-muted-foreground">Карта задачи сохранена отдельно. Теперь выберите отрасль, затем площадку и конкретное решение. Вводные участков не подставляются в финансовую модель автоматически; расчёт одного решения не равен расчёту всего объекта.</p>
+            <details className="mt-3 text-base">
+              <summary className="cursor-pointer text-primary">Участки карты: {startScopeProcesses(scopeDraft).length}</summary>
+              <ul className="mt-3 list-disc space-y-1 pl-5">{startScopeProcesses(scopeDraft).map(item => <li key={item.id}>{item.name}</li>)}</ul>
+            </details>
+            <Button variant="outline" className="mt-4" onClick={() => setLocation('/start')} data-testid="quick-select-return-scope">Вернуться к карте задачи</Button>
+          </section>
+        ) : suggestedObject && <p className="mb-6 rounded-md border border-primary/30 bg-primary/5 p-4 text-sm leading-6" role="status" data-testid="quick-select-object-intent">Из быстрого входа выбран тип площадки: <strong>{suggestedObject.title}</strong>. Сначала укажите отрасль — она не выводится автоматически из типа объекта. Затем подтвердите этот тип в списке площадок.</p>}
+        {startContext.warning && <p role="alert" className="mb-6 rounded-md border border-destructive p-4">{startContext.warning}</p>}
 
-        <ObjectQuestionnaire onApplied={() => setLocation('/object')} />
+        <ObjectQuestionnaire initialType={suggestedObject?.type} onApplied={() => setLocation(withCalculationIntent('/object', requestedSolution?.id))} />
         {error ? (
           <Card className="border-destructive/40" data-testid="status-sectors-error"><CardContent className="space-y-4 py-8">
             <p className="font-semibold">Данные карты не загрузились</p>
@@ -211,10 +271,11 @@ export default function QuickSelect() {
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   {objects.map(choice => {
                     const Icon = choice.icon;
-                    return <Card key={choice.type} className="flex flex-col" data-testid={`card-object-${choice.type}`}>
+                    return <Card key={choice.type} className={`flex flex-col ${suggestedObject?.type === choice.type ? 'border-primary/60 bg-primary/5' : ''}`} data-testid={`card-object-${choice.type}`} data-suggested={suggestedObject?.type === choice.type ? 'true' : undefined}>
                       <CardContent className="flex flex-1 flex-col p-5">
                         <Icon className="mb-4 h-5 w-5 text-primary" />
                         <h3 className="font-semibold">{choice.title}</h3>
+                        {suggestedObject?.type === choice.type && <p className="mt-2 text-xs font-medium text-primary">Выбран на предыдущем экране</p>}
                         <p className="mt-1 flex-1 text-sm leading-6 text-muted-foreground">{choice.description}</p>
                         <Button className="mt-5 justify-between" variant={state.objectType === choice.type ? 'default' : 'outline'} onClick={() => chooseObject(choice.type)} data-testid={`button-choose-object-${choice.type}`}>
                           {state.objectType === choice.type ? 'Продолжить' : 'Указать объект'}<ArrowRight className="h-4 w-4" />
@@ -228,6 +289,22 @@ export default function QuickSelect() {
           </>
         )}
       </div>
+      <AlertDialog open={pendingObjectType !== null} onOpenChange={open => { if (!open) setPendingObjectType(null); }}>
+        <AlertDialogContent data-testid="object-type-reset-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Заменить тип площадки?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Для новой площадки будут очищены текущие параметры объекта, выбранные модели и результаты экономики и симуляции. Отраслевое направление останется прежним. Продолжить?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="object-type-reset-cancel">Оставить проект</AlertDialogCancel>
+            <AlertDialogAction data-testid="object-type-reset-confirm" onClick={event => { event.preventDefault(); confirmObjectType(); }}>
+              Заменить площадку
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

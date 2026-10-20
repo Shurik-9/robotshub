@@ -13,9 +13,29 @@ if (!basePath.startsWith('/') || !basePath.endsWith('/')) {
   throw new Error('BASE_PATH must begin and end with /');
 }
 
+function rewriteGlossaryPath(req: { url?: string }, _res: unknown, next: () => void) {
+  const [pathname, query] = (req.url ?? '').split('?', 2);
+  if (pathname === '/glossary' || pathname === '/glossary/') {
+    req.url = `/glossary/index.html${query ? `?${query}` : ''}`;
+  }
+  next();
+}
+
 export default defineConfig({
   base: basePath,
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    {
+      name: 'robotshub-glossary-static-route',
+      configureServer(server) {
+        server.middlewares.use(rewriteGlossaryPath);
+      },
+      configurePreviewServer(server) {
+        server.middlewares.use(rewriteGlossaryPath);
+      },
+    },
+    react(),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, 'src'),

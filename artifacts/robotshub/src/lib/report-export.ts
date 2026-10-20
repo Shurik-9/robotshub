@@ -81,7 +81,7 @@ export function buildSimulationKpiCsvSection(
 
   const display = getSimulationSnapshotDisplay(simulationKpis);
   const snapshotColumns = display
-    ? `${csvText(display.floorCount)},${csvText(display.generatedAt)},${csvText(display.sceneInputs)}`
+    ? `${csvText(display.floorCount)},${csvText(display.generatedAt)},${csvText(display.sceneInputs + (simulationKpis.initialTasks === undefined ? '' : `; начальная очередь: ${simulationKpis.initialTasks} заданий`))}`
     : '-,-,-';
 
   simulationKpis.floorStats.forEach((floor) => {

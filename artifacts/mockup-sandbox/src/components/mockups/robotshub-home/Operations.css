@@ -1,0 +1,240 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+.ops-home {
+  --ink: #e9eee8;
+  --muted: #a5b0a8;
+  --dim: #728078;
+  --line: rgba(222, 232, 222, .16);
+  --panel: #17211e;
+  --base: #111a17;
+  --deep: #0b1311;
+  --signal: #e4ad43;
+  --mint: #a9c9ae;
+  min-height: 100dvh;
+  color: var(--ink);
+  background: var(--base);
+  font-family: 'Manrope', sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+.ops-home::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  opacity: .08;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+}
+.ops-home * { box-sizing: border-box; }
+.ops-home a { color: inherit; text-decoration: none; }
+.ops-home a:focus-visible, .ops-home button:focus-visible { outline: 2px solid var(--signal); outline-offset: 4px; }
+.ops-header, .ops-footer { max-width: 1440px; margin: 0 auto; display: flex; align-items: center; }
+.ops-header { height: 86px; padding: 0 clamp(22px, 5vw, 76px); border-bottom: 1px solid var(--line); gap: 48px; position: relative; z-index: 2; }
+.ops-logo { display: flex; width: 48px; height: 48px; border-radius: 11px; overflow: hidden; flex: 0 0 auto; }
+.ops-logo img, .ops-footer-logo img { width: 100%; height: 100%; object-fit: cover; }
+.ops-nav { display: flex; gap: clamp(20px, 3vw, 45px); margin-left: auto; font-size: 12px; color: var(--muted); }
+.ops-nav a, .ops-footer nav a { transition: color .18s ease; }
+.ops-nav a:hover, .ops-footer nav a:hover { color: var(--signal); }
+.ops-header-cta { font-size: 12px; font-weight: 700; padding: 12px 17px; border: 1px solid rgba(228,173,67,.52); color: var(--signal)!important; }
+.ops-header-cta span { margin-left: 13px; }
+.ops-hero { position: relative; max-width: 1440px; min-height: 600px; margin: 0 auto; padding: 70px clamp(22px, 5vw, 76px) 74px; display: grid; grid-template-columns: minmax(0, .95fr) minmax(440px, 1.05fr); gap: 50px; align-items: center; }
+.ops-hero::after { content: ''; position: absolute; height: 1px; left: clamp(22px, 5vw, 76px); right: clamp(22px, 5vw, 76px); bottom: 0; background: var(--line); }
+.ops-hero-copy { position: relative; z-index: 1; animation: ops-rise .72s both; }
+.ops-eyebrow, .ops-kicker, .ops-mono, .ops-state, .ops-art-index, .ops-art-caption, .ops-track-end, .ops-industry-index { font-family: 'IBM Plex Mono', monospace; letter-spacing: .085em; }
+.ops-eyebrow { color: var(--muted); font-size: 10px; display: flex; align-items: center; gap: 10px; }
+.ops-led { background: #8cbe79; width: 7px; height: 7px; border-radius: 50%; box-shadow: 0 0 0 4px rgba(140,190,121,.12); }
+.ops-divider { color: var(--signal); }
+.ops-hero h1 { font-size: clamp(62px, 8.8vw, 112px); letter-spacing: -.085em; line-height: .89; margin: 36px 0 25px; font-weight: 800; }
+.ops-hero h1 em, .ops-closing h2 em { color: var(--signal); font-style: normal; }
+.ops-hero-lede { max-width: 485px; color: #b5beb6; font-size: 15px; line-height: 1.8; margin: 0; }
+.ops-hero-actions { display: flex; align-items: center; gap: 28px; margin-top: 31px; }
+.ops-button-primary { display: inline-flex; min-height: 52px; padding: 0 21px; align-items: center; justify-content: center; gap: 25px; background: var(--signal); color: #18201b!important; font-size: 12px; font-weight: 800; transition: transform .2s ease, background .2s ease; }
+.ops-button-primary:hover { transform: translateY(-2px); background: #f0c267; }
+.ops-button-quiet { color: #d2d9d2!important; font-size: 12px; }
+.ops-button-quiet span { color: var(--signal); margin-left: 8px; }
+.ops-hero-note { display: flex; gap: 9px; align-items: flex-start; max-width: 430px; margin-top: 33px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--dim); font-size: 10px; line-height: 1.6; }
+.ops-hero-note svg { flex: 0 0 auto; color: var(--signal); }
+.ops-hero-art { padding: 18px; border: 1px solid rgba(186,202,188,.18); background: #141e1a; box-shadow: 18px 18px 0 rgba(3,8,6,.25); position: relative; animation: ops-rise .85s .12s both; }
+.ops-hero-art::before, .ops-hero-art::after { position: absolute; content: ''; width: 12px; height: 12px; border-color: var(--signal); }
+.ops-hero-art::before { top: -1px; left: -1px; border-top: 1px solid; border-left: 1px solid; }
+.ops-hero-art::after { bottom: -1px; right: -1px; border-bottom: 1px solid; border-right: 1px solid; }
+.ops-art-index, .ops-art-caption { display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: var(--dim); }
+.ops-diagram { margin-top: 17px; background: #111a17; border: 1px solid rgba(191,208,194,.12); padding: 11px 12px 9px; }
+.ops-diagram-top { display: flex; justify-content: space-between; align-items: center; font-size: 9px; }
+.ops-mono { color: #8f9b91; font-size: 8px; }
+.ops-state { display: flex; gap: 6px; color: var(--signal); font-size: 8px; align-items: center; }
+.ops-state i { width: 6px; height: 6px; background: var(--signal); display: inline-block; border-radius: 50%; }
+.ops-blueprint { width: 100%; display: block; margin-top: 8px; }
+.ops-diagram-foot { border-top: 1px solid var(--line); display: flex; justify-content: space-between; color: #87938a; font-family: 'IBM Plex Mono', monospace; font-size: 8px; padding: 11px 2px 2px; }
+.ops-diagram-foot b { color: var(--signal); font-weight: 500; margin-right: 4px; }
+.ops-art-caption { padding: 15px 2px 1px; font-size: 8px; }
+.ops-art-caption span:last-child { color: #bcc6bd; font-family: 'Manrope', sans-serif; letter-spacing: 0; font-size: 10px; }
+.ops-edge-label { position: absolute; right: 12px; top: 45%; writing-mode: vertical-rl; color: #55635a; font-family: 'IBM Plex Mono', monospace; letter-spacing: .2em; font-size: 8px; }
+.ops-data-rail { max-width: 1288px; padding: 25px 0; margin: 0 auto; display: grid; grid-template-columns: 1.4fr .7fr .8fr .8fr 1.7fr; align-items: center; border-bottom: 1px solid var(--line); }
+.ops-kicker { font-size: 9px; color: var(--signal); }
+.ops-data-intro p { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.ops-data-item { border-left: 1px solid var(--line); min-height: 50px; padding: 3px 15px; display: flex; flex-direction: column; justify-content: center; }
+.ops-data-item strong { font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 500; color: var(--ink); }
+.ops-data-item span { color: var(--dim); font-size: 9px; margin-top: 3px; }
+.ops-data-foot { border-left: 1px solid var(--line); padding-left: 21px; color: #87938a; font-size: 9px; line-height: 1.7; }
+.ops-method, .ops-scenario, .ops-industries, .ops-partners, .ops-closing { max-width: 1288px; margin: 0 auto; }
+.ops-method { padding: 102px 0 98px; }
+.ops-section-heading { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 43px; }
+.ops-section-heading h2, .ops-industries h2 { margin: 13px 0 0; font-weight: 700; font-size: clamp(32px, 4.5vw, 54px); line-height: 1.04; letter-spacing: -.065em; }
+.ops-section-heading > p { max-width: 360px; color: var(--muted); font-size: 12px; line-height: 1.8; margin: 0 0 3px; }
+.ops-track-list { border-top: 1px solid var(--line); }
+.ops-track { min-height: 140px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 44px 76px 1fr 220px; align-items: center; gap: 20px; padding: 20px 12px; transition: background .2s ease, padding .2s ease; }
+.ops-track:hover { background: rgba(228,173,67,.045); padding-left: 18px; }
+.ops-mark { color: var(--signal); font: 10px 'IBM Plex Mono', monospace; align-self: start; margin-top: 7px; }
+.ops-track-icon { width: 54px; height: 54px; display: grid; place-items: center; border: 1px solid rgba(228,173,67,.38); color: var(--signal); }
+.ops-track-who { font: 9px 'IBM Plex Mono', monospace; color: var(--dim); letter-spacing: .06em; }
+.ops-track h3 { font-size: 21px; margin: 8px 0 6px; letter-spacing: -.04em; }
+.ops-track p { max-width: 660px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.ops-track-end { display: flex; align-items: center; justify-content: space-between; color: #87938a; font-size: 8px; }
+.ops-track-end b { font: 19px 'Manrope',sans-serif; color: var(--signal); }
+.ops-scenario { display: grid; grid-template-columns: .65fr 2fr; border: 1px solid rgba(228,173,67,.38); background: #18221e; }
+.ops-scenario-aside { padding: 32px; border-right: 1px solid var(--line); background: #141d19; }
+.ops-scenario-stamp { display: flex; align-items: center; gap: 14px; margin-top: 56px; color: var(--signal); font-family: 'IBM Plex Mono', monospace; font-size: 10px; line-height: 1.7; }
+.ops-scenario-aside p { font-size: 10px; color: var(--muted); line-height: 1.7; margin: 24px 0 0; max-width: 230px; }
+.ops-scenario-main { padding: 32px 35px 23px; }
+.ops-scenario-title { display: flex; justify-content: space-between; align-items: center; }
+.ops-scenario-title h2 { margin: 0; font-size: 22px; letter-spacing: -.04em; }
+.ops-scenario-title a { color: var(--signal); font-size: 10px; }
+.ops-scenario-title a span { margin-left: 9px; }
+.ops-metrics { display: grid; grid-template-columns: repeat(4,1fr); margin-top: 33px; }
+.ops-metrics > div { padding: 0 12px; border-left: 1px solid var(--line); }
+.ops-metrics > div:first-child { padding-left: 0; border-left: 0; }
+.ops-metrics span { display: block; color: var(--muted); font-size: 9px; margin-bottom: 9px; }
+.ops-metrics strong { font: 500 clamp(16px, 2vw, 24px) 'IBM Plex Mono', monospace; letter-spacing: -.07em; white-space: nowrap; }
+.ops-metrics small { color: var(--dim); font: 9px 'Manrope', sans-serif; letter-spacing: 0; }
+.ops-assumptions { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 11px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-top: 25px; }
+.ops-assumption-icon { color: var(--signal); }
+.ops-assumptions b { font-size: 10px; }
+.ops-assumptions p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
+.ops-assumptions a { white-space: nowrap; color: var(--signal); font-size: 9px; }
+.ops-assumptions a span { margin-left: 7px; }
+.ops-caveat { margin: 13px 0 0; color: #86938a; font-size: 9px; line-height: 1.7; }
+.ops-industries { padding: 110px 0 100px; display: grid; grid-template-columns: .8fr 1.2fr; gap: 70px; }
+.ops-industries-title h2 { font-size: clamp(34px, 4.2vw, 51px); }
+.ops-industries-title p { max-width: 330px; margin: 21px 0; color: var(--muted); font-size: 11px; line-height: 1.8; }
+.ops-industries-title > a { color: var(--signal); font-size: 10px; }
+.ops-industries-title > a span { margin-left: 8px; }
+.ops-industry-grid { display: grid; grid-template-columns: 1fr 1fr; align-content: center; border-top: 1px solid var(--line); }
+.ops-industry { min-height: 62px; display: grid; grid-template-columns: 31px 1fr 16px; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); padding: 0 10px; font-size: 10px; transition: background .18s ease; }
+.ops-industry:hover { background: rgba(169,201,174,.07); }
+.ops-industry-index { color: var(--signal); font-size: 8px; }
+.ops-industry b { color: var(--dim); font-size: 13px; font-weight: 400; }
+.ops-industry-foot { grid-column: 2; display: flex; gap: 9px; align-items: center; color: var(--dim); font-size: 9px; margin-top: -54px; pointer-events: none; }
+.ops-industry-foot svg { color: var(--signal); }
+.ops-partners { padding: 25px 0 34px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow: hidden; }
+.ops-partners-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 19px; }
+.ops-partners-head p { margin: 7px 0 0; font-size: 11px; color: var(--muted); }
+.ops-pause { border: 1px solid var(--line); color: var(--muted); background: transparent; padding: 8px 12px; font: 9px 'IBM Plex Mono', monospace; cursor: pointer; }
+.ops-pause span { color: var(--signal); margin-right: 8px; }
+.ops-partners-window { overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+.ops-partners-track { display: flex; width: max-content; animation: ops-marquee 48s linear infinite; }
+.ops-partners-window.is-paused .ops-partners-track { animation-play-state: paused; }
+.ops-partner-group { display: flex; align-items: center; gap: 13px; padding-right: 13px; }
+.ops-partner-logo { width: 105px; height: 48px; background: #e8ebe6; display: grid; place-items: center; padding: 10px 13px; flex: 0 0 auto; }
+.ops-partner-logo img { display: block; max-width: 100%; max-height: 100%; width: 100%; object-fit: contain; }
+.ops-closing { display: flex; align-items: center; gap: 24px; padding: 75px 0; }
+.ops-closing-mark { width: 55px; height: 55px; display: grid; place-items: center; border: 1px solid var(--signal); color: var(--signal); }
+.ops-closing > div:nth-child(2) { flex: 1; }
+.ops-closing h2 { margin: 12px 0 0; font-size: clamp(29px, 4vw, 46px); line-height: 1.06; letter-spacing: -.065em; }
+.ops-footer { border-top: 1px solid var(--line); min-height: 90px; padding: 16px clamp(22px, 5vw, 76px); gap: 18px; color: var(--dim); font-size: 9px; }
+.ops-footer-logo { width: 36px; height: 36px; border-radius: 8px; overflow: hidden; }
+.ops-footer nav { display: flex; gap: 23px; margin-left: auto; color: var(--muted); }
+@keyframes ops-marquee { to { transform: translateX(-50%); } }
+@keyframes ops-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .ops-home *, .ops-home *::before, .ops-home *::after { scroll-behavior: auto!important; animation: none!important; transition-duration: .01ms!important; }
+  .ops-partners-track { animation: ops-marquee 48s linear infinite!important; }
+}
+@media (min-width: 1441px) { .ops-data-rail { padding-left: 0; padding-right: 0; } }
+@media (max-width: 1370px) {
+  .ops-data-rail, .ops-method, .ops-scenario, .ops-industries, .ops-partners, .ops-closing { margin-left: clamp(22px,5vw,76px); margin-right: clamp(22px,5vw,76px); }
+}
+@media (max-width: 900px) {
+  .ops-hero { grid-template-columns: 1fr; gap: 38px; padding-top: 55px; }
+  .ops-hero-copy { max-width: 650px; }
+  .ops-hero h1 { font-size: clamp(62px, 12vw, 92px); }
+  .ops-hero-art { max-width: 680px; width: 100%; justify-self: end; }
+  .ops-edge-label { display: none; }
+  .ops-data-rail { grid-template-columns: repeat(3,1fr); gap: 18px 0; }
+  .ops-data-intro { grid-column: 1/-1; }
+  .ops-data-foot { grid-column: 1/-1; border-left: 0; border-top: 1px solid var(--line); padding: 13px 0 0; }
+  .ops-method { padding-top: 75px; }
+}
+@media (max-width: 600px) {
+  .ops-header { height: 70px; gap: 13px; padding: 0 18px; }
+  .ops-logo { width: 41px; height: 41px; }
+  .ops-nav { gap: 14px; font-size: 10px; }
+  .ops-nav a:first-child { display: none; }
+  .ops-header-cta { padding: 10px 9px; font-size: 9px; white-space: nowrap; }
+  .ops-header-cta span { margin-left: 4px; }
+  .ops-hero { padding: 48px 20px 45px; min-height: 0; gap: 33px; }
+  .ops-eyebrow { font-size: 8px; gap: 7px; }
+  .ops-hero h1 { margin: 28px 0 21px; font-size: clamp(58px, 17vw, 78px); }
+  .ops-hero-lede { font-size: 13px; line-height: 1.75; }
+  .ops-hero-actions { gap: 16px; }
+  .ops-button-primary { min-height: 48px; padding: 0 14px; gap: 12px; font-size: 10px; }
+  .ops-button-quiet { font-size: 10px; }
+  .ops-hero-note { margin-top: 25px; }
+  .ops-hero-art { padding: 11px; box-shadow: 8px 8px 0 rgba(3,8,6,.25); }
+  .ops-diagram { padding: 8px 7px; }
+  .ops-diagram-foot { font-size: 6px; }
+  .ops-art-index { font-size: 7px; }
+  .ops-art-caption { font-size: 7px; }
+  .ops-data-rail, .ops-method, .ops-scenario, .ops-industries, .ops-partners, .ops-closing { margin-left: 20px; margin-right: 20px; }
+  .ops-data-rail { grid-template-columns: 1fr 1fr 1fr; padding: 21px 0; }
+  .ops-data-intro { padding-bottom: 5px; }
+  .ops-data-item { padding: 0 8px; }
+  .ops-data-item:first-of-type { padding-left: 0; }
+  .ops-data-item strong { font-size: 20px; }
+  .ops-data-item span { font-size: 8px; }
+  .ops-data-foot { font-size: 8px; }
+  .ops-method { padding: 68px 0 65px; }
+  .ops-section-heading { display: block; margin-bottom: 30px; }
+  .ops-section-heading h2, .ops-industries h2 { font-size: 38px; }
+  .ops-section-heading > p { margin-top: 18px; font-size: 11px; }
+  .ops-track { grid-template-columns: 24px 45px 1fr; gap: 10px; padding: 18px 3px; }
+  .ops-track-icon { width: 40px; height: 40px; }
+  .ops-track-icon svg { width: 19px; height: 19px; }
+  .ops-track-who { font-size: 7px; letter-spacing: 0; }
+  .ops-track h3 { font-size: 16px; margin: 5px 0; }
+  .ops-track p { font-size: 9px; line-height: 1.6; }
+  .ops-track-end { grid-column: 3; justify-content: flex-start; gap: 14px; font-size: 7px; margin-top: 4px; }
+  .ops-track-end b { font-size: 14px; }
+  .ops-scenario { display: block; }
+  .ops-scenario-aside { padding: 20px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .ops-scenario-stamp { margin-top: 19px; }
+  .ops-scenario-aside p { margin-top: 11px; max-width: 100%; }
+  .ops-scenario-main { padding: 21px 17px 18px; }
+  .ops-scenario-title { align-items: flex-start; gap: 10px; flex-direction: column; }
+  .ops-scenario-title h2 { font-size: 20px; }
+  .ops-metrics { grid-template-columns: 1fr 1fr; gap: 19px 0; margin-top: 25px; }
+  .ops-metrics > div:nth-child(odd) { border-left: 0; padding-left: 0; }
+  .ops-metrics > div { padding-left: 12px; }
+  .ops-metrics strong { font-size: 19px; }
+  .ops-assumptions { grid-template-columns: 23px 1fr; }
+  .ops-assumptions a { grid-column: 2; }
+  .ops-industries { padding: 72px 0 65px; display: block; }
+  .ops-industries-title p { font-size: 10px; }
+  .ops-industry-grid { margin-top: 28px; grid-template-columns: 1fr; }
+  .ops-industry { min-height: 53px; }
+  .ops-industry-foot { margin-top: 15px; font-size: 8px; }
+  .ops-partners { padding: 22px 0 25px; }
+  .ops-partners-head { align-items: flex-end; gap: 10px; }
+  .ops-partners-head p { font-size: 9px; max-width: 220px; line-height: 1.5; }
+  .ops-pause { padding: 8px 9px; font-size: 8px; white-space: nowrap; }
+  .ops-partner-logo { width: 87px; height: 42px; }
+  .ops-partners-track { animation-duration: 34s; }
+  .ops-closing { display: grid; grid-template-columns: 48px 1fr; gap: 15px; padding: 55px 0; }
+  .ops-closing-mark { width: 45px; height: 45px; }
+  .ops-closing h2 { font-size: 29px; }
+  .ops-closing .ops-button-primary { grid-column: 1/-1; justify-self: start; }
+  .ops-footer { padding: 18px 20px; display: grid; grid-template-columns: 38px 1fr; gap: 9px 12px; }
+  .ops-footer > span { font-size: 8px; }
+  .ops-footer nav { grid-column: 1/-1; margin: 5px 0 0; justify-content: space-between; }
+}

@@ -1,0 +1,928 @@
+{
+  "checked_at": "2026-10-20",
+  "source_url": "https://funderberger.github.io/robots",
+  "source_notice": "Неофициальный демонстрационный прототип. Не подтверждает ТТХ, роль компании или включение в реестр.",
+  "catalog_count": 224,
+  "entries": [
+    {
+      "row": 1,
+      "card_ref": "3f2aaa1b-2237-4d7b-b215-1ac5ec789ed5@2",
+      "id": "3f2aaa1b-2237-4d7b-b215-1ac5ec789ed5",
+      "name": "Ronavi SR (грузоподъемность до 50 кг)",
+      "vendor": "ООО \"Ронави Роботикс\"",
+      "source_id": "rp-015",
+      "source_name": "Ronavi SR",
+      "source_company": "ООО «Ронави Роботикс»",
+      "method": "model-name-and-company",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/amr.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-015.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · Ronavi SR (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "1c65eecd7675c5e2b936881a72adfa3673aca683ad365f5d91f36e77ca237c9f"
+    },
+    {
+      "row": 9,
+      "card_ref": "cccd0c0d-8ae7-435d-a171-45f5d82886e6@10",
+      "id": "cccd0c0d-8ae7-435d-a171-45f5d82886e6",
+      "name": "DMR 1200 (грузоподъемность до 1 200 кг)",
+      "vendor": "ООО \"Диком-Сервис\"",
+      "source_id": "rp-020",
+      "source_name": "DMR 1200",
+      "source_company": "ООО «Диком-Сервис»",
+      "method": "model-name-and-company",
+      "fields": [
+        "description"
+      ],
+      "before": {
+        "description": ""
+      },
+      "after": {
+        "description": "DMR 1200 — мобильная роботизированная платформа для перемещения грузов между рабочими зонами склада и производства. Оснастка и условия движения подбираются под задачу."
+      },
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 10,
+      "card_ref": "be814758-3616-4b94-befa-9848be2ac604@11",
+      "id": "be814758-3616-4b94-befa-9848be2ac604",
+      "name": "DMR 600 (грузоподъемность до 600 кг)",
+      "vendor": "ООО \"Диком-Сервис\"",
+      "source_id": "rp-021",
+      "source_name": "DMR 600",
+      "source_company": "ООО «Диком-Сервис»",
+      "method": "model-name-and-company",
+      "fields": [
+        "description"
+      ],
+      "before": {
+        "description": ""
+      },
+      "after": {
+        "description": "DMR 600 — мобильный логистический робот для перевозки грузов на складе и производственной площадке. Способ размещения груза и взаимодействие с оборудованием зависят от конфигурации решения."
+      },
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 11,
+      "card_ref": "993d980e-8b91-45e0-9c98-50ffab6e11e4@12",
+      "id": "993d980e-8b91-45e0-9c98-50ffab6e11e4",
+      "name": "Сёмабот (грузоподъемность до 1 500 кг)",
+      "vendor": "ООО \"Семаргл\"",
+      "source_id": "rp-019",
+      "source_name": "Семабот",
+      "source_company": "ООО «Семаргл»",
+      "method": "model-name-and-company",
+      "fields": [
+        "description"
+      ],
+      "before": {
+        "description": ""
+      },
+      "after": {
+        "description": "Сёмабот — мобильная роботизированная платформа для перевозки грузов в складских комплексах. Оснастку, маршрут и взаимодействие с оборудованием необходимо уточнять для конкретного проекта."
+      },
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 19,
+      "card_ref": "e8960183-1828-4fdb-8c39-91f5a3523a96@20",
+      "id": "e8960183-1828-4fdb-8c39-91f5a3523a96",
+      "name": "РУБИ-С-03",
+      "vendor": "ООО \"РОБО\"",
+      "source_id": "rp-007",
+      "source_name": "РУБИ-С-03",
+      "source_company": "ООО «РОБО»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/scrubber.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-007.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · РУБИ-С-03 (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "6378a2b192b36aea7e1eadf8f77cbee0144064986007f4287f7ac099cad4cf3d"
+    },
+    {
+      "row": 21,
+      "card_ref": "e2095cfe-3ce4-404e-a4bb-2f378480d7ca@22",
+      "id": "e2095cfe-3ce4-404e-a4bb-2f378480d7ca",
+      "name": "АК-SC80",
+      "vendor": "ООО \"ГК Автомакон\"",
+      "source_id": "rp-011",
+      "source_name": "АК-SC80",
+      "source_company": "ООО «ГК Автомакон»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/scrubber.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-011.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · АК-SC80 (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "8f2a6f44bf5c0061ceee116c00021983d2a8ca753a5b2c1efc7479466fdf3523"
+    },
+    {
+      "row": 22,
+      "card_ref": "f31223c1-44c8-4410-8381-6356e2158b61@23",
+      "id": "f31223c1-44c8-4410-8381-6356e2158b61",
+      "name": "Клинботикс 400 PRO",
+      "vendor": "ООО \"Вейбот Автомакон Роботикс\"",
+      "source_id": "rp-009",
+      "source_name": "Клинботикс 400 PRO",
+      "source_company": "ООО «Вейбот Автомакон Роботикс»",
+      "method": "normalized-name",
+      "fields": [
+        "description"
+      ],
+      "before": {
+        "description": ""
+      },
+      "after": {
+        "description": "Клинботикс 400 PRO — автономный робот для профессиональной уборки коммерческих и общественных помещений. Выполняет уборку пола; режимы обслуживания и оснащение уточняются для выбранной комплектации."
+      },
+      "description_source": {
+        "url": "https://waybotrobotics.com/",
+        "status": "primary-purpose-checked",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 23,
+      "card_ref": "5a5b3599-bd64-4330-9bbb-4f8ce7d780b9@24",
+      "id": "5a5b3599-bd64-4330-9bbb-4f8ce7d780b9",
+      "name": "Клинботикс 600",
+      "vendor": "ООО \"Вейбот Автомакон Роботикс\"",
+      "source_id": "rp-008",
+      "source_name": "Клинботикс 600",
+      "source_company": "ООО «Вейбот Автомакон Роботикс»",
+      "method": "normalized-name",
+      "fields": [
+        "description"
+      ],
+      "before": {
+        "description": ""
+      },
+      "after": {
+        "description": "Клинботикс 600 — робот-поломойщик для автоматизированной уборки помещений. Используется для регулярных уборочных маршрутов; требования к площадке и обслуживанию определяются проектом внедрения."
+      },
+      "description_source": {
+        "url": "https://waybotrobotics.com/",
+        "status": "primary-purpose-checked",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 24,
+      "card_ref": "9b20417a-0ac7-4786-985b-f3459a15075d@25",
+      "id": "9b20417a-0ac7-4786-985b-f3459a15075d",
+      "name": "Unit",
+      "vendor": "ООО \"Яку Роботикс\"",
+      "source_id": "rp-010",
+      "source_name": "UNIT",
+      "source_company": "ООО «Яку Роботикс»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/scrubber.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-010.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · UNIT (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "694b69951d82ecd42767d56ba3f58fb11819a8231cb754e85439f32abbf890ab"
+    },
+    {
+      "row": 30,
+      "card_ref": "c3d39a80-5fb9-42d3-82ae-0696fb647128@31",
+      "id": "c3d39a80-5fb9-42d3-82ae-0696fb647128",
+      "name": "Робот-комплектовщик",
+      "vendor": "ООО \"Яндекс Роботикс\"",
+      "source_id": "rp-027",
+      "source_name": "Робот-комплектовщик",
+      "source_company": "ООО «Яндекс Роботикс»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres",
+        "description"
+      ],
+      "before": {
+        "img": "/assets/catalog/amr.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false,
+        "description": ""
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-027.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · Робот-комплектовщик (демонстрационный источник)",
+        "img_lowres": false,
+        "description": "Мобильный робот-комплектовщик Яндекс Роботикс предназначен для автоматизации операций сборки заказов. Поддерживаемые операции и совместимость с товарами уточняются под конкретную задачу."
+      },
+      "image_sha256": "d7b6f4b52e706ef8e59608e0769dac6b0c68ae2e2bdc9c862a48ab3807961f03",
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 35,
+      "card_ref": "242d637c-6512-4bdf-9964-2c0010259f36@36",
+      "id": "242d637c-6512-4bdf-9964-2c0010259f36",
+      "name": "Инвентаризатор AI Stock Counter 12M",
+      "vendor": "ООО \"ГК Автомакон\"",
+      "source_id": "rp-024",
+      "source_name": "AI Stock Counter 12M",
+      "source_company": "ООО «ГК Автомакон»",
+      "method": "model-name-and-company",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/amr.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-024.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · AI Stock Counter 12M (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "99544432ef8c33c96343789bd3844584826774811a17b59c3ecc516b70673751"
+    },
+    {
+      "row": 40,
+      "card_ref": "a9c720bc-e618-4dcc-90e1-990c5a3d1ae2@41",
+      "id": "a9c720bc-e618-4dcc-90e1-990c5a3d1ae2",
+      "name": "Грин",
+      "vendor": "ПАО \"Сбербанк\"",
+      "source_id": "rp-036",
+      "source_name": "Грин",
+      "source_company": "ПАО «Сбербанк»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres",
+        "description"
+      ],
+      "before": {
+        "img": "/assets/catalog/humanoid.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false,
+        "description": ""
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-036.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · Грин (демонстрационный источник)",
+        "img_lowres": false,
+        "description": "Грин — антропоморфный робот Центра робототехники Сбера. Ориентируется в пространстве, обходит препятствия и взаимодействует с человеком на естественном языке; прикладные сценарии развиваются командой разработчика."
+      },
+      "image_sha256": "3a3c42ef07e6f425d63afb9a975e86abb850f5d97c981108a239682107e735f9",
+      "description_source": {
+        "url": "https://sber.ru/robocenter/green",
+        "status": "primary-purpose-checked",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 44,
+      "card_ref": "4dc9e1a3-441b-440c-931c-8011f7869dcf@45",
+      "id": "4dc9e1a3-441b-440c-931c-8011f7869dcf",
+      "name": "Воркер",
+      "vendor": "ПАО \"Сбербанк\"",
+      "source_id": "rp-026",
+      "source_name": "Воркер",
+      "source_company": "ПАО «Сбербанк»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres",
+        "description"
+      ],
+      "before": {
+        "img": "/assets/catalog/mobile-manipulator.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false,
+        "description": ""
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-026.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · Воркер (демонстрационный источник)",
+        "img_lowres": false,
+        "description": "Воркер — полуантропоморфный робот Сбера для прикладных задач бизнеса. Перемещает и сортирует объекты, собирает товары и комплектует заказы; внедрение требует проверки конкретного сценария."
+      },
+      "image_sha256": "7ac5b64ec0ffe20e0b5e54ab5cf73d4700b965c3934d86edff461f1a35e1c0b8",
+      "description_source": {
+        "url": "https://sber.ru/robocenter/worker",
+        "status": "primary-purpose-checked",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 63,
+      "card_ref": "be814758-3616-4b94-befa-9848be2ac604@64",
+      "id": "be814758-3616-4b94-befa-9848be2ac604",
+      "name": "DMR 600 (грузоподъемность до 600 кг)",
+      "vendor": "ООО \"Диком-Сервис\"",
+      "source_id": "rp-021",
+      "source_name": "DMR 600",
+      "source_company": "ООО «Диком-Сервис»",
+      "method": "model-name-and-company",
+      "fields": [
+        "description"
+      ],
+      "before": {
+        "description": ""
+      },
+      "after": {
+        "description": "DMR 600 — мобильный логистический робот для перевозки грузов на складе и производственной площадке. Способ размещения груза и взаимодействие с оборудованием зависят от конфигурации решения."
+      },
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 88,
+      "card_ref": "9186592a-aa17-47a3-b1bb-1477d71cf28d@89",
+      "id": "9186592a-aa17-47a3-b1bb-1477d71cf28d",
+      "name": "Агробот",
+      "vendor": "ООО \"Аврора Роботикс\"",
+      "source_id": "rp-054",
+      "source_name": "Агробот",
+      "source_company": "ООО «Аврора роботикс»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres",
+        "description"
+      ],
+      "before": {
+        "img": "/assets/catalog/tech/truck.png",
+        "img_kind": "render",
+        "img_source": null,
+        "img_lowres": false,
+        "description": ""
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-054.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · Агробот (демонстрационный источник)",
+        "img_lowres": false,
+        "description": "Агробот компании Аврора Роботикс — роботизированное решение для сельскохозяйственных работ. Набор выполняемых операций определяется оборудованием и комплектацией."
+      },
+      "image_sha256": "b2a18669d40499c4f86fcb7d65a678f75510413e6ae058aa7d1997d6b8ceae32",
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 90,
+      "card_ref": "bd7a808d-3f50-4bd0-93e9-87e9646cfb26@91",
+      "id": "bd7a808d-3f50-4bd0-93e9-87e9646cfb26",
+      "name": "MARK A (Agro)",
+      "vendor": "ООО \"Электромотив\"",
+      "source_id": "rp-057",
+      "source_name": "MARK A (Agro)",
+      "source_company": "ООО «ЭЛЕКТРОМОТИВ»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/mobile-manipulator.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-057.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · MARK A (Agro) (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "373d18dd5cf751839fbeb8df50935c8bcb4d4e94470838677895a1fced49a645"
+    },
+    {
+      "row": 95,
+      "card_ref": "98ceb2a0-f777-48ef-9863-3f9a80f8a237@96",
+      "id": "98ceb2a0-f777-48ef-9863-3f9a80f8a237",
+      "name": "COGNITIVE AGRO PILOT для трактора с ИИ",
+      "vendor": "АО \"Когнитив Пилот\"",
+      "source_id": "rp-055",
+      "source_name": "Cognitive Agro Pilot",
+      "source_company": "АО «Когнитив Пилот»",
+      "method": "model-name-and-company",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/service-bot.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-055.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · Cognitive Agro Pilot (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "f378cfe83ae9534cdee42fe22c183b2959e77ee9aff3c9f518cf98433a06cef9"
+    },
+    {
+      "row": 103,
+      "card_ref": "ba5d2051-3036-439f-8b2e-e05e26581fe6@104",
+      "id": "ba5d2051-3036-439f-8b2e-e05e26581fe6",
+      "name": "БРО 2.1",
+      "vendor": "АО \"168Роботикс\"",
+      "source_id": "rp-002",
+      "source_name": "БРО 2.1",
+      "source_company": "АО «168Роботикс»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/scrubber.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-002.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · БРО 2.1 (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "16905c27290ddeafa46547eed3534b6f3db7472fc56f813f2409338c7c1adcc7"
+    },
+    {
+      "row": 104,
+      "card_ref": "ef375ca1-8de1-4a8d-9262-c1a6b71f0333@105",
+      "id": "ef375ca1-8de1-4a8d-9262-c1a6b71f0333",
+      "name": "БРО 3.0",
+      "vendor": "АО \"168Роботикс\"",
+      "source_id": "rp-003",
+      "source_name": "БРО 3.0",
+      "source_company": "АО «168Роботикс»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/scrubber.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-003.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · БРО 3.0 (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "817dc46d6dcb1b2c229b1d9ea2e70e4bd4373ba2d48c05d69a1a5939b7bd0042"
+    },
+    {
+      "row": 105,
+      "card_ref": "2f46660e-ea20-4845-9620-8c743b03225b@106",
+      "id": "2f46660e-ea20-4845-9620-8c743b03225b",
+      "name": "Пиксель",
+      "vendor": "ООО \"Автономика\"",
+      "source_id": "rp-001",
+      "source_name": "Пиксель",
+      "source_company": "ООО «Автономика»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/scrubber.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-001.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · Пиксель (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "0a779927527592212efdf3636881a701b6b0ebba9c95859f32bced9856e31143"
+    },
+    {
+      "row": 106,
+      "card_ref": "d4b39362-518a-4cf2-8770-b69bc03585a0@107",
+      "id": "d4b39362-518a-4cf2-8770-b69bc03585a0",
+      "name": "Веном Саранча",
+      "vendor": "ООО \"Робком\"",
+      "source_id": "rp-005",
+      "source_name": "Веном Саранча",
+      "source_company": "ООО «Робком»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres",
+        "description"
+      ],
+      "before": {
+        "img": "/assets/catalog/scrubber.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false,
+        "description": ""
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-005.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · Веном Саранча (демонстрационный источник)",
+        "img_lowres": false,
+        "description": "Веном Саранча — робот-газонокосильщик для ухода за территориями и покоса растительности. Состав оборудования и доступные режимы работы необходимо уточнять у производителя."
+      },
+      "image_sha256": "39437bf7b10159d2a82f5c02957321edcf6313a0625a389bc8b212c2d987269e",
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 125,
+      "card_ref": "a3b4c902-9e1b-454b-a2bf-01c6d0e98bdb@126",
+      "id": "a3b4c902-9e1b-454b-a2bf-01c6d0e98bdb",
+      "name": "АМТ S300",
+      "vendor": "ООО \"АМТ\"",
+      "source_id": "rp-047",
+      "source_name": "АМТ S300",
+      "source_company": "ГК «АМТ»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/tech/palletizer.png",
+        "img_kind": "render",
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-047.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · АМТ S300 (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "3a00b7435052f050183f87469bfb91eced8a328b6737ef92c035973980d221da"
+    },
+    {
+      "row": 126,
+      "card_ref": "1f82ce16-5670-4903-a4ea-bfdbbc710f20@127",
+      "id": "1f82ce16-5670-4903-a4ea-bfdbbc710f20",
+      "name": "Комплекс управления кранами ВИРСАЙН СДУ",
+      "vendor": "ООО \"Вирсайн Инновации\"",
+      "source_id": "rp-048",
+      "source_name": "Вирсайн СДУ",
+      "source_company": "ООО «Вирсайн Инновации»",
+      "method": "model-name-and-company",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres",
+        "description"
+      ],
+      "before": {
+        "img": "/assets/catalog/service-bot.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false,
+        "description": ""
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-048.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · Вирсайн СДУ (демонстрационный источник)",
+        "img_lowres": false,
+        "description": "ВИРСАЙН СДУ — комплекс управления строительными кранами и наблюдения за рабочей зоной. Поддерживаемые режимы управления и требования безопасности уточняются для конкретного объекта."
+      },
+      "image_sha256": "b0a22fcb156f00f272e1bf7a685b3316406c62865d656be968435f7d2a57e458",
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 127,
+      "card_ref": "192ce3de-958f-4bad-9440-c2b3ab56634a@128",
+      "id": "192ce3de-958f-4bad-9440-c2b3ab56634a",
+      "name": "МРСК",
+      "vendor": "ООО \"КБ-интеграл\"",
+      "source_id": "rp-049",
+      "source_name": "МРСК",
+      "source_company": "ООО «КБ интеграл»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres",
+        "description"
+      ],
+      "before": {
+        "img": "/assets/catalog/tech/palletizer.png",
+        "img_kind": "render",
+        "img_source": null,
+        "img_lowres": false,
+        "description": ""
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-049.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · МРСК (демонстрационный источник)",
+        "img_lowres": false,
+        "description": "МРСК — роботизированный комплекс для сварочных работ на строительных объектах. Возможность работы без оператора и допустимые условия эксплуатации требуют отдельного подтверждения."
+      },
+      "image_sha256": "b167c95f9b707c4ae6a0a808a323b274ae86e59ecf16b228f3cf3ec343868080",
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 132,
+      "card_ref": "3c19d4d7-f1b7-4c46-8169-6c3b6b9345fb@133",
+      "id": "3c19d4d7-f1b7-4c46-8169-6c3b6b9345fb",
+      "name": "Azarrus 1.0A",
+      "vendor": "ООО \"Деморобот\"",
+      "source_id": "rp-040",
+      "source_name": "Azarrus 1.0A",
+      "source_company": "ООО «Деморобот»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/amr.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-040.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · Azarrus 1.0A (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "bf18fdeaeab4b7614c1e5cd492c00b0811f1d33be4c05b8c1f2b704d76432913"
+    },
+    {
+      "row": 144,
+      "card_ref": "5778fa74-615d-4f5e-8660-70d0d7ee4b88@145",
+      "id": "5778fa74-615d-4f5e-8660-70d0d7ee4b88",
+      "name": "MARTin",
+      "vendor": "ООО \"Миррико\"",
+      "source_id": "rp-046",
+      "source_name": "MARTin",
+      "source_company": "ООО «Миррико»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres"
+      ],
+      "before": {
+        "img": "/assets/catalog/amr.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-046.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · MARTin (демонстрационный источник)",
+        "img_lowres": false
+      },
+      "image_sha256": "c5cf29db8043f5c3323d33624466305d8b5855f878c9a94b68121e386026724e"
+    },
+    {
+      "row": 172,
+      "card_ref": "6aa68572-2fef-4dd7-bfd5-68d117c558cc@173",
+      "id": "6aa68572-2fef-4dd7-bfd5-68d117c558cc",
+      "name": "Трал Патруль 5",
+      "vendor": "ООО \"СМП Сервис\"",
+      "source_id": "rp-028",
+      "source_name": "Трал Патруль 5",
+      "source_company": "ООО «СМП-Сервис»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres",
+        "description"
+      ],
+      "before": {
+        "img": "/assets/catalog/security-robot.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false,
+        "description": ""
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-028.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · Трал Патруль 5 (демонстрационный источник)",
+        "img_lowres": false,
+        "description": "Трал Патруль 5 — мобильный робот для патрулирования по заданному маршруту и наблюдения за территорией. Состав средств наблюдения и условия применения определяются комплектацией."
+      },
+      "image_sha256": "9ab47521d8638f852115b5ea89eb2b95bd7d7502fbe2f9b882f29db81b80bf1c",
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 177,
+      "card_ref": "04d05489-05fb-46b3-aed0-1012f96d34a3@178",
+      "id": "04d05489-05fb-46b3-aed0-1012f96d34a3",
+      "name": "Гумич спасатель",
+      "vendor": "ООО \"Гумич РТК\"",
+      "source_id": "rp-035",
+      "source_name": "ГУМИЧ Спасатель",
+      "source_company": "ООО «ГУМИЧ РТК»",
+      "method": "normalized-name",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres",
+        "description"
+      ],
+      "before": {
+        "img": "/assets/catalog/security-robot.webp",
+        "img_kind": null,
+        "img_source": null,
+        "img_lowres": false,
+        "description": ""
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-035.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · ГУМИЧ Спасатель (демонстрационный источник)",
+        "img_lowres": false,
+        "description": "Гумич спасатель — наземный робот для мониторинга и помощи при спасательных работах. Применение для перевозки пострадавших необходимо согласовать с разработчиком с учётом комплектации."
+      },
+      "image_sha256": "4253ab847b67918f8a276c9b7ceb78068d47cf0d1e43ae9a93796bbdbec35948",
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    },
+    {
+      "row": 188,
+      "card_ref": "d59a8cc3-4edf-428b-8b36-783ac2bf1514@189",
+      "id": "d59a8cc3-4edf-428b-8b36-783ac2bf1514",
+      "name": "Беспилотный AMT 6×6",
+      "vendor": "ООО \"Амт Н.В.\"",
+      "source_id": "rp-061",
+      "source_name": "AMT 6×6",
+      "source_company": "ООО «Амт Н.В.»",
+      "method": "model-name-and-company",
+      "fields": [
+        "img",
+        "img_kind",
+        "img_source",
+        "img_lowres",
+        "description"
+      ],
+      "before": {
+        "img": "/assets/catalog/tech/truck.png",
+        "img_kind": "render",
+        "img_source": null,
+        "img_lowres": false,
+        "description": ""
+      },
+      "after": {
+        "img": "/assets/catalog/real/roboportal-rp-061.webp",
+        "img_kind": "catalog-photo",
+        "img_source": "Робопортал · AMT 6×6 (демонстрационный источник)",
+        "img_lowres": false,
+        "description": "Беспилотный тягач AMT 6×6 предназначен для транспортировки грузов. Условия работы, совместимую нагрузку и режимы управления нужно уточнять для конкретного исполнения."
+      },
+      "image_sha256": "61ee6d85e6e61c6ef49bd96ffed009117d08beb8a64e5cc3698404d96aa7687d",
+      "description_source": {
+        "url": "https://funderberger.github.io/robots",
+        "status": "secondary-only",
+        "checked_at": "2026-10-20"
+      }
+    }
+  ]
+}

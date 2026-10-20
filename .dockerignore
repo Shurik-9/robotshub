@@ -19,3 +19,4 @@ docs/prtners
 .env
 .env.*
 !.env.example
+**/.data/

@@ -15,6 +15,8 @@ export const areaDefinitions = [
 export const operationDefinitions = [
   { id: 'clean_indoor', label: 'Уборка помещений' },
   { id: 'clean_outdoor', label: 'Уборка территории и дорог' },
+  { id: 'clean_facade', label: 'Мойка фасадов и окон' },
+  { id: 'clean_industrial', label: 'Очистка труб и промышленного оборудования' },
   { id: 'vegetation', label: 'Покос и уход за растительностью' },
   { id: 'transport', label: 'Перевозка и доставка' },
   { id: 'handling', label: 'Погрузка и перемещение грузов' },
@@ -47,6 +49,10 @@ export type SolutionLike = {
   industry?: string;
   kind?: string;
   specs?: Record<string, unknown>;
+  taxonomyOverride?: {
+    areaIds?: unknown;
+    operationIds?: unknown;
+  };
 };
 
 export type SolutionTaxonomy = {
@@ -60,6 +66,41 @@ export type SolutionTaxonomy = {
 
 const areaLabel = (id: AreaId) => areaDefinitions.find(item => item.id === id)?.label ?? id;
 const operationLabel = (id: OperationId) => operationDefinitions.find(item => item.id === id)?.label ?? id;
+
+function validateOverrideIds<T extends string>(
+  value: unknown,
+  definitions: readonly { id: T }[],
+  field: string,
+  solution: SolutionLike,
+): T[] | undefined {
+  if (value === undefined) return undefined;
+  const validIds = new Set<string>(definitions.map(item => item.id));
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new TypeError(`Invalid taxonomyOverride.${field} for ${solution.name ?? 'unnamed solution'}: expected a non-empty array`);
+  }
+
+  const ids = value.map(id => {
+    if (typeof id !== 'string' || !validIds.has(id)) {
+      throw new TypeError(`Invalid taxonomyOverride.${field} for ${solution.name ?? 'unnamed solution'}: unsupported identifier ${String(id)}`);
+    }
+    return id as T;
+  });
+  return Array.from(new Set(ids));
+}
+
+function getValidatedTaxonomyOverride(solution: SolutionLike) {
+  const rawOverride: unknown = solution.taxonomyOverride;
+  if (rawOverride === undefined) return {};
+  if (rawOverride === null || typeof rawOverride !== 'object' || Array.isArray(rawOverride)) {
+    throw new TypeError(`Invalid taxonomyOverride for ${solution.name ?? 'unnamed solution'}: expected an object`);
+  }
+
+  const override = rawOverride as Record<string, unknown>;
+  return {
+    areaIds: validateOverrideIds(override.areaIds, areaDefinitions, 'areaIds', solution),
+    operationIds: validateOverrideIds(override.operationIds, operationDefinitions, 'operationIds', solution),
+  };
+}
 
 function rawText(solution: SolutionLike) {
   return [
@@ -78,6 +119,7 @@ function addIf<T extends string>(target: T[], value: T, condition: boolean) {
 }
 
 export function getSolutionTaxonomy(solution: SolutionLike): SolutionTaxonomy {
+  const override = getValidatedTaxonomyOverride(solution);
   const raw = rawText(solution);
   const scenario = solution.scenario?.toLowerCase() ?? '';
   const areas: AreaId[] = [];
@@ -96,7 +138,14 @@ export function getSolutionTaxonomy(solution: SolutionLike): SolutionTaxonomy {
 
   const explicitIndoorCleaning = /уборк.{0,12}помещен|мойк.{0,12}(пол|помещен)|внутренн.{0,12}уборк/.test(scenario);
   const explicitOutdoorCleaning = /уборк.{0,12}(улиц|территор|дорог|снег)|коммунальн.{0,12}работ/.test(scenario);
-  const cleaning = /уборк|поломо|пылесос|мойк|мыть|очистк|дезинфек/.test(raw) && !/не клинингов/.test(raw);
+  const waterWork = areas.includes('water');
+  const aerialFacadeCleaning = areas.includes('air')
+    && solution.kind === 'bas'
+    && /фасад|окон|стеклопакет/.test(raw);
+  const nonGroundCleaning = waterWork || aerialFacadeCleaning;
+  const cleaning = !nonGroundCleaning
+    && /уборк|поломо|пылесос|мойк|мыть|очистк|дезинфек/.test(raw)
+    && !/не клинингов/.test(raw);
   const vegetation = /мульчер|косил|покос|измельчение растительност|дикорастущ|кустарник|газон/.test(raw);
   const outdoorCleaning = !explicitIndoorCleaning && cleaning && (
     explicitOutdoorCleaning
@@ -134,7 +183,7 @@ export function getSolutionTaxonomy(solution: SolutionLike): SolutionTaxonomy {
     primaryOperation = 'medical';
   }
   if (areas.includes('air') && operations.includes('monitoring')) primaryOperation = 'monitoring';
-  if (explicitIndoorCleaning) {
+  if (explicitIndoorCleaning && !nonGroundCleaning) {
     primaryArea = areas.find(area => ['warehouse', 'healthcare', 'public', 'production', 'indoor'].includes(area)) ?? 'indoor';
     primaryOperation = 'clean_indoor';
   }
@@ -142,16 +191,19 @@ export function getSolutionTaxonomy(solution: SolutionLike): SolutionTaxonomy {
   if (primaryOperation === 'clean_outdoor' || primaryOperation === 'vegetation') primaryArea = areas.find(area => ['outdoor', 'roads', 'agriculture'].includes(area)) ?? 'outdoor';
 
   const subtype = solution.subtype?.trim();
+  const finalAreas = override.areaIds ?? areas;
+  const finalOperations = override.operationIds ?? operations;
+  const finalPrimaryOperation = override.operationIds?.[0] ?? primaryOperation;
   const specialization = subtype
-    || (operations.length > 1
-      ? operations.slice(0, 2).map(operationLabel).join(' · ')
-      : operationLabel(primaryOperation));
+    || (finalOperations.length > 1
+      ? finalOperations.slice(0, 2).map(operationLabel).join(' · ')
+      : operationLabel(finalPrimaryOperation));
 
   return {
-    areaId: primaryArea,
-    areaIds: areas,
-    operationId: primaryOperation,
-    operationIds: operations,
+    areaId: override.areaIds?.[0] ?? primaryArea,
+    areaIds: finalAreas,
+    operationId: finalPrimaryOperation,
+    operationIds: finalOperations,
     specialization,
     confidence: solution.scenario?.trim() && (subtype || solution.description?.trim()) ? 'derived' : 'needs_review',
   };

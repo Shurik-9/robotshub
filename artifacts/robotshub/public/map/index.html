@@ -35,7 +35,7 @@ body{background:var(--bg);color:var(--tx);font:17px/1.5 -apple-system,'Segoe UI'
   font-size:13px;letter-spacing:.12em;color:var(--mut);background:rgba(16,26,46,.75);position:relative}
 .kick i{width:8px;height:8px;border-radius:50%;background:var(--op);box-shadow:0 0 12px var(--op);animation:blink 2.2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
- h1{position:relative;font-size:clamp(32px,4.8vw,58px);line-height:1.07;font-weight:800;letter-spacing:-.02em;margin:18px 0 14px}
+ h1{position:relative;font-size:clamp(32px,4.8vw,58px);line-height:1.07;font-weight:800;letter-spacing:-.02em;margin:18px 0 4px}
 h1 .grad{background:linear-gradient(92deg,var(--op) 0%,var(--pil) 55%,var(--rnd) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
  .sub{position:relative;color:var(--mut);font-size:19px}
 .sub b{color:var(--tx);font-weight:650}
@@ -287,6 +287,7 @@ footer .brandrow{margin-top:14px;color:var(--mut)}
 </style>
 <link rel="stylesheet" href="./partners.css">
 <script type="module" src="./partners.js"></script>
+<link rel="stylesheet" href="/brand/brand.css">
 </head>
 <body>
 
@@ -295,7 +296,6 @@ footer .brandrow{margin-top:14px;color:var(--mut)}
   <div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div>
   <div class="wrap">
     <h1>Роботы уже работают <span class="grad">в вашей отрасли</span></h1>
-    <p class="sub">Найдите свою отрасль: кто уже внедрил, что в пилотах — и сколько это стоит. <b>Кликните</b> на любой элемент — раскроется досье.</p>
   </div>
 </header>
 
@@ -325,7 +325,6 @@ footer .brandrow{margin-top:14px;color:var(--mut)}
       <div class="hint"><i></i><span id="hint"></span></div>
 
       <section class="view on" id="v-ind">
-        <div class="vh">12 направлений · 223 записи базового каталога<small>9 исходных отраслей + 3 тематических среза. Срезы пересекаются с исходными отраслями: числа плиток не складываются. Площадь отражает число записей, полоса — их статусы.</small></div>
         <svg class="map" id="bubbles" viewBox="0 0 1200 620" role="group" aria-label="Карта отраслей и тематических отраслевых направлений"></svg>
       </section>
 
@@ -381,7 +380,7 @@ footer .brandrow{margin-top:14px;color:var(--mut)}
         </div>
       </div>
     </details>
-    <div class="brandrow">Центр подбора роботизации «Железный аргумент» · 2026</div>
+    <div class="brandrow"><a class="site-brand" href="/" aria-label="Центр подбора роботизации «Железный аргумент»"><img src="/brand/logo.jpg" alt="" width="40" height="40"><span><strong>Железный аргумент</strong><small>Центр подбора роботизации</small></span></a></div>
   </div>
 </footer>
 
@@ -462,9 +461,9 @@ function buildBubbles(){
   ];
   svg.innerHTML = '';
   const mob = innerWidth < 761;
-   svg.setAttribute('viewBox', mob ? '0 0 360 568' : '0 0 1200 620');
+   svg.setAttribute('viewBox', mob ? '0 0 368 594' : '0 0 1200 620');
   const geom = new Map();
-  if (mob) sorted.forEach((d, i) => geom.set(d.id, {x: (i % 3) * 124, y: Math.floor(i / 3) * 142 + 4, w: 112, h: 132, tier: 3, variant: 0}));
+  if (mob) sorted.forEach((d, i) => geom.set(d.id, {x: (i % 2) * 184, y: Math.floor(i / 2) * 98 + 4, w: 172, h: 90, tier: 3, variant: 0}));
   if (!mob) {
    const mapW = 1152, startX = 24, gap = 12, minW = 170;
   groups.forEach(group => {
@@ -490,7 +489,7 @@ function buildBubbles(){
     return `M ${x1 + r} ${y1} H ${x2 - cut} L ${x2} ${y1 + cut} V ${y2 - r} Q ${x2} ${y2} ${x2 - r} ${y2} H ${x1 + r} Q ${x1} ${y2} ${x1} ${y2 - r} V ${y1 + r} Q ${x1} ${y1} ${x1 + r} ${y1} Z`;
   };
   const wrapLabel = (label, maxChars) => {
-    const words = (mob ? label.replace('Промышленность', 'Промыш- ленность').replace('Строительство', 'Строи- тельство') : label).split(' ');
+    const words = label.split(' ');
     const lines = [];
     let line = '';
     words.forEach(word => {
@@ -514,13 +513,13 @@ function buildBubbles(){
      pop.setAttribute('class', 'pop');
     const {x, y, w, h, tier, variant} = layout;
     const nameLines = wrapLabel(d.label, mob ? 11 : tier === 0 ? 19 : 16);
-    const px = mob ? 11 : 24;
-    const barX = x + px, barW = w - px * 2, barY = y + h - (mob ? 16 : 30), tot = d.n || 1;
+    const px = mob ? 13 : 24;
+    const barX = x + px, barW = w - px * 2, barY = y + h - (mob ? 12 : 30), tot = d.n || 1;
      const titleSize = mob ? 14 : tier === 0 ? 23 : tier === 1 ? 21 : 19;
-     const numberSize = mob ? 28 : tier === 0 ? 45 : tier === 1 ? 39 : 35;
+    const numberSize = mob ? 30 : tier === 0 ? 45 : tier === 1 ? 39 : 35;
     const title = nameLines.map((line, lineIndex) => '<tspan x="' + (x + px) + '" dy="' + (lineIndex === 0 ? 0 : titleSize + 3) + '">' + esc(line) + '</tspan>').join('');
-     const titleY = y + (mob ? 24 : 33);
-    const numberY = barY - (mob ? 26 : 30);
+    const titleY = y + (mob ? 24 : 33);
+    const numberY = mob ? y + 56 : barY - 30;
     pop.innerHTML =
       '<path class="halo" d="' + tilePath(x, y, w, h, variant, 7) + '" stroke="' + d.color + '"></path>' +
       '<path class="plate" d="' + tilePath(x + 6, y + 6, w, h, variant) + '"></path>' +
@@ -528,9 +527,9 @@ function buildBubbles(){
       '<defs><linearGradient id="tg-' + d.id + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + d.color + '"/><stop offset=".7" stop-color="' + d.color + '" stop-opacity="0"/></linearGradient></defs>' +
       '<path class="tint" d="' + tilePath(x, y, w, h, variant) + '" fill="url(#tg-' + d.id + ')"></path>' +
       '<text class="tile-title" x="' + (x + px) + '" y="' + titleY + '" font-size="' + titleSize + '" font-weight="650" fill="#F1F5F9">' + title + '</text>' +
-      '<text class="tile-number" x="' + (x + px) + '" y="' + numberY + '" font-family="ui-monospace,monospace" font-weight="800" font-size="' + numberSize + '" fill="#FFFFFF">' + d.n + '</text>' +
+      '<text class="tile-number"' + (mob ? ' text-anchor="end" x="' + (x + w - px) : ' x="' + (x + px)) + '" y="' + numberY + '" font-family="ui-monospace,monospace" font-weight="800" font-size="' + numberSize + '" fill="#FFFFFF">' + d.n + '</text>' +
       (mob
-         ? '<text class="tile-unit" x="' + (x + px) + '" y="' + (numberY + 15) + '" font-size="11.5" fill="#B7C6DC">записей · <tspan fill="#3BE68F" font-weight="700">' + Math.round(d.op / tot * 100) + '%</tspan></text>'
+         ? '<text class="tile-unit" x="' + (x + px) + '" y="' + (y + 72) + '" font-size="11" fill="#B7C6DC">записей · <tspan fill="#3BE68F" font-weight="700">' + Math.round(d.op / tot * 100) + '%</tspan></text>'
          : '<text class="tile-unit" x="' + (x + px) + '" y="' + (numberY + 18) + '" font-size="13" fill="#B7C6DC">записей</text>' +
            '<text class="tile-unit" x="' + (x + w - px) + '" y="' + (numberY + 18) + '" text-anchor="end" font-size="13" font-weight="700" fill="#3BE68F">' + Math.round(d.op / tot * 100) + '% в работе</text>') +
       '<rect x="' + barX + '" y="' + barY + '" width="' + barW + '" height="' + (mob ? 6 : 8) + '" rx="' + (mob ? 3 : 4) + '" fill="#18253A"></rect>' +

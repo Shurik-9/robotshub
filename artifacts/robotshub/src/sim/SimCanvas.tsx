@@ -21,13 +21,15 @@ interface Props {
   fleet?: SimOptions["fleet"]; // из buildFleet(selectedSolutions, robotCount)
   seed?: number;
   sceneKind?: SceneBuilderKind;
+  mobileSceneFirst?: boolean;
+  liveTuning?: boolean;
   onKpisChange?: (kpis: SimKpis) => void;
 }
 
 const fmt = new Intl.NumberFormat("ru-RU");
 const FLOW_COLORS = ["#22D3EE", "#F59E0B", "#34D399", "#A78BFA", "#FB7185", "#60A5FA"];
 
-export function SimCanvas({ scene, options, title, className, fleet, seed = 42, sceneKind, onKpisChange }: Props) {
+export function SimCanvas({ scene, options, title, className, fleet, seed = 42, sceneKind, mobileSceneFirst = false, liveTuning = false, onKpisChange }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const bankRef = useRef<SpriteBank | null>(null);
   const simRef = useRef<Sim | null>(null);
@@ -35,7 +37,7 @@ export function SimCanvas({ scene, options, title, className, fleet, seed = 42, 
   const runningRef = useRef(true);
   const activeFloorRef = useRef("");
   const followFloorRef = useRef(true);
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(10);
   const [running, setRunning] = useState(true);
   const [floors, setFloors] = useState<SimFloor[]>([]);
   const [activeFloorId, setActiveFloorId] = useState("");
@@ -70,7 +72,34 @@ export function SimCanvas({ scene, options, title, className, fleet, seed = 42, 
     setActiveFloorId(simRef.current.activeFloorId);
     setEvents([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene, fleet, options.fleet, options.tasksPerHour, options.laborCostPerTaskRub, options.batteryRuntimeHours, options.chargeTimeMinutes, seed]);
+  }, [
+    scene,
+    fleet,
+    options.fleet,
+    seed,
+    options.initialTasks,
+    liveTuning ? null : options.tasksPerHour,
+    liveTuning ? null : options.laborCostPerTaskRub,
+    liveTuning ? null : options.batteryRuntimeHours,
+    liveTuning ? null : options.chargeTimeMinutes,
+  ]);
+
+  // The main simulation can change demand and battery assumptions without
+  // resetting elapsed time. Other SimCanvas consumers keep the old behavior.
+  useEffect(() => {
+    const sim = simRef.current;
+    if (!sim || !liveTuning) return;
+    sim.opts.tasksPerHour = options.tasksPerHour;
+    sim.opts.laborCostPerTaskRub = options.laborCostPerTaskRub;
+    sim.opts.batteryRuntimeHours = options.batteryRuntimeHours ?? 8;
+    sim.opts.chargeTimeMinutes = options.chargeTimeMinutes ?? 120;
+  }, [
+    liveTuning,
+    options.tasksPerHour,
+    options.laborCostPerTaskRub,
+    options.batteryRuntimeHours,
+    options.chargeTimeMinutes,
+  ]);
 
   useEffect(() => {
     if (simRef.current) simRef.current.opts.speedMultiplier = speed;
@@ -157,26 +186,38 @@ export function SimCanvas({ scene, options, title, className, fleet, seed = 42, 
         </div>
       </div>
       <div className="shrink-0 border-b border-slate-800 bg-slate-950/70 px-4 py-2 text-xs leading-relaxed text-slate-300" data-testid="simulation-model-explanation">
+        <div className="flex flex-wrap items-center justify-between gap-2 font-medium text-cyan-200">
+          <span data-testid="simulation-fleet-activity">На маршрутах: {kpis?.activeRobots ?? 0} из {simRef.current?.robots.length ?? 0} машин · в очереди: {kpis?.queueLen ?? 0}</span>
+          <span>Темп ×{speed}</span>
+        </div>
+        {(options.initialTasks ?? 0) > 0 && <span className="block text-slate-400" data-testid="simulation-starting-queue">
+          Начальная очередь: {options.initialTasks} заданий — условие просмотра; далее поток {options.tasksPerHour.toLocaleString("ru-RU", { maximumFractionDigits: 1 })} оп/ч.
+        </span>}
+        <details className="mt-1">
+          <summary className="cursor-pointer text-slate-400">Условия и показатели модели</summary>
+          <div className="mt-2">
         <strong className="text-cyan-200">Схема работы, не прогноз окупаемости.</strong>{" "}
         Прошло {Math.floor((kpis?.elapsedSec ?? 0) / 60)} мин {Math.floor((kpis?.elapsedSec ?? 0) % 60)} с модельного времени.
         {" "}Входящий поток: {options.tasksPerHour.toLocaleString("ru-RU", { maximumFractionDigits: 1 })} оп/ч.
         {" "}Фактически в модели: {(kpis?.observedTasksPerHour ?? 0).toLocaleString("ru-RU", { maximumFractionDigits: 1 })} оп/ч с начала запуска.
         <span className="block text-amber-200" data-testid="simulation-next-arrival">
           {options.tasksPerHour > 0
-            ? `Следующее задание через ${formatDuration(kpis?.nextTaskInSec ?? 3600 / options.tasksPerHour)} модельного времени.`
+            ? `Следующее поступление по графику через ${formatDuration(kpis?.nextTaskInSec ?? 3600 / options.tasksPerHour)} модельного времени.`
             : "Входящий поток равен нулю: новые задания не поступают."}
           {(kpis?.queueLen ?? 0) === 0 && (kpis?.activeRobots ?? 0) === 0
-            ? " Парк стоит, потому что заданий пока нет, а не из-за затора."
+            ? " Ожидающих заданий нет."
             : ` Заданий в очереди: ${kpis?.queueLen ?? 0}.`}
           {options.tasksPerHour > 0 && options.tasksPerHour < 1
             ? " Очень редкий поток: проверьте объём операций и сменность в параметрах объекта."
             : ""}
         </span>
         {scene.id.startsWith("generated-") && <span className="block text-slate-400">
-          Пересекающиеся рейсы допускаются по очереди целиком, включая возврат; независимые — параллельно.
-          На местах ожидания: {kpis?.waitingRobots ?? 0}. Это консервативная схема движения, не оценка максимальной мощности парка.
-          При ×1 секунда на экране равна секунде модели. Стоянки условные, этажи равной площади; погрузка и разгрузка — допущения.
+          Проезды и лифт резервируются по месту и времени: машины могут работать одновременно на общих маршрутах.
+          После доставки — стоянка на этаже назначения; зарядка — только при низком заряде и на своём этаже.
+          Темп ×{speed}: 1 секунда просмотра = {speed} секунд модели. Этажи равной площади; погрузка и разгрузка — допущения.
         </span>}
+          </div>
+        </details>
       </div>
       {floors.length > 1 && (
         <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-slate-800 bg-slate-950/40 px-3 py-2">
@@ -218,7 +259,7 @@ export function SimCanvas({ scene, options, title, className, fleet, seed = 42, 
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* сцена */}
-        <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden bg-[#0B1220]">
+        <div className={`flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden bg-[#0B1220] ${mobileSceneFirst ? "min-h-[240px] lg:min-h-0" : ""}`}>
           <canvas
             ref={canvasRef}
             width={scene.width}
@@ -229,7 +270,7 @@ export function SimCanvas({ scene, options, title, className, fleet, seed = 42, 
         </div>
 
         {/* правая панель KPI */}
-        <div className="max-h-full w-full shrink-0 overflow-y-auto border-t border-slate-800 lg:w-64 lg:border-l lg:border-t-0">
+        <div className={`w-full shrink-0 overflow-y-auto border-t border-slate-800 lg:w-64 lg:border-l lg:border-t-0 ${mobileSceneFirst ? "min-h-0 max-h-[40%] lg:max-h-full" : "max-h-full"}`}>
            <div className="border-b border-slate-800/60 px-4 py-3" data-testid="simulation-geometry">
              <div className="mb-2 text-[10px] uppercase tracking-wider text-slate-500">Состав сцены</div>
              <div className="grid grid-cols-2 gap-x-3 gap-y-2">

@@ -1,0 +1,51 @@
+name: Проверка проекта
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - uses: browser-actions/setup-chrome@v2
+        id: setup-chrome
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm --filter @workspace/robotshub run test:map
+      - run: pnpm --filter @workspace/robotshub run test:calc
+      - run: pnpm --filter @workspace/robotshub run test:journey
+      - run: pnpm --filter @workspace/robotshub run test:questionnaire
+      - name: Start, DOCX and model connections
+        run: node --test artifacts/robotshub/scripts/test-start-value.mjs artifacts/robotshub/scripts/test-start-workbench.mjs artifacts/robotshub/scripts/test-solution-connections.mjs
+      - run: pnpm --filter @workspace/api-server run test:news-seo
+      - run: pnpm --filter @workspace/robotshub run build
+      - run: docker compose up --build --wait
+      - name: Smoke test
+        run: |
+          curl --fail --show-error http://localhost:8080/healthz
+          curl --fail --show-error http://localhost:8080/map/map-data.json > /dev/null
+          curl --fail --show-error http://localhost:8080/solutions > /dev/null
+          curl --fail --show-error http://localhost:8080/glossary/ > /dev/null
+          curl --fail --show-error http://localhost:8080/news > /dev/null
+          curl --fail --show-error http://localhost:8080/api/news > /dev/null
+          curl --fail --show-error http://localhost:8080/cabinet > /dev/null
+          curl --fail --show-error http://localhost:8080/lead > /dev/null
+      - name: Browser test against the Docker release
+        run: pnpm --filter @workspace/robotshub run test:operation-economics
+        env:
+          CHROMIUM_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+          OPERATION_ECONOMICS_BROWSER_URL: http://localhost:8080
+      - if: always()
+        run: docker compose down

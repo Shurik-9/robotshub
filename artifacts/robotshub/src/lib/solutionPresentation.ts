@@ -336,6 +336,10 @@ const specLabels: Record<string, string> = {
   floor_requirement: 'требования к полу',
 };
 
+export function getSolutionSpecLabel(key: string) {
+  return specLabels[key] || key;
+}
+
 const expectedSpecsByType: Record<string, string[]> = {
   amr: ['payload_kg', 'navigation', 'speed_mps', 'runtime_h'],
   fmr: ['payload_kg', 'navigation', 'speed_mps', 'runtime_h'],

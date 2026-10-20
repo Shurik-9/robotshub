@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useSearch } from 'wouter';
+import { StartBriefModelContext } from '@/components/start-scope/start-brief/model-action';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, ArrowRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { useSectorMap, sectorCatalogPath } from '@/lib/useSectorMap';
 import { useProject } from '@/store/project';
 import { ObjectQuestionnaire } from '@/components/object-questionnaire';
 import { questionnaireTemplates as templates, fieldsFor, type Template } from '@/lib/questionnaire-schema';
+import { requestedCalculationSolution, withCalculationIntent } from '@/lib/calculation-intent';
 
 type Params = Record<string, string | number | boolean>;
 type DraftReader = MutableRefObject<() => Params>;
@@ -54,7 +56,7 @@ function CustomSite({ initial, onSave, draftReader }: { initial: Params; onSave:
       </CardContent>
     </Card>
     <p className="rounded-md border border-accent/40 bg-accent/5 p-4 text-sm leading-6" data-testid="status-custom-brief">Это исследовательский бриф, а не исходные данные для ТЭО. Для четырёх поддерживаемых операций отдельный расчёт откроется после выбора подходящей модели в каталоге; в нём потребуются измерения площадки и финансовые документы. Для остальных задач расчёт недоступен.</p>
-    <div className="flex justify-end"><Button type="submit" size="lg" className="w-full sm:w-auto" data-testid="object-submit">Сохранить бриф и перейти в каталог<ArrowRight className="ml-2 h-4 w-4" /></Button></div>
+    <div className="flex justify-end"><Button type="submit" size="lg" className="w-full sm:w-auto" data-testid="object-submit">Сохранить бриф и продолжить<ArrowRight className="ml-2 h-4 w-4" /></Button></div>
   </form></Form>;
 }
 
@@ -115,7 +117,7 @@ function TemplateSite({ template, initial, onSave, onProgress, draftReader }: { 
       </Card>
       <div className="flex justify-end">
         <Button type="submit" size="lg" className="w-full sm:w-auto" data-testid={activeGroup === template.groups.length - 1 ? 'object-submit' : 'object-next-step'}>
-          {activeGroup === template.groups.length - 1 ? 'Сохранить и выбрать решения' : 'Далее'}<ArrowRight className="ml-2 h-4 w-4" />
+          {activeGroup === template.groups.length - 1 ? 'Сохранить и продолжить' : 'Далее'}<ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </form></Form></div>
@@ -124,17 +126,19 @@ function TemplateSite({ template, initial, onSave, onProgress, draftReader }: { 
 
 export default function ObjectSetup() {
   const [, setLocation] = useLocation();
+  const requestedSolution = requestedCalculationSolution(useSearch());
   const { state, updateObjectParams } = useProject();
   const { sectors, error } = useSectorMap();
   const [waitingForCatalog, setWaitingForCatalog] = useState(false);
   const [importRevision, setImportRevision] = useState(0);
   const draftReader = useRef<() => Params>(() => state.objectParams);
   const sector = sectors?.find(item => item.id === state.sectorId);
-  const destination = sector ? sectorCatalogPath(sector) : '/solutions';
+  const catalogDestination = sector ? sectorCatalogPath(sector) : '/solutions';
+  const destination = requestedSolution ? withCalculationIntent('/calc', requestedSolution.id) : catalogDestination;
   const template = state.objectType && state.objectType !== 'custom' ? templates[state.objectType] : null;
   useEffect(() => {
-    if (waitingForCatalog && sector) setLocation(sectorCatalogPath(sector));
-  }, [waitingForCatalog, sector, setLocation]);
+    if (waitingForCatalog && sector) setLocation(destination);
+  }, [waitingForCatalog, sector, destination, setLocation]);
   const save = (data: Params) => {
     updateObjectParams(data);
     if (state.sectorId && !sector) {
@@ -144,20 +148,22 @@ export default function ObjectSetup() {
     setLocation(destination);
   };
 
-  if (!state.objectType) return <div className="container mx-auto max-w-5xl px-4 py-12" data-testid="page-object-setup"><Card><CardContent className="space-y-4 py-8"><h1 className="text-xl font-semibold">Объект ещё не выбран</h1><p className="text-sm text-muted-foreground">Сначала укажите направление и тип площадки или загрузите анкету для текущего направления.</p><Button onClick={() => setLocation('/quick-select')} data-testid="button-choose-object">К выбору объекта<ArrowRight className="ml-2 h-4 w-4" /></Button></CardContent></Card><ObjectQuestionnaire /></div>;
+  if (!state.objectType) return <div className="container mx-auto max-w-5xl px-4 py-12" data-testid="page-object-setup"><Card><CardContent className="space-y-4 py-8"><h1 className="text-xl font-semibold">Объект ещё не выбран</h1><p className="text-sm text-muted-foreground">Сначала укажите направление и тип площадки или загрузите анкету для текущего направления.</p><Button onClick={() => setLocation(withCalculationIntent('/quick-select', requestedSolution?.id))} data-testid="button-choose-object">К выбору объекта<ArrowRight className="ml-2 h-4 w-4" /></Button></CardContent></Card><ObjectQuestionnaire /></div>;
 
   return <div className="container mx-auto w-full max-w-none px-4 py-8" data-testid="page-object-setup">
+    <StartBriefModelContext />
     <div className="mx-auto max-w-6xl">
       <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
-        <Button type="button" variant="ghost" onClick={() => setLocation(state.sectorId ? `/quick-select?sector=${encodeURIComponent(state.sectorId)}` : '/quick-select')} className="pl-0 hover:bg-transparent" data-testid="button-back-quick-select"><ArrowLeft className="mr-2 h-4 w-4" />К выбору направления</Button>
-        <Button type="button" variant="outline" size="sm" disabled={Boolean(state.sectorId && !sector)} onClick={() => setLocation(destination)} data-testid="button-open-catalog">Каталог<ArrowRight className="ml-2 h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" onClick={() => setLocation(withCalculationIntent(state.sectorId ? `/quick-select?sector=${encodeURIComponent(state.sectorId)}` : '/quick-select', requestedSolution?.id))} className="pl-0 hover:bg-transparent" data-testid="button-back-quick-select"><ArrowLeft className="mr-2 h-4 w-4" />К выбору направления</Button>
+        <Button type="button" variant="outline" size="sm" disabled={Boolean(state.sectorId && !sector)} onClick={() => setLocation(catalogDestination)} data-testid="button-open-catalog">Каталог<ArrowRight className="ml-2 h-4 w-4" /></Button>
       </div>
       <p className="mb-2 font-mono text-xs uppercase tracking-widest text-primary">Маршрут подбора / 02 — Площадка</p>
       <h1 className="mb-3 text-3xl font-bold tracking-tight">Опишите объект</h1>
+      {requestedSolution && <p className="mb-6 rounded-md border border-primary/30 bg-primary/5 p-4 text-sm leading-6" data-testid="object-calculation-intent">После сохранения параметров откроется подтверждение расчёта для <strong>{requestedSolution.name}</strong>. Применимость модели будет проверена по выбранному объекту и направлению.</p>}
       <ObjectQuestionnaire readCurrent={() => draftReader.current()} onApplied={() => { setImportRevision(value => value + 1); setWaitingForCatalog(false); }} />
       <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-secondary/30 p-4">
         <div><p className="text-xs uppercase tracking-widest text-muted-foreground">Направление карты</p><p className="mt-1 font-medium" data-testid="text-object-sector">{sector?.label ?? (error ? 'Данные направлений недоступны' : sectors ? 'Не выбрано' : 'Загрузка направления…')}</p><p className="mt-1 text-xs text-muted-foreground">Направление определяет каталог; шаблон объекта описывает физическую площадку.</p></div>
-        <Button type="button" variant="outline" size="sm" onClick={() => setLocation('/quick-select')} data-testid="button-change-sector">Изменить направление</Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => setLocation(withCalculationIntent('/quick-select', requestedSolution?.id))} data-testid="button-change-sector">Изменить направление</Button>
       </div>
       {!sectors && !error && state.sectorId && <p className="mb-5 rounded-md border border-border p-3 text-sm text-muted-foreground" role="status" data-testid="status-object-sector-loading">Загружаем направление для фильтрации каталога…</p>}
       {error && state.sectorId && <p className="mb-5 rounded-md border border-destructive/40 p-3 text-sm" role="alert" data-testid="status-object-sector-error">Не удалось проверить направление: {error}. Параметры сохранятся, но переход в отраслевой каталог возможен после загрузки карты. <button type="button" className="underline" onClick={() => window.location.reload()} data-testid="button-retry-object-sector">Повторить загрузку</button></p>}

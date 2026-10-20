@@ -31,8 +31,12 @@ const instructions = [
 
 export async function createQuestionnaire(type: QuestionnaireType, sectorId: string | null) {
   const book = new ExcelJS.Workbook();
-  book.creator = 'RobotsHub';
+  book.creator = 'Центр подбора роботизации «Железный аргумент»';
   const help = book.addWorksheet(SHEETS[0]);
+  const brandRow = help.addRow(['Центр подбора роботизации «Железный аргумент»']);
+  brandRow.font = { bold: true, size: 14 };
+  brandRow.alignment = { wrapText: true, vertical: 'middle' };
+  brandRow.height = 32;
   help.getColumn(1).width = 130;
   instructions.forEach(text => { const row = help.addRow([text]); row.alignment = { wrapText: true, vertical: 'top' }; row.height = 45; });
   const meta = book.addWorksheet(SHEETS[1]);
@@ -191,7 +195,7 @@ export async function parseQuestionnaire(data: ArrayBuffer): Promise<Questionnai
       missingSheets.length ? `не хватает листов «${missingSheets.join('», «')}»` : '',
       extraSheets.length ? `есть неподдерживаемые листы «${extraSheets.join('», «')}»` : '',
     ].filter(Boolean).join('; ');
-    throw new Error(`Неполная или несовместимая анкета: ${problems}. Скачайте новую XLSX в RobotsHub и перенесите в неё только ответы, комментарии, источники и даты. Не удаляйте листы и не меняйте заголовки.`);
+    throw new Error(`Неполная или несовместимая анкета: ${problems}. Скачайте новую XLSX в Железный аргумент и перенесите в неё только ответы, комментарии, источники и даты. Не удаляйте листы и не меняйте заголовки.`);
   }
   const meta = book.getWorksheet(SHEETS[1])!;
   if (meta.rowCount !== 4 || meta.columnCount !== 2) throw new Error('Повреждена структура метаданных.');

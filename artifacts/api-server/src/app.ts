@@ -3,6 +3,7 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { createNewsRouter } from "./news-engine/server/router.js";
 
 const app: Express = express();
 
@@ -26,9 +27,10 @@ app.use(
   }),
 );
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "256kb" }));
 app.use(express.urlencoded({ extended: true }));
 
+app.use(createNewsRouter());
 app.use("/api", router);
 
 export default app;

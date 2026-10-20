@@ -1,0 +1,73 @@
+.solution-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 640px), 1fr));
+  gap: 24px;
+  align-items: stretch;
+  padding-bottom: 24px;
+}
+
+.solution-card {
+  container-type: inline-size;
+  overflow-wrap: anywhere;
+}
+
+.solution-card-media {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  height: 276px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: #0b1424;
+  padding: 44px 16px 64px;
+}
+
+.solution-card-photo {
+  display: block;
+  width: 168px;
+  height: 168px;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  padding: 8px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  background: #101e30;
+}
+
+.solution-card-actions > button {
+  min-width: 0;
+  min-height: 44px;
+  height: auto;
+  padding: 10px 12px;
+  white-space: normal;
+  line-height: 1.4;
+  text-align: center;
+}
+
+@container (min-width: 360px) {
+  .solution-card-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Wide cards keep the full description visible without a tall photo banner. */
+@media (min-width: 960px) {
+  .solution-card-grid .solution-card {
+    flex-direction: row;
+  }
+
+  .solution-card-grid .solution-card-media {
+    width: 224px;
+    height: auto;
+    min-height: 340px;
+    padding: 60px 16px 88px;
+    border-right: 1px solid hsl(var(--border));
+    border-bottom: 0;
+  }
+
+  .solution-card-photo {
+    width: 192px;
+    height: 192px;
+  }
+}

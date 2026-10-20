@@ -1,13 +1,17 @@
-import { useMemo, useEffect } from 'react';
-import { useLocation } from 'wouter';
+import { useMemo, useEffect, useState } from 'react';
+import { useLocation, useSearch } from 'wouter';
 import { useProject } from '@/store/project';
 import { evaluationLimit } from '@/lib/evaluationScope';
 import { operationFor } from '@/lib/operationEconomics';
 import OperationEvaluation from '@/components/OperationEvaluation';
+import { QuoteCta } from '@/components/quote-cta';
+import { FloatingCompareBar } from '@/components/floating-compare-bar';
+import { ShareProjectButton } from '@/components/share-project-button';
 import solutionsData from '@/data/solutions.json';
 import {
   buildScenarioConclusion,
   calculateEconomics,
+  calculateSimulationInputs,
   ECONOMIC_RISKS,
   formatPaybackYears,
   getPaybackVerdict,
@@ -24,19 +28,31 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getSolutionDataStatus, getSolutionRole, getSolutionSummary, getSolutionTypeLabel } from '@/lib/solutionPresentation';
 import { IconCalculator, IconChartRoi, IconClockPayback, IconInfoAssumption, IconSliders, IconVisualization } from '@/components/brand-icons';
+import { StepNav } from '@/components/step-nav';
+import { ProjectStartState } from '@/components/project-start-state';
+import { CalculationIntentState } from '@/components/calculation-intent-state';
+import { requestedCalculationSolution } from '@/lib/calculation-intent';
+import { DEMO_BANNER_TEXT, isEmptyProject } from '@/lib/demo-project';
 
 // Charting
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function Calc() {
   const [, setLocation] = useLocation();
+  const requestedSolution = requestedCalculationSolution(useSearch());
   const {
     state,
+    selectSolutionForCalculation,
     setActiveSolution,
     setWhatIfOverrides,
     setAssumptionsOverrides,
+    setFinancingScenario,
     resetProject,
+    applyDemoProject,
+    projectRecoveryNotice,
   } = useProject();
+  const search = useSearch();
+  const [openedFromShare] = useState(() => new URLSearchParams(search).has('p'));
 
   const activeSolutionId = state.selectedSolutions.includes(state.activeSolutionId ?? '')
     ? state.activeSolutionId
@@ -64,6 +80,14 @@ export default function Calc() {
     });
   }, [solution, evaluationWarning, operation, state.objectParams, state.assumptionsOverrides, salaryMultiplier, priceMultiplier, volumeMultiplier]);
 
+  const simulationEconomics = useMemo(() => solution && !evaluationWarning && !operation
+    ? calculateSimulationInputs({
+        objectParams: state.objectParams, solution,
+        whatIf: { salaryMultiplier, priceMultiplier, volumeMultiplier },
+        assumptionsOverrides: state.assumptionsOverrides,
+      }) : null,
+  [solution, evaluationWarning, operation, state.objectParams, state.assumptionsOverrides, salaryMultiplier, priceMultiplier, volumeMultiplier]);
+
   const paybackRisk = useMemo(() => {
     if (!solution || evaluationWarning || operation) return null;
     return simulatePaybackRisk({
@@ -81,12 +105,31 @@ export default function Calc() {
   }, [activeSolutionId, setActiveSolution, state.activeSolutionId]);
 
   useEffect(() => {
-    if (!state.objectType || state.selectedSolutions.length === 0) {
-      setLocation('/solutions');
+    const query = new URLSearchParams(search);
+    const blankProject = isEmptyProject(state);
+    if (
+      !query.has('p')
+      && !openedFromShare
+      && !query.has('solution')
+      && !projectRecoveryNotice
+      && blankProject
+    ) {
+      applyDemoProject();
     }
-  }, [setLocation, state.objectType, state.selectedSolutions.length]);
+  }, [applyDemoProject, openedFromShare, projectRecoveryNotice, search, state]);
 
-  if (!state.objectType || state.selectedSolutions.length === 0) return null;
+  if (requestedSolution) return (
+    <CalculationIntentState
+      solution={requestedSolution}
+      hasObject={Boolean(state.objectType && Object.keys(state.objectParams).length)}
+      limitation={evaluationLimit(state.sectorId, state.objectType, state.objectParams, requestedSolution.id)}
+      onCalculate={() => {
+        selectSolutionForCalculation(requestedSolution.id);
+        setLocation('/calc');
+      }}
+    />
+  );
+  if (!state.objectType || state.selectedSolutions.length === 0) return <ProjectStartState mode="calc" />;
   if (evaluationWarning) return (
     <div className="container mx-auto max-w-3xl px-4 py-12" data-testid="alert-calculation-unavailable">
       <h1 className="text-2xl font-bold">ТЭО для этой задачи пока недоступно</h1>
@@ -126,12 +169,20 @@ export default function Calc() {
 
   return (
     <div className="container mx-auto w-full max-w-none py-6 sm:py-8 px-4 flex flex-col h-full gap-6">
+      <StepNav step="04" label="Экономика" backTo="/solutions" backLabel="К каталогу" testId="button-back-calc" />
+      {state.demoProject && (
+        <div className="rounded-lg border border-[#22D3EE]/30 bg-[#06202A]/40 px-4 py-3 text-sm text-muted-foreground" data-testid="calc-demo-banner">
+          {DEMO_BANNER_TEXT}{' '}
+          <a href="/object" className="whitespace-nowrap font-medium text-[#22D3EE] hover:underline">Ввести свой объект</a>
+        </div>
+      )}
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Экономический расчет</h1>
           <p className="text-muted-foreground mt-1">Сравнение сценариев финансирования и анализ чувствительности</p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <ShareProjectButton className="w-full sm:w-auto" />
           <Button
             variant="outline"
             onClick={() => {
@@ -305,8 +356,12 @@ export default function Calc() {
                 </div>
                 <div className="w-full text-left sm:w-auto sm:shrink-0 sm:text-right">
                   <p className="text-sm text-muted-foreground">Расчетное кол-во роботов</p>
-                   <p className="text-2xl font-bold font-mono tabular-nums text-primary">{results[1]?.robotCount || 0} шт.</p>
-                    <p className="text-xs text-muted-foreground mt-1">Цена: с НДС, без доставки и пусконаладки</p>
+                  <p className="text-2xl font-bold font-mono tabular-nums text-primary">{results[1]?.robotCount || 0} шт.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Цена: с НДС, без доставки и пусконаладки</p>
+                  {solution && <div className="mt-3 flex flex-col gap-2 sm:items-end">
+                    <QuoteCta solutionId={solution.id} size="sm" />
+                    <QuoteCta solutionId={solution.id} variant="leasing" size="sm" />
+                  </div>}
                 </div>
               </CardContent>
             </Card>
@@ -373,6 +428,21 @@ export default function Calc() {
                            <span className="text-xs text-muted-foreground">TCO ({res.assumptions.horizonYears} лет)</span>
                            <span className="font-mono tabular-nums text-xs font-bold">{formatCurrency(res.tco)}</span>
                         </div>
+                        {res.id === 'leasing' && solution && (
+                          <QuoteCta solutionId={solution.id} variant="leasing" size="sm" className="mt-2 w-full" />
+                        )}
+                        {res.id !== 'as_is' && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={state.financingScenario === res.id ? 'default' : 'outline'}
+                            className="mt-2 w-full"
+                            onClick={() => setFinancingScenario(res.id as 'purchase' | 'leasing' | 'raas')}
+                            data-testid={`button-primary-financing-${res.id}`}
+                          >
+                            {state.financingScenario === res.id ? 'Выбрано для ссылки' : 'Выбрать для ссылки'}
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -386,6 +456,16 @@ export default function Calc() {
                       <span className="font-semibold text-sm">Вердикт окупаемости: {purchaseVerdict.label}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{purchaseVerdict.detail}</p>
+                    <p className="mt-3 text-xs leading-relaxed text-[#8FA3BB]" data-testid="calc-leasing-estimate">
+                      Ориентир: лизинг ≈ 3,6% от CAPEX в месяц — ≈ {formatCurrency(purchase.capex * 0.036)}/мес за этот парк (допущение для ориентира; точные условия — по запросу у лизинговой компании)
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/25 bg-primary/5 p-3" data-testid="calc-simulation-bridge">
+                      <div>
+                        <p className="text-sm">Симуляция: проверьте, что флот справляется с потоком на вашей схеме</p>
+                        <p className="mt-1 text-xs text-muted-foreground" data-testid="calc-labor-equivalent">Эквивалент труда в модели: {simulationEconomics?.laborEquivalent.toLocaleString('ru-RU')} ставок</p>
+                      </div>
+                      <Button size="sm" onClick={() => setLocation('/simulation')} data-testid="button-check-simulation">Проверить симуляцией</Button>
+                    </div>
                     <ul className="mt-3 space-y-1 text-xs text-muted-foreground list-disc pl-4">
                       {ECONOMIC_RISKS.map(risk => <li key={risk}>{risk}</li>)}
                     </ul>
@@ -519,6 +599,7 @@ export default function Calc() {
                               <span className="text-muted-foreground">{item.label}</span>
                               <span className="font-mono tabular-nums text-foreground">
                                 база {item.base} · {item.range[0]}–{item.range[1]} {item.unit}
+                                {' · '}{item.distribution === 'triangular' ? 'треугольное' : 'равномерное'}
                                 {item.overridden ? ' · переопределено' : ''}
                               </span>
                             </li>
@@ -526,7 +607,7 @@ export default function Calc() {
                         </ul>
                         <p className="border-t border-border/70 pt-2 text-[10px] text-muted-foreground">
                           Источники: assumptions.json · {paybackRisk.assumptions.map(item => item.source).join(' · ')}.
-                          В {Math.round(paybackRisk.baseProbability * 100)}% прогонов используется базовое значение, в остальных — равномерная выборка по диапазону.
+                          В {Math.round(paybackRisk.baseProbability * 100)}% прогонов используется базовое значение, в остальных — указанное распределение; объём операций — треугольное ±20%, цена техники — равномерное ±15%. ФОТ, ставка дисконтирования и тариф электроэнергии фиксированы.
                         </p>
                       </div>
                     </details>
@@ -614,6 +695,7 @@ export default function Calc() {
 
         </div>
       </div>
+      <FloatingCompareBar />
     </div>
   );
 }

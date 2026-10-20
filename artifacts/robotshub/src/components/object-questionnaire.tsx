@@ -10,9 +10,13 @@ import type { QuestionnaireImport } from '@/lib/questionnaire-xlsx';
 type Preview = { imported: QuestionnaireImport; expected: string; current: Answers; draftSignature: string; requestedType: QuestionnaireType };
 const show = (value: unknown) => value == null || value === '' ? 'Не указано' : typeof value === 'boolean' ? value ? 'Да' : 'Нет' : String(value);
 
-export function ObjectQuestionnaire({ readCurrent, onApplied }: { readCurrent?: () => Answers; onApplied?: () => void }) {
+export function ObjectQuestionnaire({ readCurrent, onApplied, initialType }: {
+  readCurrent?: () => Answers;
+  onApplied?: () => void;
+  initialType?: QuestionnaireType;
+}) {
   const { state, applyQuestionnaire, projectStorageUnavailable } = useProject();
-  const [type, setType] = useState<QuestionnaireType>(state.objectType ?? 'warehouse');
+  const [type, setType] = useState<QuestionnaireType>(state.objectType ?? initialType ?? 'warehouse');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [preview, setPreview] = useState<Preview | null>(null);

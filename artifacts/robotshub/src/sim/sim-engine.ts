@@ -3,6 +3,8 @@
 // по проездам, скорость из ТТХ. Робот = тип техники (спрайт).
 // ------------------------------------------------------------
 
+import { compileJourney, frameAt, trajectoriesConflict, TRAJECTORY_DT, type Trajectory, type TrajectoryFrame } from './trajectory-reservations.ts';
+
 export type RobotState =
   | "idle" | "toPickup" | "loading" | "toDrop" | "unloading" | "toCharge" | "charging" | "returning";
 
@@ -89,6 +91,8 @@ export interface SimOptions {
   seed?: number;
   batteryRuntimeHours?: number;
   chargeTimeMinutes?: number;
+  /** Explicit backlog at the start of a shift, not an increased arrival rate. */
+  initialTasks?: number;
 }
 
 export interface Robot {
@@ -116,6 +120,7 @@ export interface Robot {
   waitSec: number;
   busySec: number;
   blockedSec: number;
+  corridorWaitSec: number;
   progressM: number;
   lidar: LidarStatus;
   /**
@@ -125,6 +130,9 @@ export interface Robot {
    */
   yieldResumePath?: RouteStep[];
   yieldResumePathIdx?: number;
+  yieldWaitForId?: number;
+  yieldConflictPoint?: [number, number];
+  yieldPocket?: [number, number];
 }
 
 export type LidarAction = "clear" | "turning" | "waiting";
@@ -158,6 +166,7 @@ export interface FlowStat {
 }
 
 export interface SimKpis {
+  initialTasks?: number;
   nextTaskInSec?: number | null;
   elapsedSec?: number;
   observedTasksPerHour?: number;
@@ -278,69 +287,52 @@ export function createSim(scene: SimScene, opts: SimOptions) {
         path: [], pathIdx: 0, flow: null, routeVariant: undefined,
         taskFloorIds: undefined,
         waitSec: rand(0, 2.5), busySec: 0,
-        blockedSec: 0, progressM: 0,
+        blockedSec: 0, corridorWaitSec: 0, progressM: 0,
         lidar: { action: "clear", obstacleId: null, distanceM: null },
       });
       idSeq++;
     }
   }
-  // Reserve complete journeys before departure, including the return to a
-  // physical waiting bay. Waiting robots never occupy a pickup point or lift.
-  // This conservative admission policy allows disjoint journeys in parallel;
-  // intersecting journeys wait in stable FIFO order, not inside a junction.
+  // Generated scenes reserve continuous trajectories in space AND time.
+  // Shared geometry is allowed at different times; parked bodies, service
+  // stages and lift occupancy remain part of the reservation.
   type Segment = { floor: string; a: [number, number]; b: [number, number] };
+  const corridorLocks = new Map<number, Segment & { step: RouteStep }>();
   const bays = new Map<number, { floor: string; point: [number, number] }>();
-  const missions = new Map<number, { segments: Segment[]; drop: RouteStep[]; back: RouteStep[] }>();
-  const missionPlans = new Map<string, { segments: Segment[]; pickup: RouteStep[]; drop: RouteStep[]; back: RouteStep[] }>();
+  const missions = new Map<number, { drop: RouteStep[]; back: RouteStep[] }>();
+  const missionPlans = new Map<string, { pickup: RouteStep[]; drop: RouteStep[]; back: RouteStep[] }>();
   let nextDispatchSec = 0;
+  let managedRemainder = 0;
+  const trajectories = new Map<number, Trajectory>();
+  const compiledPlans = new Map<string, TrajectoryFrame[]>();
+  const destinationBays = new Map<number, { floor: string; point: [number, number] }>();
+  function waitingBay(id: number, floor: string, _right: boolean) {
+    if (id >= 56) throw new Error("Слишком большой парк для безопасных мест ожидания.");
+    return { floor, point: [scene.width - 60 - (id % 28) * 40,
+      id < 28 ? 48 : scene.height - 48] as [number, number] };
+  }
   if (managed) {
-    const availableFloors = scene.verticalLinks?.some(link => link.enabled !== false)
-      ? floorIds(scene, defaultFloorId) : [defaultFloorId];
-    robots.forEach((r, index) => {
-      const slot = Math.floor(index / availableFloors.length);
-      if (slot >= 56) throw new Error("Слишком большой парк для схемы: не хватает безопасных мест ожидания.");
-      const point: [number, number] = [60 + (slot % 28) * 40, slot < 28 ? 48 : 672];
-      const floor = availableFloors[index % availableFloors.length];
-      if (segmentBlocked(point, point, sceneForFloor(scene, floor))) {
+    robots.forEach(r => {
+      const bay = waitingBay(r.id, r.floorId, r.x > scene.width / 2);
+      if (segmentBlocked(bay.point, bay.point, sceneForFloor(scene, bay.floor))) {
         throw new Error("Место ожидания пересекает препятствие. Проверьте геометрию объекта.");
       }
-      bays.set(r.id, { floor, point });
-      r.floorId = floor;
-      [r.x, r.y] = point;
+      bays.set(r.id, bay);
+      [r.x, r.y] = bay.point;
+      r.waitSec = 0;
     });
   }
   function planningScene(r: Robot): SimScene {
-    const occupied = (floor: string) => [...bays.entries()]
-      .filter(([id, bay]) => id !== r.id && bay.floor === floor)
-      .map(([, bay]) => ({ x: bay.point[0] - 19, y: bay.point[1] - 19, w: 38, h: 38 }));
+    // Waiting berths exist on every floor. Reserve their
+    // geometry in routing, so an idle machine never obstructs a through aisle.
+    const occupied = (floor: string) => robots.filter(other => other.id !== r.id)
+      .map(other => waitingBay(other.id, floor, true))
+      .map(bay => ({ x: bay.point[0] - 19, y: bay.point[1] - 19, w: 38, h: 38 }));
     return {
       ...scene,
       racks: [...(scene.racks ?? []), ...occupied(defaultFloorId)],
       floors: scene.floors?.map(f => ({ ...f, racks: [...(f.racks ?? []), ...occupied(f.id)] })),
     };
-  }
-  function segmentsFor(r: Robot, steps: RouteStep[]): Segment[] {
-    let floor = r.floorId;
-    let point: [number, number] = [r.x, r.y];
-    const segments: Segment[] = [];
-    for (const step of steps) {
-      if (step.kind === "vertical") {
-        segments.push({ floor, a: point, b: step.from });
-        floor = step.toFloor;
-        point = step.to;
-        segments.push({ floor, a: point, b: point });
-      } else {
-        segments.push({ floor: step.floorId, a: point, b: step.point });
-        point = step.point;
-        floor = step.floorId;
-      }
-    }
-    return segments;
-  }
-  function canReserve(segments: Segment[], ignoreId?: number) {
-    return [...missions.entries()].filter(([id]) => id !== ignoreId).every(([, m]) => m.segments.every(a =>
-      segments.every(b => a.floor !== b.floor || segmentDistance(a.a, a.b, b.a, b.b) >= MIN_PASSING_GAP_PX + 2),
-    ));
   }
   // Стартовый операционный задел: техника начинает работу сразу, а затем
   // новые задания поступают уже с расчётной частотой.
@@ -348,6 +340,10 @@ export function createSim(scene: SimScene, opts: SimOptions) {
     for (let i = 0; i < robots.length; i++) {
       queue.push(1);
     }
+  }
+  if (managed && safeFlows.length > 0) {
+    const initialTasks = Math.max(0, Math.min(10000, Math.floor(opts.initialTasks ?? 0)));
+    for (let i = 0; i < initialTasks; i++) queue.push(1);
   }
 
   function homeFor(
@@ -434,8 +430,80 @@ export function createSim(scene: SimScene, opts: SimOptions) {
     if (!Number.isFinite(dtSim) || dtSim <= 0) return;
     // Explicit fast-forward advances the same state machine in small model
     // steps; it never makes a robot jump six seconds past a junction.
-    const steps = managed ? Math.max(1, Math.ceil(dtSim / 0.1)) : 1;
-    for (let i = 0; i < steps; i++) updateStep(dtSim / steps);
+    if (managed) {
+      managedRemainder += dtSim;
+      while (managedRemainder + 1e-9 >= TRAJECTORY_DT) {
+        updateStep(TRAJECTORY_DT);
+        managedRemainder -= TRAJECTORY_DT;
+      }
+    } else updateStep(dtSim);
+  }
+
+  function reserveTrajectory(r: Robot, frames: TrajectoryFrame[]) {
+    const candidate: Trajectory = { start: Math.round(simTimeSec * 10) / 10, frames };
+    for (const other of robots) {
+      if (other.id === r.id) continue;
+      const occupied = trajectories.get(other.id) ?? {
+        start: candidate.start,
+        frames: [{ x: other.x, y: other.y, floorId: other.floorId, state: other.state, pathIdx: 0 }],
+      };
+      if (trajectoriesConflict(candidate, occupied)) {
+        r.lidar = lidarStatusFor(other, r, 'waiting');
+        return false;
+      }
+    }
+    r.lidar = { action: 'clear', obstacleId: null, distanceM: null };
+    trajectories.set(r.id, candidate);
+    return true;
+  }
+
+  function advanceManaged(r: Robot) {
+    const trajectory = trajectories.get(r.id);
+    if (!trajectory) { r.waitSec = 0; return; }
+    const next = frameAt(trajectory, simTimeSec);
+    const previousState = r.state;
+    const movedPx = r.floorId === next.floorId && !r.verticalLinkId && !next.verticalLinkId
+      ? Math.hypot(next.x - r.x, next.y - r.y) : 0;
+    if (movedPx > 0) {
+      r.angle = Math.atan2(next.y - r.y, next.x - r.x);
+      r.progressM += movedPx * scene.mPerPx;
+      distanceM += movedPx * scene.mPerPx;
+      r.trail.push({ x: next.x, y: next.y });
+      if (r.trail.length > TRAIL_LEN) r.trail.shift();
+    }
+    if (r.floorId !== next.floorId) r.trail = [];
+    r.x = next.x; r.y = next.y; r.floorId = next.floorId;
+    r.state = next.state; r.pathIdx = next.pathIdx;
+    r.verticalLinkId = next.verticalLinkId;
+    r.verticalWaiting = next.verticalWaiting;
+    r.verticalRemainingSec = undefined;
+    r.blockedSec = 0; r.corridorWaitSec = 0;
+    if (next.verticalTrip) verticalTrips++;
+    const mission = missions.get(r.id)!;
+    if (next.state === 'toDrop') r.path = mission.drop;
+    if (next.state === 'returning') r.path = mission.back;
+    if (next.completed) {
+      tasksDone++; moneySavedRub += opts.laborCostPerTaskRub;
+      if (r.flow) {
+        flowCompleted.set(r.flow.id, (flowCompleted.get(r.flow.id) ?? 0) + 1);
+        pushEvent(`${r.name}: рейс выполнен (${r.flow.label})`);
+      }
+      for (const floor of r.taskFloorIds ?? []) {
+        const stats = floorTaskStats.get(floor);
+        if (stats) stats.completed++;
+      }
+      r.flow = null; r.taskFloorIds = undefined;
+    }
+    if (previousState === 'charging' && next.state !== 'charging') {
+      r.battery = 100;
+      pushEvent(`${r.name}: зарядка завершена`);
+    }
+    if (next.state === 'idle') {
+      const destination = destinationBays.get(r.id);
+      if (destination) bays.set(r.id, destination);
+      trajectories.delete(r.id); missions.delete(r.id); destinationBays.delete(r.id);
+      r.path = []; r.pathIdx = 0; r.waitSec = 0;
+    }
   }
 
   function updateStep(dtSim: number) {
@@ -452,6 +520,7 @@ export function createSim(scene: SimScene, opts: SimOptions) {
 
       if (r.state === "charging") r.battery = Math.min(100, r.battery + dtSim * (managed ? 100 / (Math.max(1, opts.chargeTimeMinutes ?? 120) * 60) : 0.12));
       else if (r.state !== "idle") r.battery = Math.max(0, r.battery - dtSim * (managed ? 100 / (Math.max(0.1, opts.batteryRuntimeHours ?? 8) * 3600) : 0.005));
+      if (managed) { advanceManaged(r); continue; }
 
       if (
         !managed && r.battery < 18 &&
@@ -502,36 +571,17 @@ export function createSim(scene: SimScene, opts: SimOptions) {
               if (stats) stats.completed++;
             }
             r.taskFloorIds = undefined;
-            if (managed) {
-              r.path = missions.get(r.id)!.back;
-              r.pathIdx = 0;
-              r.state = "returning";
-              r.flow = null;
-            } else { r.state = "idle"; r.waitSec = rand(0.4, 1.4); }
+            r.state = "idle"; r.waitSec = rand(0.4, 1.4);
           }
           break;
         case "toCharge":
           if (advance(r, dtSim)) {
             r.state = "charging";
-            if (managed) {
-              const mission = missions.get(r.id)!;
-              // A parked charger owns its berth, not the approach aisle for
-              // the whole charging duration. Its departure is reserved anew.
-              mission.segments = [{ floor: r.floorId, a: [r.x, r.y], b: [r.x, r.y] }];
-            }
           }
           break;
         case "charging":
           if (r.battery >= 96) {
-            if (managed) {
-              const mission = missions.get(r.id)!;
-              const segments = segmentsFor(r, mission.back);
-              if (!canReserve(segments, r.id)) break;
-              mission.segments = segments;
-              r.path = mission.back;
-              r.pathIdx = 0;
-              r.state = "returning";
-            } else { r.state = "idle"; r.waitSec = 0; }
+            r.state = "idle"; r.waitSec = 0;
             pushEvent(`${r.name}: зарядка завершена`);
           }
           break;
@@ -554,7 +604,7 @@ export function createSim(scene: SimScene, opts: SimOptions) {
     r.routeVariant = pickRouteVariant(r, f);
     let pickup: RouteStep[] | undefined;
     if (managed) {
-      const planKey = `${r.id}:${f.id}:${JSON.stringify(r.routeVariant)}`;
+      const planKey = `${r.id}:${r.floorId}:${r.x}:${r.y}:${f.id}:${JSON.stringify(r.routeVariant)}`;
       let plan = missionPlans.get(planKey);
       if (!plan) {
         const routing = planningScene(r);
@@ -565,13 +615,20 @@ export function createSim(scene: SimScene, opts: SimOptions) {
         const end = last.waypoints[last.waypoints.length - 1];
         pickup = planPickupPath(r, f, routing);
         const drop = planDropPath({ ...r, floorId: first.floorId, x: start[0], y: start[1] }, f, routing);
-        const bay = bays.get(r.id)!;
+        const bay = waitingBay(r.id, last.floorId, end[0] > scene.width / 2);
         const back = routeToPoint(last.floorId, end, bay.floor, bay.point, routing);
-        const segments = segmentsFor(r, [...pickup, ...drop, ...back]);
-        plan = { segments, pickup, drop, back };
+        plan = { pickup, drop, back };
         missionPlans.set(planKey, plan);
       }
-      if (!canReserve(plan.segments)) { r.flow = null; return false; }
+      let frames = compiledPlans.get(planKey);
+      if (!frames) {
+        frames = compileJourney({ origin: r, pickup: plan.pickup, drop: plan.drop,
+          back: plan.back, speedPxPerSec: r.speedMps / scene.mPerPx });
+        compiledPlans.set(planKey, frames);
+      }
+      if (!reserveTrajectory(r, frames)) { r.flow = null; return false; }
+      const destination = frames[frames.length - 1];
+      destinationBays.set(r.id, { floor: destination.floorId, point: [destination.x, destination.y] });
       pickup = plan.pickup;
       missions.set(r.id, plan);
     }
@@ -587,6 +644,10 @@ export function createSim(scene: SimScene, opts: SimOptions) {
     r.path = pickup ?? planPickupPath(r, f); r.pathIdx = 0;
     r.yieldResumePath = undefined;
     r.yieldResumePathIdx = undefined;
+    r.yieldWaitForId = undefined;
+    r.yieldConflictPoint = undefined;
+    r.yieldPocket = undefined;
+    r.corridorWaitSec = 0;
     r.trail = [{ x: r.x, y: r.y }];
     r.state = "toPickup";
     robotAssignments.set(r.id, (robotAssignments.get(r.id) ?? 0) + 1);
@@ -601,16 +662,29 @@ export function createSim(scene: SimScene, opts: SimOptions) {
     if (managed) {
       for (const r of robots.filter(r => r.state === "idle" && r.battery < 25)) {
         const routing = planningScene(r);
-        const charge = sceneForFloor(scene, r.floorId).charges[r.id % sceneForFloor(scene, r.floorId).charges.length];
-        if (!charge) continue;
-        const path = routeToPoint(r.floorId, [r.x, r.y], r.floorId, charge, routing);
-        const bay = bays.get(r.id)!;
-        const back = routeToPoint(r.floorId, charge, bay.floor, bay.point, routing);
-        const segments = segmentsFor(r, [...path, ...back]);
-        if (!canReserve(segments)) continue;
-        missions.set(r.id, { segments, drop: [], back });
-        r.path = path; r.pathIdx = 0; r.state = "toCharge"; r.flow = null;
-        pushEvent(`${r.name}: направлен на зарядную станцию`);
+        const charges = [...sceneForFloor(scene, r.floorId).charges]
+          .sort((a, b) => Math.hypot(a[0] - r.x, a[1] - r.y) - Math.hypot(b[0] - r.x, b[1] - r.y));
+        for (const charge of charges) {
+          const path = routeToPoint(r.floorId, [r.x, r.y], r.floorId, charge, routing);
+          const bay = bays.get(r.id)!;
+          const back = routeToPoint(r.floorId, charge, r.floorId, bay.point, routing);
+          const chargeKey = `charge:${r.id}:${r.floorId}:${r.x}:${r.y}:${charge.join(',')}:${r.battery}`;
+          let frames = compiledPlans.get(chargeKey);
+          if (!frames) {
+            const approachSeconds = compileJourney({ origin: r, pickup: path, back: [],
+              speedPxPerSec: r.speedMps / scene.mPerPx, chargeSeconds: 0 }).length * TRAJECTORY_DT;
+            const arrivalBattery = Math.max(0, r.battery - approachSeconds * 100 / (Math.max(0.1, opts.batteryRuntimeHours ?? 8) * 3600));
+            frames = compileJourney({ origin: r, pickup: path, back,
+              speedPxPerSec: r.speedMps / scene.mPerPx,
+              chargeSeconds: (100 - arrivalBattery) / 100 * Math.max(1, opts.chargeTimeMinutes ?? 120) * 60 });
+            compiledPlans.set(chargeKey, frames);
+          }
+          if (!reserveTrajectory(r, frames)) continue;
+          missions.set(r.id, { drop: [], back });
+          r.path = path; r.pathIdx = 0; r.state = "toCharge"; r.flow = null;
+          pushEvent(`${r.name}: направлен на зарядную станцию своего этажа`);
+          break;
+        }
       }
     }
     while (queue.length > 0) {
@@ -626,10 +700,12 @@ export function createSim(scene: SimScene, opts: SimOptions) {
             (robotAssignments.get(first.id) ?? 0) - (robotAssignments.get(second.id) ?? 0);
           if (assignmentDelta !== 0) return assignmentDelta;
           return (robotAssignmentOrder.get(first.id) ?? -1)
-            - (robotAssignmentOrder.get(second.id) ?? -1);
+            - (robotAssignmentOrder.get(second.id) ?? -1) || first.id - second.id;
         });
       if (managed) {
-        if (!candidates.some(robot => assignQueuedFlow(robot))) break;
+        const leastAssigned = candidates.length ? robotAssignments.get(candidates[0].id) ?? 0 : 0;
+        const fairCandidates = candidates.filter(robot => (robotAssignments.get(robot.id) ?? 0) === leastAssigned);
+        if (!fairCandidates.some(robot => assignQueuedFlow(robot))) break;
       } else {
         const robot = candidates[0];
         if (!robot || !assignQueuedFlow(robot)) break;
@@ -686,11 +762,7 @@ export function createSim(scene: SimScene, opts: SimOptions) {
   function advance(r: Robot, dtSim: number): boolean {
     if (r.pathIdx >= r.path.length) {
       if (r.yieldResumePath) {
-        r.path = r.yieldResumePath;
-        r.pathIdx = r.yieldResumePathIdx ?? 0;
-        r.yieldResumePath = undefined;
-        r.yieldResumePathIdx = undefined;
-        r.blockedSec = 0;
+        resumeAfterYield(r);
         return false;
       }
       return true;
@@ -716,34 +788,39 @@ export function createSim(scene: SimScene, opts: SimOptions) {
     const movement = movementDecision(r, nextPoint);
     setLidarStatus(r, movement.lidar);
     if (!movement.allowed) {
-      r.blockedSec += dtSim;
+      if (movement.reservation) {
+        r.corridorWaitSec += dtSim;
+        r.blockedSec = 0;
+      } else {
+        r.blockedSec += dtSim;
+        r.corridorWaitSec = 0;
+      }
       const obstacle = movement.lidar.obstacleId === null
         ? undefined
         : robots.find((robot) => robot.id === movement.lidar.obstacleId);
       // Lower IDs own the contested passage. Only the losing robot yields;
       // the winner waits at the safety radius until the loser has cleared it.
       if (
-        r.blockedSec >= 1.2 &&
+        Math.max(r.blockedSec, r.corridorWaitSec) >= 1.2 &&
         obstacle &&
+        (Math.hypot(r.x - obstacle.x, r.y - obstacle.y) < MIN_PASSING_GAP_PX * 2 ||
+          (obstacle.lidar.action === "waiting" && obstacle.lidar.obstacleId === r.id)) &&
         r.id > obstacle.id &&
-        !r.yieldResumePath && !managed
+        !managed && (!r.yieldResumePath || r.blockedSec >= 3.2)
       ) {
-        beginYield(r);
+        beginYield(r, obstacle);
       }
       return false;
     }
 
     r.blockedSec = 0;
+    r.corridorWaitSec = 0;
     if (distPx <= stepPx) {
       r.x = tx; r.y = ty; r.pathIdx++;
       r.progressM += distPx * scene.mPerPx;
       distanceM += distPx * scene.mPerPx;
       if (r.pathIdx >= r.path.length && r.yieldResumePath) {
-        r.path = r.yieldResumePath;
-        r.pathIdx = r.yieldResumePathIdx ?? 0;
-        r.yieldResumePath = undefined;
-        r.yieldResumePathIdx = undefined;
-        r.blockedSec = 0;
+        resumeAfterYield(r);
         return false;
       }
       return r.pathIdx >= r.path.length;
@@ -806,31 +883,120 @@ export function createSim(scene: SimScene, opts: SimOptions) {
     return r.pathIdx >= r.path.length;
   }
 
-  function beginYield(r: Robot) {
-    // The first robot wins a contested passage by stable ID order. A robot
-    // that has no history to backtrack to simply waits; this only applies to
-    // robots already moving on a route, so normal task endpoints stay intact.
-    const history = r.trail;
-    if (history.length < 3) return;
-    const target = history[Math.max(0, history.length - 7)];
-    if (!target || Math.hypot(target.x - r.x, target.y - r.y) < MIN_PASSING_GAP_PX) return;
+  function resumeAfterYield(r: Robot) {
+    const winner = robots.find(other => other.id === r.yieldWaitForId);
+    const conflict = r.yieldConflictPoint;
+    // Waiting in a pocket is not an in-aisle blockage. Do not drive back out
+    // as soon as the pocket is reached: let the higher-priority robot pass.
+    r.blockedSec = 0;
+    if (winner && conflict && winner.floorId === r.floorId &&
+      Math.hypot(winner.x - conflict[0], winner.y - conflict[1]) < MIN_PASSING_GAP_PX * 2) return;
+    const remaining = r.yieldResumePath!.slice(r.yieldResumePathIdx ?? 0);
+    const next = remaining[0];
+    if (next?.kind !== "move") return;
+    const connector = safeConnectorPath([r.x, r.y], next.point, scene, r.floorId);
+    if (!safePocketPath(r, connector)) return;
+    r.path = [
+      ...connector.slice(1).map(point => ({ kind: "move" as const, floorId: r.floorId, point })),
+      ...remaining.slice(1),
+    ];
+    r.pathIdx = 0;
+    r.yieldResumePath = undefined;
+    r.yieldResumePathIdx = undefined;
+    r.yieldWaitForId = undefined;
+    r.yieldConflictPoint = undefined;
+    r.yieldPocket = undefined;
+  }
 
-    r.yieldResumePath = r.path;
-    r.yieldResumePathIdx = r.pathIdx;
-    r.path = [{
-      kind: "move",
-      floorId: r.floorId,
-      point: [target.x, target.y],
-    }];
+  function safePocketPath(r: Robot, points: [number, number][]) {
+    if (points.length < 2) return false;
+    const floor = sceneForFloor(scene, r.floorId);
+    return points.slice(1).every((point, index) =>
+      !segmentBlocked(points[index], point, floor) &&
+      robots.every(other => other.id === r.id || other.floorId !== r.floorId ||
+        pointSegmentDistance([other.x, other.y], points[index], point) >= MIN_PASSING_GAP_PX));
+  }
+
+  function beginYield(r: Robot, winner: Robot) {
+    const floor = sceneForFloor(scene, r.floorId);
+    const winnerStep = winner.path[winner.pathIdx];
+    const winnerTarget: [number, number] = winnerStep?.kind === "move"
+      ? winnerStep.point : [winner.x, winner.y];
+    // Candidate bays come from the real zone edges, not random offsets.
+    // Every connector is routed and checked against racks AND robot bodies.
+    const candidates: [number, number][] = [];
+    for (const zone of floor.zones) {
+      const inset = MIN_PASSING_GAP_PX;
+      for (let x = zone.x + inset; x <= zone.x + zone.w - inset; x += 32) {
+        candidates.push([x, zone.y + inset], [x, zone.y + zone.h - inset]);
+      }
+      for (let y = zone.y + inset; y <= zone.y + zone.h - inset; y += 32) {
+        candidates.push([zone.x + inset, y], [zone.x + zone.w - inset, y]);
+      }
+    }
+    const maxDistance = r.blockedSec >= 3.2 ? 400 : 180;
+    const targets = candidates.filter(point => {
+      const distance = Math.hypot(point[0] - r.x, point[1] - r.y);
+      return distance >= MIN_PASSING_GAP_PX && distance <= maxDistance &&
+        !segmentBlocked(point, point, floor) &&
+        pointSegmentDistance(point, [winner.x, winner.y], winnerTarget) >= MIN_PASSING_GAP_PX + 6 &&
+        robots.every(other => other.id === r.id || other.floorId !== r.floorId ||
+          (Math.hypot(point[0] - other.x, point[1] - other.y) >= MIN_PASSING_GAP_PX + 6 &&
+            (!other.yieldPocket || Math.hypot(point[0] - other.yieldPocket[0], point[1] - other.yieldPocket[1]) >= MIN_PASSING_GAP_PX + 6)));
+    }).sort((a, b) => Math.hypot(a[0] - r.x, a[1] - r.y) - Math.hypot(b[0] - r.x, b[1] - r.y));
+    let path: [number, number][] | undefined;
+    let target: [number, number] | undefined;
+    for (const candidate of targets) {
+      const connector = safeConnectorPath([r.x, r.y], candidate, scene, r.floorId);
+      if (safePocketPath(r, connector)) { path = connector; target = candidate; break; }
+    }
+    if (!path || !target) return;
+    if (!r.yieldResumePath) {
+      r.yieldResumePath = r.path;
+      r.yieldResumePathIdx = r.pathIdx;
+      r.yieldConflictPoint = [r.x, r.y];
+    }
+    r.yieldWaitForId = winner.id;
+    r.yieldPocket = target;
+    corridorLocks.delete(r.id);
+    r.path = path.slice(1).map(point => ({ kind: "move" as const, floorId: r.floorId, point }));
     r.pathIdx = 0;
     r.blockedSec = 0;
-    pushEvent(`${r.name}: уступает проезд — отходит по своей трассе`);
+    pushEvent(`${r.name}: уступает ${winner.name} — следует в свободный бокc ожидания`);
   }
 
   function movementDecision(
     r: Robot,
     nextPoint: [number, number],
-  ): { allowed: boolean; lidar: LidarStatus } {
+  ): { allowed: boolean; lidar: LidarStatus; reservation?: boolean } {
+    if (!managed && !r.yieldResumePath) {
+      // Acquire before entering, including endpoint/junction clearance. The
+      // lock survives successive integration steps and is released when the
+      // robot changes segment or leaves to a pocket. A short segment is not
+      // exempt: one physical robot owns it at a time.
+      for (const [id, lock] of corridorLocks) {
+        const owner = robots.find(robot => robot.id === id);
+        if (!owner || owner.floorId !== lock.floor || owner.path[owner.pathIdx] !== lock.step ||
+          !["toPickup", "toDrop", "toCharge", "returning"].includes(owner.state)) {
+          corridorLocks.delete(id);
+        }
+      }
+      const step = r.path[r.pathIdx];
+      const own = corridorLocks.get(r.id);
+      if (step && !own) {
+        const request: Segment & { step: RouteStep } = {
+          floor: r.floorId, a: [r.x, r.y], b: step.kind === "move" ? step.point : nextPoint, step,
+        };
+        const conflict = [...corridorLocks.entries()].find(([id, lock]) => id !== r.id &&
+          lock.floor === request.floor &&
+          segmentDistance(lock.a, lock.b, request.a, request.b) < MIN_PASSING_GAP_PX + 2);
+        if (conflict) {
+          const owner = robots.find(robot => robot.id === conflict[0])!;
+          return { allowed: false, lidar: lidarStatusFor(owner, r, "waiting"), reservation: true };
+        }
+        corridorLocks.set(r.id, request);
+      }
+    }
     const detection = scanLidar(r, nextPoint);
     const clearStatus: LidarStatus = detection
       ? {
@@ -855,7 +1021,8 @@ export function createSim(scene: SimScene, opts: SimOptions) {
       }
       const currentGap = Math.hypot(r.x - other.x, r.y - other.y);
       const predictedGap = Math.hypot(nextPoint[0] - other.x, nextPoint[1] - other.y);
-      if (managed && pointSegmentDistance([other.x, other.y], [r.x, r.y], nextPoint) < MIN_PASSING_GAP_PX) {
+      if (currentGap >= MIN_PASSING_GAP_PX &&
+        pointSegmentDistance([other.x, other.y], [r.x, r.y], nextPoint) < MIN_PASSING_GAP_PX) {
         return { allowed: false, lidar: lidarStatusFor(other, r, "waiting") };
       }
       if (predictedGap < MIN_PASSING_GAP_PX) {
@@ -929,6 +1096,7 @@ export function createSim(scene: SimScene, opts: SimOptions) {
       ? active[0]
       : robots.find((robot) => robot.state !== "idle") ?? robots[0];
     return {
+      initialTasks: managed ? Math.max(0, Math.min(10000, Math.floor(opts.initialTasks ?? 0))) : robots.length,
       tasksDone, distanceM, moneySavedRub,
       nextTaskInSec: opts.tasksPerHour > 0 ? Math.max(0, (1 - acc) * 3600 / opts.tasksPerHour) : null,
       elapsedSec: simTimeSec - clockToSec(scene.startClock),

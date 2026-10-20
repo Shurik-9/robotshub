@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
-import { rm } from "node:fs/promises";
+import { cp, mkdir, rm } from "node:fs/promises";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -118,6 +118,16 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     `,
     },
   });
+
+  const newsPublicSource = path.resolve(artifactDir, "src/news-engine/public");
+  const newsPublicOutput = path.resolve(artifactDir, "public");
+  await rm(newsPublicOutput, { recursive: true, force: true });
+  await cp(newsPublicSource, newsPublicOutput, { recursive: true });
+  await mkdir(distDir, { recursive: true });
+  await cp(
+    path.resolve(artifactDir, "src/news-engine/server/keywords.json"),
+    path.resolve(distDir, "keywords.json"),
+  );
 }
 
 buildAll().catch((err) => {

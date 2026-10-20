@@ -1,4 +1,17 @@
 services:
+  news:
+    build:
+      context: .
+      dockerfile: deploy/news.Dockerfile
+    platform: linux/amd64
+    environment:
+      # Optional: moderation is disabled when no token is configured.
+      ADMIN_TOKEN: "${ADMIN_TOKEN:-}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+    volumes:
+      - news-data:/data/news
+    restart: unless-stopped
   web:
     build:
       context: .
@@ -7,4 +20,10 @@ services:
     platform: linux/amd64
     ports:
       - "${WEB_PORT:-8080}:8080"
+    depends_on:
+      news:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  news-data:

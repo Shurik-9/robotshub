@@ -1,14 +1,20 @@
 import { useState, useMemo, type ReactNode } from 'react';
+import './solutions-cards.css';
 import { useLocation } from 'wouter';
+import { useComparisonSelection } from '@/hooks/use-comparison-selection';
+import { FloatingCompareBar } from '@/components/floating-compare-bar';
+import { QuoteCta } from '@/components/quote-cta';
 import { useProject } from '@/store/project';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Info, Check, X, Building2, MapPin, Activity, ArrowRight, ChevronDown, Target, ShieldAlert } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { IconRobotAmr } from '@/components/brand-icons';
+import { StepNav } from '@/components/step-nav';
+import { CatalogDescriptionSource } from '@/components/catalog-description-source';
+import { SolutionConnectionsSummary } from '@/components/solution-connections-summary';
 import {
   getCompanyProfile,
   type CompanyRoleId,
@@ -22,6 +28,7 @@ import {
 import { scoreSolutionMatch, type MatchReasonStatus } from '@/lib/solutionScoring';
 import { evaluationLimit } from '@/lib/evaluationScope';
 import { useSectorMap } from '@/lib/useSectorMap';
+import { matchesWarehouseCatalog, warehouseCatalogPriority } from '@/lib/catalogObjectScope';
 
 import solutionsData from '@/data/solutions.json';
 
@@ -123,10 +130,11 @@ function SolutionImage({
       ? 'border-[#38D6F0]/45 bg-[#38D6F0]/15 text-[#38D6F0]'
       : 'border-[#B49AF8]/45 bg-[#B49AF8]/15 text-[#B49AF8]';
   const showPlaceholder = !img || failed;
+  const isModelImage = imgKind === 'vendor-photo' || imgKind === 'catalog-photo';
 
   return (
     <div
-      className="relative aspect-[16/10] overflow-hidden border-b border-border bg-[#0B1424]"
+      className="solution-card-media"
       data-testid={`photo-${id}`}
     >
       {showPlaceholder ? (
@@ -137,12 +145,12 @@ function SolutionImage({
       ) : (
         <img
           src={img}
-          alt={imgKind === 'vendor-photo' ? name : `Типовое изображение: ${name}`}
-          width={1280}
-          height={800}
+          alt={isModelImage ? name : `Типовое изображение: ${name}`}
+          width={192}
+          height={192}
           loading="lazy"
           decoding="async"
-          className={imgLowres ? 'h-full w-full object-scale-down' : 'h-full w-full object-cover'}
+          className={`solution-card-photo ${imgLowres ? 'object-scale-down' : 'object-contain'}`}
           onError={() => setFailed(true)}
           data-testid={`img-${id}`}
         />
@@ -153,10 +161,10 @@ function SolutionImage({
       <span className="absolute right-3 top-3 rounded-full border border-white/20 bg-[#07101f]/80 px-2.5 py-1 font-mono text-[10px] font-semibold text-slate-100 backdrop-blur-sm" data-testid={`badge-trl-${id}`}>
         УГТ {trl}/9
       </span>
-      {!showPlaceholder && imgKind === 'vendor-photo' && (
+      {!showPlaceholder && isModelImage && (
         <div className="absolute inset-x-3 bottom-3 flex flex-wrap items-end justify-between gap-2">
-          <span className="max-w-[75%] rounded-md border border-white/15 bg-[#07101f]/85 px-2 py-1 font-mono text-[9px] leading-tight text-slate-200 backdrop-blur-sm" data-testid={`credit-photo-${id}`}>
-            Фото: {imgSource || 'источник не указан'}
+          <span className="max-w-full rounded-md border border-white/15 bg-[#07101f]/85 px-2 py-1 text-[11px] leading-4 text-slate-200 backdrop-blur-sm" data-testid={`credit-photo-${id}`}>
+            {imgKind === 'catalog-photo' ? 'Изображение' : 'Фото'}: {imgSource || 'источник не указан'}
           </span>
           {imgLowres && (
             <span className="rounded-full border border-[#FBBF24]/45 bg-[#FBBF24]/15 px-2 py-1 font-mono text-[9px] font-semibold text-[#FBBF24] backdrop-blur-sm" data-testid={`badge-lowres-${id}`}>
@@ -165,7 +173,7 @@ function SolutionImage({
           )}
         </div>
       )}
-      {!showPlaceholder && imgKind !== 'vendor-photo' && (
+      {!showPlaceholder && !isModelImage && (
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -185,8 +193,8 @@ function SolutionImage({
 }
 
 export default function Solutions() {
-  const [personalizedMode, setPersonalizedMode] = useState(false);
   const [, setLocation] = useLocation();
+  const comparison = useComparisonSelection();
   const {
     state,
     setSectorId,
@@ -195,6 +203,7 @@ export default function Solutions() {
     selectSolutionForCalculation,
     clearSelectedSolutions,
   } = useProject();
+  const [personalizedMode, setPersonalizedMode] = useState(state.objectType === 'warehouse');
   const [industryFilter, setIndustryFilter] = useState(
     () => new URLSearchParams(window.location.search).get('industry')?.trim() ?? '',
   );
@@ -210,11 +219,21 @@ export default function Solutions() {
         ids: new Set((storedSector.records ?? []).map(record => record.split('|')[0])),
       } : null);
   const activeDirectionId = activeSector?.id ?? activeIndustry;
+  const returnDirectionId = activeDirectionId || state.sectorId;
+  const quickSelectBackUrl = returnDirectionId
+    ? `/quick-select?sector=${encodeURIComponent(returnDirectionId)}`
+    : '/quick-select';
   const directionMismatch = Boolean(activeDirectionId && state.objectType && state.sectorId !== activeDirectionId);
+  const [warehouseFilter, setWarehouseFilter] = useState(true);
+  const warehouseScope = warehouseFilter && state.objectType === 'warehouse' && !directionMismatch && !activeSector;
   const directionWarning = 'Текущий объект был выбран вне этого направления. Перед расчётом подтвердите отрасль и параметры площадки.';
   
   const [search, setSearch] = useState('');
-  const [areaFilter, setAreaFilter] = useState('all');
+  const urlArea = new URLSearchParams(window.location.search).get('area');
+  const initialArea = areaDefinitions.find(item => item.id === urlArea)?.id ?? null;
+  const [areaFilter, setAreaFilter] = useState(initialArea ?? 'all');
+  const areaIsPrimary = initialArea !== null && areaFilter !== 'all';
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [operationFilter, setOperationFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
   const [companyFilter, setCompanyFilter] = useState('all');
@@ -231,6 +250,7 @@ export default function Solutions() {
   };
 
   const resetCatalogFilters = () => {
+    setWarehouseFilter(false);
     setSearch('');
     setAreaFilter('all');
     setOperationFilter('all');
@@ -244,6 +264,7 @@ export default function Solutions() {
   };
 
   const hasActiveFilters = search.trim() !== ''
+    || warehouseScope
     || activeIndustry !== ''
     || activeSector !== null
     || areaFilter !== 'all'
@@ -268,6 +289,7 @@ export default function Solutions() {
         matchConfidence: match.confidence,
         matchReasons: match.reasons,
         criticalMismatch: match.criticalMismatch,
+        warehousePriority: warehouseCatalogPriority(sol.variants),
         tax,
         companyProfile,
       };
@@ -278,9 +300,12 @@ export default function Solutions() {
       if (Boolean(a.criticalMismatch) !== Boolean(b.criticalMismatch)) {
         return a.criticalMismatch ? 1 : -1;
       }
+      if (warehouseScope && a.warehousePriority !== b.warehousePriority) {
+        return a.warehousePriority - b.warehousePriority;
+      }
       return b.matchScore - a.matchScore || b.matchConfidence - a.matchConfidence;
     });
-  }, [personalizedMode, state.objectParams, state.objectType]);
+  }, [personalizedMode, state.objectParams, state.objectType, warehouseScope]);
 
   const filterResults = useMemo(() => {
     type FilterDimension = 'area' | 'operation' | 'brand' | 'company' | 'role';
@@ -311,12 +336,13 @@ export default function Solutions() {
         || (roleFilter === 'unconfirmed'
           ? s.companyProfile.confirmedRoles.length === 0
           : s.companyProfile.confirmedRoles.includes(roleFilter));
-      const matchIndustry = activeIndustry === ''
+      const matchIndustry = areaIsPrimary || warehouseScope || activeIndustry === ''
         || s.variants.some(variant => variant.industry === activeIndustry);
-      const matchSector = activeSector === null
+      const matchSector = areaIsPrimary || activeSector === null
         || s.variants.some(variant => activeSector.ids.has(variant.id));
       
-      return !unresolvedSector && matchSearch && matchArea && matchOperation && matchBrand && matchCompany && matchRole && matchIndustry && matchSector;
+      const matchObject = !warehouseScope || matchesWarehouseCatalog(s.variants);
+      return !unresolvedSector && matchObject && matchSearch && matchArea && matchOperation && matchBrand && matchCompany && matchRole && matchIndustry && matchSector;
     };
 
     const countBy = <T extends string>(
@@ -366,7 +392,7 @@ export default function Solutions() {
         company: rankedSolutions.filter(solution => matches(solution, 'company')).length,
       },
     };
-  }, [rankedSolutions, search, areaFilter, operationFilter, brandFilter, companyFilter, roleFilter, activeIndustry, activeSector, unresolvedSector]);
+  }, [rankedSolutions, search, areaFilter, operationFilter, brandFilter, companyFilter, roleFilter, activeIndustry, activeSector, unresolvedSector, warehouseScope]);
 
   const {
     filteredSolutions,
@@ -413,12 +439,15 @@ export default function Solutions() {
   ];
 
   return (
-    <div className="container mx-auto flex h-[calc(100vh-64px)] max-w-none flex-col px-4 py-8" data-testid="page-solutions">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4 shrink-0">
+    <div className="container mx-auto flex min-h-[calc(100dvh-64px)] max-w-none flex-col px-4 py-8" data-testid="page-solutions">
+      <StepNav step="03" label="Каталог" backTo={quickSelectBackUrl} backLabel="К направлению" testId="button-back-catalog" />
+      <div className="mt-4 flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4 shrink-0">
         <div>
           <h1 className="text-3xl font-bold tracking-tight" data-testid="text-page-title">Каталог решений</h1>
           <p className="text-muted-foreground mt-1 text-sm" data-testid="text-page-subtitle">
-            {activeSector
+            {warehouseScope
+              ? 'Подбор для склада: складские операции и уборка помещений по всему каталогу, независимо от отрасли записи'
+              : activeSector
               ? `Решения направления «${activeSector.label}» · одинаковые отраслевые варианты объединены в карточки`
               : activeIndustry
               ? `Решения отрасли «${storedSector?.label ?? activeIndustry}»`
@@ -426,6 +455,18 @@ export default function Solutions() {
                 ? 'Выдача ранжирована по объяснимому расчёту соответствия'
                 : 'Нейтральный порядок каталога — персональный скоринг выключен'}
           </p>
+          {(activeIndustry || activeSector) && (
+            <p className="mt-2 max-w-3xl text-xs leading-5 text-muted-foreground" role="note" data-testid="text-industry-environment-note">
+              Отрасль описывает сферу применения, а среда — тип площадки. Если в направлении есть решения для разных сред, каталог показывает их все; среду можно выбрать отдельно в фильтре «Где работает».
+            </p>
+          )}
+          {warehouseScope && (
+            <button type="button" onClick={() => setWarehouseFilter(false)}
+              className="mt-3 mr-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs text-primary"
+              data-testid="button-clear-object-filter">
+              Объект: склад<X className="h-3.5 w-3.5" />
+            </button>
+          )}
           {activeIndustry && (
             <button
               type="button"
@@ -437,7 +478,7 @@ export default function Solutions() {
               className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
               data-testid="button-clear-industry-filter"
             >
-              Отрасль: {storedSector?.label ?? activeIndustry}
+              {warehouseScope ? 'Направление' : 'Отрасль'}: {storedSector?.label ?? activeIndustry}
               <X className="h-3.5 w-3.5" />
             </button>
           )}
@@ -491,7 +532,7 @@ export default function Solutions() {
             {personalizedMode ? 'По объекту: вкл.' : 'По параметрам объекта'}
           </Button>
           <div className="bg-secondary/50 border border-border px-3 py-1.5 rounded-md text-sm flex items-center gap-2">
-            <span className="text-muted-foreground">Для сравнения:</span>
+            <span className="text-muted-foreground">В расчёте:</span>
             <span className="text-primary font-bold" data-testid="text-selected-count">{state.selectedSolutions.length}</span>
           </div>
           <Button
@@ -503,7 +544,7 @@ export default function Solutions() {
             data-testid="button-clear-selected"
           >
             <X className="h-4 w-4" />
-            Сбросить выбор
+            Очистить расчёт
           </Button>
           <Button 
             disabled={state.selectedSolutions.length === 0 || directionMismatch || Boolean(evaluationLimit(
@@ -533,13 +574,29 @@ export default function Solutions() {
       {(activeDirectionId || state.sectorId) && (
         <Alert className="mb-4 shrink-0 border-primary/30 bg-primary/5" data-testid="alert-evidence-scope">
           <Info className="h-4 w-4" />
-          <AlertTitle>Доказательства и расчёт — разные этапы</AlertTitle>
+          <AlertTitle className="flex flex-wrap items-center gap-x-3">
+            Доказательства и расчёт — разные этапы
+            <button
+              type="button"
+              onClick={() => setEvidenceOpen(value => !value)}
+              className="text-xs font-normal normal-case text-primary underline underline-offset-2"
+              data-testid="button-evidence-toggle"
+            >
+              {evidenceOpen ? 'скрыть' : 'подробнее'}
+            </button>
+          </AlertTitle>
           <AlertDescription>
-            Здесь показаны записи выбранного направления. Совпадение с отраслью не доказывает пригодность робота для вашей задачи.
-            Ранжирование учитывает тип и параметры объекта, но не подтверждает применимость к каждой операции.
-            Для сбора плавающего мусора, съёмки карьера, доставки биоматериалов и реабилитационных сеансов
-            предусмотрены отдельные модели. Годовую мощность подтверждают только журналы конкретной площадки за обозначенный период: смены, принятые съёмки, выполненные рейсы или завершённые сеансы вместе с отменами и простоями. Условия объекта, погода, разрешения, персонал и обработка должны быть учтены отдельно; паспортный максимум и разовый кейс не заменяют эти данные.
-            Для других операций универсальный расчёт не применяется.
+            <span className="text-sm">
+              Совпадение с отраслью само по себе не подтверждает пригодность решения для вашей задачи.
+            </span>
+            {evidenceOpen && (
+              <span className="mt-1 block text-xs text-muted-foreground">
+                Здесь показаны записи выбранного направления. Ранжирование учитывает тип и параметры объекта, но не подтверждает применимость к каждой операции.
+                Для сбора плавающего мусора, съёмки карьера, доставки биоматериалов и реабилитационных сеансов
+                предусмотрены отдельные модели. Годовую мощность подтверждают только журналы конкретной площадки за обозначенный период: смены, принятые съёмки, выполненные рейсы или завершённые сеансы вместе с отменами и простоями. Условия объекта, погода, разрешения, персонал и обработка должны быть учтены отдельно; паспортный максимум и разовый кейс не заменяют эти данные.
+                Для других операций универсальный расчёт не применяется.
+              </span>
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -572,9 +629,9 @@ export default function Solutions() {
         </Alert>
       )}
 
-      <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
+      <div className="flex flex-col items-start gap-6 md:flex-row">
         {/* Filters Sidebar */}
-        <div className="w-full md:w-80 shrink-0 flex flex-col gap-4 overflow-y-auto pr-1 pb-4">
+        <div className="flex max-h-[320px] w-full shrink-0 flex-col gap-4 overflow-y-auto pb-4 pr-1 md:sticky md:top-20 md:max-h-[calc(100dvh-96px)] md:w-64 xl:w-80">
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
@@ -757,7 +814,7 @@ export default function Solutions() {
         </div>
 
         {/* Results Grid */}
-        <div className="flex-1 flex flex-col min-h-0 bg-muted/30 border border-border rounded-xl overflow-hidden">
+        <div className="flex w-full min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-muted/30">
           <div className="px-4 py-3 border-b border-border bg-card/50 flex items-center justify-between gap-3 text-sm shrink-0">
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Найдено решений:</span>
@@ -778,8 +835,8 @@ export default function Solutions() {
             )}
           </div>
           
-          <ScrollArea className="flex-1 p-4">
-            <div className="grid grid-cols-1 gap-5 pb-8 min-[700px]:grid-cols-2 min-[1100px]:grid-cols-3">
+          <div className="p-4">
+            <div className="solution-card-grid" data-testid="catalog-card-grid">
               {filteredSolutions.map((sol) => {
                 const isSelected = state.selectedSolutions.includes(sol.id);
                 const estimateLimit = (directionMismatch ? directionWarning : null) || evaluationLimit(
@@ -801,7 +858,7 @@ export default function Solutions() {
                 return (
                   <article
                     key={sol.id}
-                    className={`flex min-w-0 flex-col overflow-hidden rounded-[18px] border bg-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 ${
+                    className={`solution-card flex min-w-0 flex-col overflow-hidden rounded-[18px] border bg-card shadow-sm transition-all duration-200 hover:border-primary/40 ${
                       isSelected ? 'border-primary/60 ring-2 ring-primary' : 'border-border'
                     }`}
                     data-testid={`card-solution-${sol.id}`}
@@ -818,7 +875,7 @@ export default function Solutions() {
                       trl={sol.trl}
                     />
 
-                    <div className="flex flex-1 flex-col gap-3 px-[18px] py-4">
+                    <div className="flex min-w-0 flex-1 flex-col gap-3 px-[18px] py-4">
                       {personalizedMode && (
                         <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-3" data-testid={`match-panel-${sol.id}`}>
                           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -869,17 +926,21 @@ export default function Solutions() {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <h2 className="line-clamp-2 min-h-[3rem] text-[19px] font-semibold leading-6 text-foreground" data-testid={`title-${sol.id}`} title={sol.name}>
-                          {sol.name}
-                        </h2>
-                        <p className="mt-2 line-clamp-2 min-h-10 text-[13px] leading-5 text-muted-foreground" data-testid={`text-tagline-${sol.id}`}>
+                        <button
+                          type="button"
+                          onClick={() => setLocation(`/solutions/${sol.id}`)}
+                          className="break-words text-left text-xl font-semibold leading-7 text-foreground hover:text-primary"
+                          data-testid={`link-solution-detail-${sol.id}`}
+                          title={sol.name}
+                        >{sol.name}</button>
+                        <p className="mt-2 break-words text-sm leading-6 text-muted-foreground" data-testid={`text-tagline-${sol.id}`}>
                           {sol.tagline}
                         </p>
                       </div>
 
                       <ul className="space-y-1.5" data-testid={`list-bullets-${sol.id}`}>
-                        {sol.bullets.slice(0, 3).map((bullet, index) => (
-                          <li key={`${sol.id}-bullet-${index}`} className="flex items-start gap-2 text-xs leading-[1.45] text-foreground">
+                        {sol.bullets.map((bullet, index) => (
+                          <li key={`${sol.id}-bullet-${index}`} className="flex items-start gap-2 text-sm leading-6 text-foreground">
                             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#3BE68F]" />
                             <span>{bullet}</span>
                           </li>
@@ -896,20 +957,23 @@ export default function Solutions() {
                       </div>
 
                       <div className="border-t border-dashed border-border pt-3">
-                        <p className="line-clamp-3 text-xs leading-[1.55] text-muted-foreground" data-testid={`text-description-${sol.id}`}>
+                        <p className="break-words text-sm leading-6 text-muted-foreground" data-testid={`text-description-${sol.id}`}>
                           {description}
                         </p>
+                        {!sol.desc_real && <CatalogDescriptionSource solution={sol} />}
                         {sol.desc_real && sol.specs_source && (
-                          <p className="mt-2 font-mono text-[9px] leading-4 text-muted-foreground/75" data-testid={`text-description-source-${sol.id}`}>
+                          <p className="mt-2 break-words text-xs leading-5 text-muted-foreground" data-testid={`text-description-source-${sol.id}`}>
                             Источник описания: {sol.specs_source}
                           </p>
                         )}
                       </div>
 
+                      <SolutionConnectionsSummary solution={sol} onOpen={() => setLocation(`/solutions/${sol.id}`)} />
+
                       <footer className="mt-auto border-t border-border pt-4">
                         <p className="font-mono text-lg font-bold text-[#3BE68F]" data-testid={`text-price-${sol.id}`}>{price}</p>
                         <p className="mt-1 text-[10px] text-muted-foreground">с НДС, без доставки и ПНР</p>
-                        <div className="mt-4 grid gap-2">
+                        <div className="solution-card-actions mt-4 grid gap-2">
                           <Button
                             type="button"
                             onClick={() => {
@@ -935,20 +999,41 @@ export default function Solutions() {
                                 : 'Нет модели ТЭО для задачи')
                               : 'Предварительное ТЭО'}
                           </Button>
-                          {estimateLimit && state.objectType
-                            && Object.keys(state.objectParams).length > 0 && (
-                            <p className="text-xs text-amber-300" data-testid={`text-evaluation-limit-${sol.id}`}>{estimateLimit}</p>
-                          )}
                           <Button
                             type="button"
                             variant={isSelected ? 'default' : 'outline'}
                             onClick={() => toggleSolution(sol.id)}
+                            aria-pressed={isSelected}
                             className="w-full"
                             data-testid={`button-toggle-${sol.id}`}
                           >
-                            {isSelected ? 'В сравнении' : 'В сравнение'}
+                            {isSelected ? 'В расчёте' : 'Добавить в расчёт'}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={comparison.ids.includes(sol.id) ? 'secondary' : 'outline'}
+                            onClick={() => comparison.toggle(sol.id)}
+                            className="w-full"
+                            aria-pressed={comparison.ids.includes(sol.id)}
+                            data-testid={`button-compare-${sol.id}`}
+                          >
+                            {comparison.ids.includes(sol.id) ? 'Выбрано для сравнения' : 'Добавить к сравнению'}
+                          </Button>
+                          <QuoteCta solutionId={sol.id} className="w-full" />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setLocation(`/solutions/${sol.id}`)}
+                            className="w-full gap-2 border border-primary/30 text-primary hover:bg-primary/10"
+                            data-testid={`button-model-page-${sol.id}`}
+                          >
+                            Страница модели <ArrowRight className="h-4 w-4" />
                           </Button>
                         </div>
+                        {estimateLimit && state.objectType
+                          && Object.keys(state.objectParams).length > 0 && (
+                          <p className="mt-3 text-sm leading-5 text-amber-300" data-testid={`text-evaluation-limit-${sol.id}`}>{estimateLimit}</p>
+                        )}
                       </footer>
                       <span
                         aria-hidden="true"
@@ -978,9 +1063,10 @@ export default function Solutions() {
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </div>
+      <FloatingCompareBar />
     </div>
   );
 }
